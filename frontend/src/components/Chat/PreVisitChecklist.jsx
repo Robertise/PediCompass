@@ -17,20 +17,15 @@ export default function PreVisitChecklist({ items }) {
   const checkedCount = Object.values(checked).filter(Boolean).length
 
   return (
-    <div style={{ marginTop: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <p className="section-heading">📋 Pre-Visit Checklist</p>
-        <span style={{ fontSize: '0.8125rem', color: 'var(--color-gray-400)' }}>
+    <div className="mt-4">
+      <div className="flex justify-between items-center mb-2">
+        <p className="font-semibold text-teal-400 uppercase tracking-wide text-xs">📋 Pre-Visit Checklist</p>
+        <span className="text-[0.8125rem] text-gray-400">
           {checkedCount}/{items.length} done
         </span>
       </div>
 
-      <div style={{
-        background: 'var(--color-bg-elevated)',
-        borderRadius: 'var(--radius-md)',
-        padding: '8px',
-        border: '1px solid rgba(255,255,255,0.05)',
-      }}>
+      <div className="bg-bgElevated rounded-md p-2 border border-white/5">
         {items.map((item, idx) => (
           <div
             key={idx}
@@ -49,7 +44,7 @@ export default function PreVisitChecklist({ items }) {
               onClick={(e) => e.stopPropagation()}
               aria-label={item}
             />
-            <span style={{ fontSize: '0.9375rem' }}>{item}</span>
+            <span className="text-[0.9375rem]">{item}</span>
           </div>
         ))}
       </div>

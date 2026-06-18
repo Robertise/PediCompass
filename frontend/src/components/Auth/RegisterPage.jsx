@@ -18,9 +18,9 @@ export default function RegisterPage({ onToggleMode }) {
 
   if (success) {
     return (
-      <div className="auth-card" style={{ textAlign: 'center' }}>
-        <h2 style={{ marginBottom: '16px' }}>Registration Successful!</h2>
-        <p style={{ color: 'var(--color-gray-200)', marginBottom: '24px' }}>
+      <div className="auth-card text-center">
+        <h2 className="mb-4">Registration Successful!</h2>
+        <p className="text-gray-200 mb-6">
           Please check your email to verify your account. Once verified, you can sign in.
         </p>
         <button onClick={onToggleMode} className="btn btn-primary w-full">
@@ -32,9 +32,9 @@ export default function RegisterPage({ onToggleMode }) {
 
   return (
     <div className="auth-card">
-      <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>Create Account</h2>
+      <h2 className="text-center mb-6">Create Account</h2>
       
-      {error && <div className="alert alert--emergency" style={{ marginBottom: '16px' }}>{error}</div>}
+      {error && <div className="alert alert--emergency mb-4">{error}</div>}
 
       <form onSubmit={handleSubmit} className="form-group">
         <div>
@@ -58,14 +58,14 @@ export default function RegisterPage({ onToggleMode }) {
             minLength={8}
           />
         </div>
-        <button type="submit" className="btn btn-primary w-full" disabled={isLoading} style={{ marginTop: '16px' }}>
+        <button type="submit" className="btn btn-primary w-full mt-4" disabled={isLoading}>
           {isLoading ? 'Creating...' : 'Create Account'}
         </button>
       </form>
 
-      <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.875rem' }}>
+      <p className="text-center mt-6 text-sm">
         Already have an account?{' '}
-        <button onClick={onToggleMode} className="btn-ghost" style={{ padding: 0 }}>
+        <button onClick={onToggleMode} className="btn-ghost p-0">
           Sign in
         </button>
       </p>

@@ -45,7 +45,7 @@ export default function ProfileForm({ initialData, onSubmit, onCancel }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="form-group" style={{ background: 'var(--color-bg-elevated)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
+    <form onSubmit={handleSubmit} className="form-group bg-bgElevated p-6 rounded-lg">
       <div>
         <label className="input-label">Child's Name / Nickname</label>
         <input 
@@ -110,7 +110,7 @@ export default function ProfileForm({ initialData, onSubmit, onCancel }) {
         />
       </div>
 
-      <div style={{ display: 'flex', gap: '12px', marginTop: '16px', justifyContent: 'flex-end' }}>
+      <div className="flex gap-3 mt-4 justify-end">
         <button type="button" className="btn btn-secondary" onClick={onCancel}>
           Cancel
         </button>

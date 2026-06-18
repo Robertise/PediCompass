@@ -24,27 +24,26 @@ export default function ProfileSelector({ selectedId, onChange, disabled }) {
     loadProfiles()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) return <div className="skeleton" style={{ height: '42px', width: '200px' }} />
+  if (loading) return <div className="skeleton h-[42px] w-[200px]" />
 
   if (profiles.length === 0) {
     return (
-      <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-400)' }}>
+      <div className="text-sm text-gray-400">
         No profiles found. You can chat as a guest or create a profile first.
       </div>
     )
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <label style={{ fontSize: '0.875rem', color: 'var(--color-gray-200)' }}>
+    <div className="flex items-center gap-3">
+      <label className="text-sm text-gray-200">
         Chatting about:
       </label>
       <select 
-        className="profile-select"
+        className="profile-select w-auto min-w-[200px]"
         value={selectedId || ''} 
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        style={{ width: 'auto', minWidth: '200px' }}
       >
         <option value="">-- Guest (No Profile) --</option>
         {profiles.map(p => {

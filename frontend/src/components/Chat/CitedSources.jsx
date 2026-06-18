@@ -15,8 +15,8 @@ export default function CitedSources({ sources }) {
   }
 
   return (
-    <div style={{ marginTop: '16px' }}>
-      <p className="section-heading">📎 Clinical Sources</p>
+    <div className="mt-4">
+      <p className="font-semibold text-teal-400 uppercase tracking-wide text-xs mb-2">📎 Clinical Sources</p>
       <div className="citations-list">
         {sources.map((source, idx) => (
           <div key={source.chunk_id || idx} className="citation-item">
@@ -26,7 +26,7 @@ export default function CitedSources({ sources }) {
             >
               {source.source_authority}
             </span>
-            <span style={{ color: 'var(--color-gray-400)', fontSize: '0.75rem' }}>•</span>
+            <span className="text-gray-400 text-xs mx-1">•</span>
             <span>{source.text_snippet || source.content_type || 'Clinical guideline'}</span>
           </div>
         ))}

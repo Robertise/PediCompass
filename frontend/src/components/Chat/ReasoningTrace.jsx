@@ -24,7 +24,7 @@ export default function ReasoningTrace({ trace }) {
   const stages = Object.entries(STAGE_META).filter(([key]) => trace[key])
 
   return (
-    <div className="trace-accordion" style={{ marginTop: '12px' }}>
+    <div className="trace-accordion mt-3">
       {/* Header */}
       <button
         id="reasoning-trace-toggle"
@@ -34,8 +34,8 @@ export default function ReasoningTrace({ trace }) {
         aria-controls="reasoning-trace-body"
       >
         <span>🔬 Reasoning Trace ({trace.iterations || 1} iteration{(trace.iterations || 1) !== 1 ? 's' : ''})</span>
-        <span style={{ fontSize: '0.75rem', transition: 'transform 200ms' }}>
-          {open ? '▲' : '▼'}
+        <span className={`text-xs transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>
+          ▼
         </span>
       </button>
 
@@ -44,12 +44,11 @@ export default function ReasoningTrace({ trace }) {
         {open && (
           <motion.div
             id="reasoning-trace-body"
-            className="trace-accordion-body"
+            className="trace-accordion-body overflow-hidden"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            style={{ overflow: 'hidden' }}
           >
             {stages.map(([stageKey, meta]) => (
               <TraceStageRow
@@ -73,21 +72,20 @@ function TraceStageRow({ meta, data }) {
       <div className="trace-stage-icon" aria-hidden="true">
         {meta.icon}
       </div>
-      <div style={{ flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="flex-1">
+        <div className="flex justify-between items-center">
           <div>
-            <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--color-white)' }}>
+            <span className="font-semibold text-sm text-white">
               {meta.label}
             </span>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--color-gray-400)', marginLeft: '8px' }}>
+            <span className="text-[0.8125rem] text-gray-400 ml-2">
               {meta.description}
             </span>
           </div>
           {data && (
             <button
-              className="btn btn-ghost btn-sm"
+              className="btn btn-ghost btn-sm text-xs"
               onClick={() => setDetailOpen(o => !o)}
-              style={{ fontSize: '0.75rem' }}
             >
               {detailOpen ? 'Hide' : 'Details'}
             </button>
@@ -101,18 +99,7 @@ function TraceStageRow({ meta, data }) {
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.15 }}
-              style={{
-                marginTop: '8px',
-                padding: '10px',
-                background: 'var(--color-bg-deep)',
-                borderRadius: '6px',
-                fontSize: '0.75rem',
-                color: 'var(--color-gray-200)',
-                overflow: 'auto',
-                maxHeight: '200px',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-              }}
+              className="mt-2 p-2.5 bg-bgDeep rounded-md text-xs text-gray-200 overflow-auto max-h-[200px] whitespace-pre-wrap break-words"
             >
               {JSON.stringify(data, null, 2)}
             </motion.pre>

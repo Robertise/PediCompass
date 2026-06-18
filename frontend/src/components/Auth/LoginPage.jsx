@@ -19,9 +19,9 @@ export default function LoginPage({ onToggleMode }) {
 
   return (
     <div className="auth-card">
-      <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>Welcome Back</h2>
+      <h2 className="text-center mb-6">Welcome Back</h2>
       
-      {error && <div className="alert alert--emergency" style={{ marginBottom: '16px' }}>{error}</div>}
+      {error && <div className="alert alert--emergency mb-4">{error}</div>}
 
       <form onSubmit={handleSubmit} className="form-group">
         <div>
@@ -44,14 +44,14 @@ export default function LoginPage({ onToggleMode }) {
             required 
           />
         </div>
-        <button type="submit" className="btn btn-primary w-full" disabled={isLoading} style={{ marginTop: '16px' }}>
+        <button type="submit" className="btn btn-primary w-full mt-4" disabled={isLoading}>
           {isLoading ? 'Signing in...' : 'Sign In'}
         </button>
       </form>
 
-      <p style={{ textAlign: 'center', marginTop: '24px', fontSize: '0.875rem' }}>
+      <p className="text-center mt-6 text-sm">
         Don't have an account?{' '}
-        <button onClick={onToggleMode} className="btn-ghost" style={{ padding: 0 }}>
+        <button onClick={onToggleMode} className="btn-ghost p-0">
           Create one
         </button>
       </p>

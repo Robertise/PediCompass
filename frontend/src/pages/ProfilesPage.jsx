@@ -61,12 +61,12 @@ export default function ProfilesPage() {
   }
 
   if (loading) {
-    return <div className="page container"><div className="spinner" style={{ margin: '40px auto' }}/></div>
+    return <div className="page container flex justify-center py-10"><div className="spinner" /></div>
   }
 
   return (
     <div className="page container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div className="flex justify-between items-center mb-6">
         <h2>Child Profiles</h2>
         {!isEditing && (
           <button className="btn btn-primary" onClick={handleCreate}>
@@ -76,8 +76,8 @@ export default function ProfilesPage() {
       </div>
 
       {isEditing ? (
-        <div style={{ maxWidth: '600px', margin: '0 auto' }}>
-          <h3 style={{ marginBottom: '16px' }}>{currentProfile ? 'Edit Profile' : 'New Profile'}</h3>
+        <div className="max-w-[600px] mx-auto">
+          <h3 className="mb-4">{currentProfile ? 'Edit Profile' : 'New Profile'}</h3>
           <ProfileForm 
             initialData={currentProfile} 
             onSubmit={handleFormSubmit}
@@ -87,8 +87,8 @@ export default function ProfilesPage() {
       ) : (
         <div className="feature-grid">
           {profiles.length === 0 ? (
-            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', background: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
-              <p style={{ color: 'var(--color-gray-400)', marginBottom: '16px' }}>You haven't created any profiles yet.</p>
+            <div className="col-span-full text-center p-10 bg-bgCard rounded-lg">
+              <p className="text-gray-400 mb-4">You haven't created any profiles yet.</p>
               <button className="btn btn-primary" onClick={handleCreate}>Create Your First Profile</button>
             </div>
           ) : (
@@ -98,15 +98,15 @@ export default function ProfilesPage() {
               const stale = isProfileStale(p.last_updated)
 
               return (
-                <div key={p.profile_id} className="card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                <div key={p.profile_id} className="card flex flex-col justify-between">
+                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <h3 style={{ color: 'var(--color-teal)', marginBottom: '4px' }}>{p.nickname}</h3>
+                      <h3 className="text-teal-400 mb-1">{p.nickname}</h3>
                       <div className="tag tag--teal">{ageStr}</div>
                     </div>
                   </div>
 
-                  <div style={{ fontSize: '0.875rem', color: 'var(--color-gray-200)', marginBottom: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div className="text-[0.875rem] text-gray-200 mb-4 flex flex-col gap-2 flex-1">
                     <p><strong>DOB:</strong> {p.dob}</p>
                     <p><strong>Gender:</strong> {p.gender}</p>
                     {p.weight_kg > 0 && <p><strong>Weight:</strong> {p.weight_kg} kg</p>}
@@ -116,14 +116,14 @@ export default function ProfilesPage() {
                   </div>
 
                   {stale && (
-                    <div className="alert alert--warning" style={{ fontSize: '0.75rem', padding: '8px', marginBottom: '16px' }}>
+                    <div className="alert alert--warning text-xs p-2 mb-4">
                       ⚠️ Please review and update weight/conditions.
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
-                    <button className="btn btn-secondary btn-sm" style={{ flex: 1 }} onClick={() => handleEdit(p)}>Edit</button>
-                    <button className="btn btn-danger btn-sm" style={{ flex: 1 }} onClick={() => handleDelete(p.profile_id)}>Delete</button>
+                  <div className="flex gap-2 border-t border-white/5 pt-4">
+                    <button className="btn btn-secondary btn-sm flex-1" onClick={() => handleEdit(p)}>Edit</button>
+                    <button className="btn btn-danger btn-sm flex-1" onClick={() => handleDelete(p.profile_id)}>Delete</button>
                   </div>
                 </div>
               )

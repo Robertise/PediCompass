@@ -27,7 +27,7 @@ export default function AnalyticsDashboard() {
   }, [days])
 
   if (loading) {
-    return <div className="spinner" style={{ margin: '40px auto' }} />
+    return <div className="spinner mx-auto my-10" />
   }
 
   if (!summary) return null
@@ -36,10 +36,9 @@ export default function AnalyticsDashboard() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '24px' }}>
+      <div className="flex justify-end mb-6">
         <select 
-          className="input" 
-          style={{ width: '200px' }}
+          className="input w-[200px]" 
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
         >
@@ -49,7 +48,7 @@ export default function AnalyticsDashboard() {
         </select>
       </div>
 
-      <div className="analytics-grid" style={{ marginBottom: '40px' }}>
+      <div className="analytics-grid mb-10">
         <div className="stat-card">
           <div className="stat-value">{totalQueries}</div>
           <div className="stat-label">Total Queries</div>
@@ -57,68 +56,66 @@ export default function AnalyticsDashboard() {
         
         {/* Placeholder for real charts - rendering basic text for now */}
         <div className="card">
-          <h3 style={{ fontSize: '1rem', marginBottom: '16px' }}>Urgency Distribution</h3>
+          <h3 className="text-base mb-4">Urgency Distribution</h3>
           {Object.entries(summary.urgency_distribution || {}).length === 0 ? (
-            <p style={{ color: 'var(--color-gray-400)', fontSize: '0.875rem' }}>No data</p>
+            <p className="text-gray-400 text-sm">No data</p>
           ) : (
             Object.entries(summary.urgency_distribution).map(([level, count]) => (
-              <div key={level} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
-                <span style={{ textTransform: 'capitalize' }}>{level.replace('_', ' ')}</span>
-                <span style={{ fontWeight: 600 }}>{count} ({Math.round((count/totalQueries)*100)}%)</span>
+              <div key={level} className="flex justify-between mb-2 text-sm">
+                <span className="capitalize">{level.replace('_', ' ')}</span>
+                <span className="font-semibold">{count} ({Math.round((count/totalQueries)*100)}%)</span>
               </div>
             ))
           )}
         </div>
 
         <div className="card">
-          <h3 style={{ fontSize: '1rem', marginBottom: '16px' }}>Age Demographics</h3>
+          <h3 className="text-base mb-4">Age Demographics</h3>
           {Object.entries(summary.age_group_distribution || {}).length === 0 ? (
-            <p style={{ color: 'var(--color-gray-400)', fontSize: '0.875rem' }}>No data</p>
+            <p className="text-gray-400 text-sm">No data</p>
           ) : (
             Object.entries(summary.age_group_distribution).map(([age, count]) => (
-              <div key={age} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.875rem' }}>
-                <span style={{ textTransform: 'capitalize' }}>{age.replace('_', ' ')}</span>
-                <span style={{ fontWeight: 600 }}>{count} ({Math.round((count/totalQueries)*100)}%)</span>
+              <div key={age} className="flex justify-between mb-2 text-sm">
+                <span className="capitalize">{age.replace('_', ' ')}</span>
+                <span className="font-semibold">{count} ({Math.round((count/totalQueries)*100)}%)</span>
               </div>
             ))
           )}
         </div>
       </div>
 
-      <h2 style={{ marginBottom: '24px' }}>Document Registry (KB)</h2>
-      <div className="card" style={{ overflowX: 'auto', padding: 0 }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+      <h2 className="mb-6">Document Registry (KB)</h2>
+      <div className="card overflow-x-auto p-0">
+        <table className="w-full border-collapse text-left">
           <thead>
-            <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'var(--color-bg-surface)' }}>
-              <th style={{ padding: '16px', fontSize: '0.875rem', color: 'var(--color-gray-400)', fontWeight: 600 }}>Document Name</th>
-              <th style={{ padding: '16px', fontSize: '0.875rem', color: 'var(--color-gray-400)', fontWeight: 600 }}>Authority</th>
-              <th style={{ padding: '16px', fontSize: '0.875rem', color: 'var(--color-gray-400)', fontWeight: 600 }}>Chunks</th>
-              <th style={{ padding: '16px', fontSize: '0.875rem', color: 'var(--color-gray-400)', fontWeight: 600 }}>Date Indexed</th>
-              <th style={{ padding: '16px', fontSize: '0.875rem', color: 'var(--color-gray-400)', fontWeight: 600 }}>Status</th>
+            <tr className="border-b border-white/10 bg-bgSurface">
+              <th className="p-4 text-sm text-gray-400 font-semibold">Document Name</th>
+              <th className="p-4 text-sm text-gray-400 font-semibold">Authority</th>
+              <th className="p-4 text-sm text-gray-400 font-semibold">Chunks</th>
+              <th className="p-4 text-sm text-gray-400 font-semibold">Date Indexed</th>
+              <th className="p-4 text-sm text-gray-400 font-semibold">Status</th>
             </tr>
           </thead>
           <tbody>
             {documents.length === 0 ? (
               <tr>
-                <td colSpan="5" style={{ padding: '24px', textAlign: 'center', color: 'var(--color-gray-400)' }}>
+                <td colSpan="5" className="p-6 text-center text-gray-400">
                   No documents found in registry.
                 </td>
               </tr>
             ) : (
               documents.map(doc => (
-                <tr key={doc.doc_id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '16px', fontSize: '0.9375rem' }}>{doc.filename}</td>
-                  <td style={{ padding: '16px' }}><span className="tag tag--teal">{doc.source_authority}</span></td>
-                  <td style={{ padding: '16px', fontSize: '0.9375rem', color: 'var(--color-gray-200)' }}>{doc.chunk_count}</td>
-                  <td style={{ padding: '16px', fontSize: '0.9375rem', color: 'var(--color-gray-200)' }}>{new Date(doc.upload_date).toLocaleDateString()}</td>
-                  <td style={{ padding: '16px' }}>
-                    <span style={{ 
-                      fontSize: '0.75rem', 
-                      padding: '4px 8px', 
-                      borderRadius: 'var(--radius-sm)',
-                      background: doc.status === 'complete' ? 'rgba(42,157,143,0.15)' : 'rgba(233,196,106,0.15)',
-                      color: doc.status === 'complete' ? '#52B788' : '#E9C46A'
-                    }}>
+                <tr key={doc.doc_id} className="border-b border-white/5">
+                  <td className="p-4 text-[0.9375rem]">{doc.filename}</td>
+                  <td className="p-4"><span className="tag tag--teal">{doc.source_authority}</span></td>
+                  <td className="p-4 text-[0.9375rem] text-gray-200">{doc.chunk_count}</td>
+                  <td className="p-4 text-[0.9375rem] text-gray-200">{new Date(doc.upload_date).toLocaleDateString()}</td>
+                  <td className="p-4">
+                    <span className={`text-xs px-2 py-1 rounded-sm ${
+                      doc.status === 'complete' 
+                        ? 'bg-[#52B788]/15 text-[#52B788]' 
+                        : 'bg-[#E9C46A]/15 text-[#E9C46A]'
+                    }`}>
                       {doc.status.toUpperCase()}
                     </span>
                   </td>

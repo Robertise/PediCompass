@@ -18,7 +18,7 @@ import PreVisitChecklist from './PreVisitChecklist'
 export default function MessageBubble({ role, content }) {
   if (role === 'user') {
     return (
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div className="flex justify-end">
         <div className="message-bubble message-bubble--user" id={`msg-user-${Date.now()}`}>
           {content}
         </div>
@@ -28,7 +28,7 @@ export default function MessageBubble({ role, content }) {
 
   // Agent response
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-start', width: '100%' }}>
+    <div className="flex justify-start w-full">
       <div className="message-bubble message-bubble--agent">
         <AgentResponseCard response={content} />
       </div>
@@ -43,22 +43,17 @@ function AgentResponseCard({ response }) {
   if (response.type === 'emergency') {
     return (
       <div>
-        <div className="alert alert--emergency" style={{ marginBottom: '12px' }}>
+        <div className="alert alert--emergency mb-3">
           <strong>🚨 CALL EMERGENCY SERVICES IMMEDIATELY</strong>
-          <p style={{ marginTop: '8px', color: 'var(--color-white)' }}>
+          <p className="mt-2 text-white">
             {response.reason}
           </p>
         </div>
-        <div style={{
-          background: 'var(--color-bg-elevated)',
-          borderRadius: 'var(--radius-md)',
-          padding: '16px',
-          borderLeft: '3px solid var(--urgency-emergency)',
-        }}>
-          <p style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--color-white)' }}>
+        <div className="bg-bgElevated rounded-md p-4 border-l-[3px] border-emergency">
+          <p className="font-semibold mb-2 text-white">
             What to do RIGHT NOW:
           </p>
-          <p style={{ color: 'var(--color-gray-200)' }}>
+          <p className="text-gray-200">
             {response.care_pathway?.immediate_actions?.[0] || 'Call 999 / 911 / your local emergency number immediately.'}
           </p>
         </div>
@@ -71,10 +66,10 @@ function AgentResponseCard({ response }) {
   if (response.type === 'clarification') {
     return (
       <div>
-        <p style={{ color: 'var(--color-gray-200)', marginBottom: '12px' }}>
+        <p className="text-gray-200 mb-3">
           To give you the most accurate guidance, I need a little more information:
         </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {response.clarification_questions?.map((q, i) => (
             <div key={i} className="alert alert--info">
               {q}
@@ -90,7 +85,7 @@ function AgentResponseCard({ response }) {
     const { urgency_level, care_pathway, pre_visit_checklist, warning_signs, cited_sources, reasoning_trace } = response
 
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div className="flex flex-col gap-4">
 
         {/* Urgency badge */}
         {urgency_level && (
@@ -101,27 +96,18 @@ function AgentResponseCard({ response }) {
 
         {/* Care pathway summary */}
         {care_pathway && (
-          <div style={{
-            background: 'var(--color-bg-elevated)',
-            borderRadius: 'var(--radius-md)',
-            padding: '16px',
-          }}>
-            <p className="section-heading">🏥 Recommended Care</p>
-            <p style={{
-              fontSize: '1.0625rem',
-              fontWeight: 600,
-              color: 'var(--color-white)',
-              marginBottom: '8px',
-            }}>
+          <div className="bg-bgElevated rounded-md p-4">
+            <p className="font-semibold text-teal-400 uppercase tracking-wide text-xs mb-2">🏥 Recommended Care</p>
+            <p className="text-[1.0625rem] font-semibold text-white mb-2">
               {care_pathway.care_setting}
             </p>
 
             {care_pathway.immediate_actions?.length > 0 && (
               <>
-                <p className="section-heading" style={{ marginTop: '12px' }}>Right now:</p>
-                <ul style={{ paddingLeft: '20px', color: 'var(--color-gray-200)' }}>
+                <p className="font-semibold text-teal-400 uppercase tracking-wide text-xs mt-3 mb-2">Right now:</p>
+                <ul className="pl-5 text-gray-200 list-disc">
                   {care_pathway.immediate_actions.map((action, i) => (
-                    <li key={i} style={{ marginBottom: '4px' }}>{action}</li>
+                    <li key={i} className="mb-1">{action}</li>
                   ))}
                 </ul>
               </>
@@ -129,11 +115,11 @@ function AgentResponseCard({ response }) {
 
             {care_pathway.clinical_reasoning && (
               <>
-                <p className="section-heading" style={{ marginTop: '12px' }}>Why:</p>
+                <p className="font-semibold text-teal-400 uppercase tracking-wide text-xs mt-3 mb-2">Why:</p>
                 <ReactMarkdown
                   components={{
                     p: ({ children }) => (
-                      <p style={{ color: 'var(--color-gray-200)', fontSize: '0.9375rem' }}>
+                      <p className="text-gray-200 text-[0.9375rem] mb-2">
                         {children}
                       </p>
                     ),
@@ -149,12 +135,12 @@ function AgentResponseCard({ response }) {
         {/* Warning signs */}
         {warning_signs?.length > 0 && (
           <div className="alert alert--warning">
-            <p style={{ fontWeight: 600, marginBottom: '8px', color: 'var(--color-white)' }}>
+            <p className="font-semibold mb-2 text-white">
               ⚠️ Watch for these warning signs at home:
             </p>
-            <ul style={{ paddingLeft: '20px', color: 'var(--color-gray-200)' }}>
+            <ul className="pl-5 text-gray-200 list-disc">
               {warning_signs.map((sign, i) => (
-                <li key={i} style={{ marginBottom: '4px' }}>{sign}</li>
+                <li key={i} className="mb-1">{sign}</li>
               ))}
             </ul>
           </div>
@@ -170,13 +156,7 @@ function AgentResponseCard({ response }) {
         <ReasoningTrace trace={reasoning_trace} />
 
         {/* Disclaimer */}
-        <p style={{
-          fontSize: '0.8125rem',
-          color: 'var(--color-gray-400)',
-          fontStyle: 'italic',
-          borderTop: '1px solid rgba(255,255,255,0.05)',
-          paddingTop: '12px',
-        }}>
+        <p className="text-[0.8125rem] text-gray-400 italic border-t border-white/5 pt-3">
           This guidance is for informational purposes only. Please consult a qualified
           pediatric healthcare professional for proper evaluation and diagnosis.
         </p>
