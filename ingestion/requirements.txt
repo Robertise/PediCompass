@@ -1,0 +1,18 @@
+# PediCompass — Ingestion Pipeline Requirements
+#
+# INSTALL ORDER (important — torch must be installed first with CPU-only index):
+#
+#   Step 1 — CPU-only PyTorch (avoids downloading the 2GB CUDA build):
+#     pip install torch --index-url https://download.pytorch.org/whl/cpu
+#
+#   Step 2 — Everything else:
+#     pip install -r requirements.txt
+#
+# Do NOT add torch to this file directly; pip would pull the CUDA build.
+
+pymupdf
+sentence-transformers>=3.0
+qdrant-client>=1.9
+boto3>=1.34
+python-dotenv
+tqdm
