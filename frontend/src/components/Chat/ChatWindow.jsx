@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import MessageBubble from './MessageBubble'
-import ProfileSelector from '../Profiles/ProfileSelector'
 import { chatApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
+import { useAppStore } from '../../store/appStore'
 
-export default function ChatWindow() {
+export default function ChatWindow({ messages, setMessages }) {
   const { user } = useAuthStore()
-  const [messages, setMessages] = useState([])
+  const { selectedProfileId } = useAppStore()
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState(null)
-  const [selectedProfileId, setSelectedProfileId] = useState(null)
   const messagesEndRef = useRef(null)
 
   const scrollToBottom = () => {
@@ -70,23 +69,15 @@ export default function ChatWindow() {
   }
 
   return (
-    <div className="chat-main flex flex-col h-full w-full max-w-[760px] mx-auto px-4 md:px-0">
-      {user && (
-        <div className="py-4 border-b border-white/5">
-          <ProfileSelector 
-            selectedId={selectedProfileId} 
-            onChange={setSelectedProfileId} 
-            disabled={messages.length > 0} 
-          />
-        </div>
-      )}
-
-      <div className="chat-messages flex-1 overflow-y-auto py-6 flex flex-col gap-4">
+    <main className="flex-1 flex flex-col h-full bg-surface-lowest relative">
+      <div className="flex-1 overflow-y-auto p-md lg:p-lg space-y-lg relative">
         {messages.length === 0 ? (
-          <div className="text-center mt-10 text-gray-400">
-            <p className="text-xl mb-2">👋 Welcome to PediCompass</p>
-            <p>Describe your child's symptoms to get started.</p>
-            {!user && <p className="mt-2 text-sm">You are using Guest Mode. I will ask for your child's age first.</p>}
+          <div className="flex flex-col items-center justify-center h-full text-on-surface-variant max-w-lg mx-auto text-center gap-sm">
+            <span className="material-symbols-outlined text-[64px] text-primary/30">explore</span>
+            <h2 className="text-headline-md font-headline-md text-on-surface">How can I help you today?</h2>
+            <p className="text-body-md font-body-md">
+              Select a child profile above and describe their symptoms. I will guide you through evidence-based pediatric care pathways.
+            </p>
           </div>
         ) : (
           messages.map((msg, idx) => (
@@ -95,44 +86,63 @@ export default function ChatWindow() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              className="w-full"
             >
               <MessageBubble role={msg.role} content={msg.content} />
             </motion.div>
           ))
         )}
-        
+
         {loading && (
-          <div className="flex gap-2 p-4">
-            <div className="spinner" />
-            <span className="text-gray-400 text-sm">Analyzing...</span>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
+            className="flex items-start gap-sm max-w-3xl mx-auto w-full"
+          >
+            <div className="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-primary">smart_toy</span>
+            </div>
+            <div className="bg-surface-container-low p-md rounded-2xl rounded-tl-sm shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center gap-2 w-32 justify-center">
+              <div className="flex gap-1 items-center">
+                <span className="w-2 h-2 rounded-full bg-primary animate-bounce"></span>
+                <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+              </div>
+            </div>
+          </motion.div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-20"></div> {/* padding bottom */}
       </div>
 
-      <div className="chat-input-bar py-4 border-t border-white/5">
-        <div className="flex gap-2 items-end">
-          <textarea
-            className="chat-textarea flex-1 resize-none min-h-[52px] max-h-[200px] p-3 bg-bgElevated border border-gray-600 rounded-lg text-white font-sans text-[15px] leading-relaxed outline-none transition-colors focus:border-teal-400 focus:ring-2 focus:ring-teal-400/30 overflow-y-auto"
-            placeholder="Type your message here..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={loading}
-            rows={1}
-          />
-          <button 
-            className="btn btn-primary h-[52px] px-6 shrink-0" 
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-          >
-            Send
-          </button>
+      {/* Input Area */}
+      <div className="p-md bg-surface border-t border-outline-variant/20 sticky bottom-0 z-10 w-full">
+        <div className="max-w-4xl mx-auto flex flex-col items-center">
+          <div className="flex items-center w-full bg-surface-container-lowest rounded-full px-sm py-xs border border-outline-variant/40 focus-within:border-primary transition-colors shadow-sm">
+            <button className="p-sm text-on-surface-variant hover:text-primary transition-colors">
+              <span className="material-symbols-outlined text-[20px]">attach_file</span>
+            </button>
+            <textarea
+              className="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline py-sm px-sm resize-none"
+              placeholder="Ask a follow-up question or describe symptoms..."
+              rows={1}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={loading || (!selectedProfileId && user)}
+              onInput={(e) => { e.target.style.height = ''; e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px'; }}
+            />
+            <button 
+              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary hover:bg-primary-fixed-variant transition-colors shadow-sm disabled:opacity-50"
+              onClick={handleSend}
+              disabled={!input.trim() || loading || (!selectedProfileId && user)}
+            >
+              <span className="material-symbols-outlined text-[20px]">send</span>
+            </button>
+          </div>
+          <div className="text-center mt-xs text-[11px] text-on-surface-variant flex items-center justify-center gap-xs">
+            <span className="material-symbols-outlined text-[14px]">lock</span> Your information is private and secure. Not a medical diagnosis.
+          </div>
         </div>
-        <p className="text-xs text-gray-400 text-center mt-2">
-          For informational purposes only. In a medical emergency, call 999 or 911.
-        </p>
       </div>
-    </div>
+    </main>
   )
 }
