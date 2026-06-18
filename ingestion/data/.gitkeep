@@ -1,0 +1,3 @@
+# This file exists so Git tracks the data/ directory.
+# Add your PDF files here before running run_ingestion.py.
+# PDFs are gitignored — see ../.gitignore

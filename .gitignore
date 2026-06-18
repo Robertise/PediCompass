@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env
+
+# Environment files (keep .env.example, ignore actual .env)
+.env
+!.env.example
+
+# Qdrant data directory
+qdrant_data/
+
+# PDF data files (large, not in repo)
+ingestion/data/*.pdf
+ingestion/data/*.PDF
+
+# Models cache (sentence-transformers downloads here)
+.cache/
+models/
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
