@@ -14,11 +14,29 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+import { useEffect } from 'react'
+import { useThemeStore } from './store/themeStore'
+
 function MainLayout({ children }) {
+  const { theme } = useThemeStore()
+
+  useEffect(() => {
+    const root = window.document.documentElement
+    
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      root.classList.remove('light', 'dark')
+      root.classList.add(systemTheme)
+    } else {
+      root.classList.remove('light', 'dark')
+      root.classList.add(theme)
+    }
+  }, [theme])
+
   return (
-    <div className="bg-background text-on-surface font-body-md h-screen overflow-hidden flex flex-col">
+    <div className="bg-background text-on-surface font-body-md h-screen overflow-hidden flex flex-col transition-colors duration-200">
       <Navbar />
-      <div className="flex flex-1 overflow-hidden max-w-[1600px] mx-auto w-full">
+      <div className="flex flex-1 overflow-hidden w-full">
         {children}
       </div>
       <AuthModal />

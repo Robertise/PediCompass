@@ -2,16 +2,17 @@ import { Link } from 'react-router-dom'
 import { useAuthStore } from '../../store/authStore'
 import { useAppStore } from '../../store/appStore'
 import ProfileSelector from '../Profiles/ProfileSelector'
+import ThemeToggle from './ThemeToggle'
 
 export default function Navbar() {
   const { user, logout } = useAuthStore()
   const { setShowAuthModal } = useAppStore()
 
   return (
-    <header className="bg-surface/80 dark:bg-surface-container/80 backdrop-blur-lg sticky top-0 z-50 flex justify-between items-center px-gutter py-base w-full max-w-full border-b border-outline-variant/30">
-      <div className="flex items-center gap-sm">
+    <header className="bg-surface/80 dark:bg-surface-container/80 backdrop-blur-lg sticky top-0 z-50 flex justify-between items-center px-gutter py-base w-full border-b border-outline-variant/30 relative">
+      <div className="flex items-center gap-sm relative z-10">
         <Link to="/" className="flex items-center gap-sm transition-transform active:scale-95">
-          <span className="material-symbols-outlined text-primary text-3xl">explore</span>
+          <img src="/logo_trans_bg.svg" alt="PediCompass Logo" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
             <span className="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed-dim leading-none">PediCompass</span>
             <span className="text-label-sm font-label-sm text-on-surface-variant hidden sm:block">Pediatric Care Pathway Navigator</span>
@@ -19,11 +20,12 @@ export default function Navbar() {
         </Link>
       </div>
 
-      <div className="flex items-center justify-center flex-1">
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center z-20">
         <ProfileSelector />
       </div>
 
-      <div className="flex items-center gap-sm">
+      <div className="flex items-center gap-sm relative z-10">
+        <ThemeToggle />
         <button className="hidden md:flex items-center gap-xs text-on-surface-variant hover:bg-primary-container/20 transition-colors px-sm py-xs rounded-full text-label-md font-label-md">
           <span className="material-symbols-outlined text-[20px]">info</span>
           <span>About</span>

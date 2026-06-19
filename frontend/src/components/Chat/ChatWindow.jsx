@@ -70,10 +70,10 @@ export default function ChatWindow({ messages, setMessages }) {
 
   return (
     <main className="flex-1 flex flex-col h-full bg-surface-lowest relative">
-      <div className="flex-1 overflow-y-auto p-md lg:p-lg space-y-lg relative">
+      <div className={`flex-1 relative ${messages.length === 0 ? 'overflow-hidden flex items-center justify-center' : 'overflow-y-auto p-md lg:p-lg space-y-lg'}`}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-on-surface-variant max-w-lg mx-auto text-center gap-sm">
-            <span className="material-symbols-outlined text-[64px] text-primary/30">explore</span>
+            <img src="/logo_trans_bg.svg" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 mb-sm grayscale-[20%]" />
             <h2 className="text-headline-md font-headline-md text-on-surface">How can I help you today?</h2>
             <p className="text-body-md font-body-md">
               Select a child profile above and describe their symptoms. I will guide you through evidence-based pediatric care pathways.

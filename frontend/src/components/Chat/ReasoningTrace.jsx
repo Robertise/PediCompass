@@ -12,7 +12,7 @@ const STAGE_META = {
 export default function ReasoningTrace({ trace }) {
   if (!trace) {
     return (
-      <aside className="w-[360px] bg-surface-container-low dark:bg-surface-container-highest h-full border-l border-outline-variant/30 flex flex-col hidden xl:flex shadow-sm">
+      <aside className="w-[360px] bg-surface-container-low dark:bg-surface-container-highest h-full border-l border-outline-variant/30 flex flex-col shadow-sm">
         <div className="p-md border-b border-outline-variant/30 bg-surface-container/50">
           <div className="flex items-center gap-xs text-on-surface">
             <span className="material-symbols-outlined text-[20px] text-tertiary">memory</span>
@@ -35,7 +35,7 @@ export default function ReasoningTrace({ trace }) {
   const stages = Object.entries(STAGE_META).filter(([key]) => trace[key])
 
   return (
-    <aside className="w-[360px] bg-surface-container-low dark:bg-surface-container-highest h-full border-l border-outline-variant/30 flex flex-col hidden xl:flex shadow-sm">
+    <aside className="w-[360px] bg-surface-container-low dark:bg-surface-container-highest h-full border-l border-outline-variant/30 flex flex-col shadow-sm">
       <div className="p-md border-b border-outline-variant/30 bg-surface-container/50">
         <div className="flex items-center gap-xs text-on-surface">
           <span className="material-symbols-outlined text-[20px] text-tertiary">memory</span>
