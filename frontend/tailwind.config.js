@@ -80,6 +80,7 @@ export default {
               "gutter": "16px"
       },
       "fontFamily": {
+              "manrope": ["Manrope"],
               "headline-sm": ["Geist"],
               "label-md": ["Inter"],
               "body-sm": ["Inter"],

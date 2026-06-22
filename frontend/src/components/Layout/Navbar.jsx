@@ -14,7 +14,7 @@ export default function Navbar() {
         <Link to="/" className="flex items-center gap-sm transition-transform active:scale-95">
           <img src="/logo_trans_bg.svg" alt="PediCompass Logo" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
-            <span className="text-headline-md font-headline-md font-bold text-primary dark:text-primary-fixed-dim leading-none">PediCompass</span>
+            <span className="text-headline-md font-manrope-md font-bold text-primary dark:text-primary-fixed-dim leading-none">PediCompass</span>
             <span className="text-label-sm font-label-sm text-on-surface-variant hidden sm:block">Pediatric Care Pathway Navigator</span>
           </div>
         </Link>
