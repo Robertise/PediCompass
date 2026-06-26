@@ -55,7 +55,11 @@ export default function ChatWindow({ messages, setMessages }) {
       setMessages(prev => [...prev, { role: 'agent', content: res.data }])
     } catch (err) {
       console.error(err)
-      setMessages(prev => [...prev, { role: 'agent', content: { type: 'error', reason: 'Sorry, I encountered an error processing your request.' } }])
+      const reason =
+        err.response?.data?.detail ||
+        err.response?.data?.message ||
+        'Sorry, I encountered an error processing your request.'
+      setMessages(prev => [...prev, { role: 'agent', content: { type: 'error', reason } }])
     } finally {
       setLoading(false)
     }
