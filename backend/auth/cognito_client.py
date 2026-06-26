@@ -4,7 +4,7 @@ from jose import jwt, jwk
 from jose.utils import base64url_decode
 from typing import Dict, Any, Optional
 
-from ..config import settings
+from config import settings
 
 class CognitoClient:
     def __init__(self):
@@ -27,6 +27,27 @@ class CognitoClient:
             return {"success": True, "user_sub": response['UserSub']}
         except self.client.exceptions.UsernameExistsException:
             return {"success": False, "error": "User already exists"}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def confirm_sign_up(self, email: str, code: str) -> dict:
+        try:
+            self.client.confirm_sign_up(
+                ClientId=self.client_id,
+                Username=email,
+                ConfirmationCode=code
+            )
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    def resend_confirmation_code(self, email: str) -> dict:
+        try:
+            self.client.resend_confirmation_code(
+                ClientId=self.client_id,
+                Username=email
+            )
+            return {"success": True}
         except Exception as e:
             return {"success": False, "error": str(e)}
 

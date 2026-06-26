@@ -50,6 +50,32 @@ export const useAuthStore = create(
         }
       },
 
+      confirm: async (email, code) => {
+        set({ isLoading: true, error: null })
+        try {
+          await authApi.confirm(email, code)
+          set({ isLoading: false })
+          return { success: true }
+        } catch (err) {
+          const message = err.response?.data?.detail || 'Verification failed. Invalid code?'
+          set({ isLoading: false, error: message })
+          return { success: false, error: message }
+        }
+      },
+
+      resendCode: async (email) => {
+        set({ isLoading: true, error: null })
+        try {
+          await authApi.resendCode(email)
+          set({ isLoading: false })
+          return { success: true }
+        } catch (err) {
+          const message = err.response?.data?.detail || 'Failed to resend verification code.'
+          set({ isLoading: false, error: message })
+          return { success: false, error: message }
+        }
+      },
+
       logout: async () => {
         try {
           await authApi.logout()

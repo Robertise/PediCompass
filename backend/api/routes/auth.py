@@ -13,12 +13,33 @@ class AuthRequest(BaseModel):
 class RefreshRequest(BaseModel):
     refresh_token: str
 
+class ConfirmRequest(BaseModel):
+    email: str
+    code: str
+
+class ResendRequest(BaseModel):
+    email: str
+
 @router.post("/register")
 async def register(req: AuthRequest):
     result = cognito_client.sign_up(req.email, req.password)
     if not result.get("success"):
         raise HTTPException(status_code=400, detail=result.get("error"))
     return {"message": "Registration successful. Please verify your email."}
+
+@router.post("/confirm")
+async def confirm(req: ConfirmRequest):
+    result = cognito_client.confirm_sign_up(req.email, req.code)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return {"message": "Email verification successful. You can now log in."}
+
+@router.post("/resend-code")
+async def resend_code(req: ResendRequest):
+    result = cognito_client.resend_confirmation_code(req.email)
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error"))
+    return {"message": "Verification code resent successfully."}
 
 @router.post("/login")
 async def login(req: AuthRequest):
