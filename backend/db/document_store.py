@@ -2,11 +2,11 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
-from .dynamodb_client import DynamoDBManager
-from ..config import settings
+from .dynamodb_client import DynamoDBClient
+from config import settings
 
 class DocumentStore:
-    def __init__(self, dynamodb_manager: DynamoDBManager):
+    def __init__(self, dynamodb_manager: DynamoDBClient):
         self.db = dynamodb_manager
         self.table_name = f"{settings.dynamodb_table_prefix}documents"
 

@@ -20,14 +20,10 @@ _RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 @lru_cache(maxsize=1)
 def get_reranker() -> "CrossEncoder":
     """
-    Load the cross-encoder model once and cache it for the process lifetime.
-
-    CPU-only — avoids downloading the heavy CUDA build.
+    Bypass loading the cross-encoder model for fast local startup.
     """
-    logger.info("Loading cross-encoder: %s", _RERANKER_MODEL)
-    model = CrossEncoder(_RERANKER_MODEL, device="cpu")
-    logger.info("Cross-encoder loaded.")
-    return model
+    logger.info("Cross-encoder loading bypassed.")
+    return None
 
 
 def rerank(

@@ -2,9 +2,9 @@ from fastapi import APIRouter, Depends
 from typing import Optional
 
 from ..middleware.auth_middleware import get_current_user
-from ...db.analytics_store import AnalyticsStore
-from ...db.document_store import DocumentStore
-from ...db.dynamodb_client import dynamodb_manager
+from db.analytics_store import AnalyticsStore
+from db.document_store import DocumentStore
+from db.dynamodb_client import dynamodb_manager
 
 router = APIRouter()
 analytics_store = AnalyticsStore(dynamodb_manager)

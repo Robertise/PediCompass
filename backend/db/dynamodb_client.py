@@ -56,17 +56,21 @@ class DynamoDBClient:
 
     def _ensure_tables_sync(self) -> None:
         """Synchronous implementation called from the thread executor."""
-        existing = {t.name for t in self._resource.tables.all()}
-
         for schema in TABLE_SCHEMAS:
             table_name = schema["TableName"]
             ttl_attr = schema.pop("_ttl_attribute", None)
 
-            if table_name in existing:
+            table = self._resource.Table(table_name)
+            try:
+                table.load()
                 logger.info("Table '%s' already exists.", table_name)
                 # Re-add the private key before continuing
                 schema["_ttl_attribute"] = ttl_attr
                 continue
+            except ClientError as exc:
+                if exc.response["Error"]["Code"] != "ResourceNotFoundException":
+                    logger.exception("Failed to check if table '%s' exists: %s", table_name, exc)
+                    raise
 
             # Build create_table kwargs (exclude private _ttl_attribute key)
             create_kwargs = {k: v for k, v in schema.items() if not k.startswith("_")}
@@ -192,3 +196,6 @@ class DynamoDBClient:
 def get_dynamodb_client() -> DynamoDBClient:
     """Singleton DynamoDB client — instantiated once per process."""
     return DynamoDBClient()
+
+
+dynamodb_manager = get_dynamodb_client()

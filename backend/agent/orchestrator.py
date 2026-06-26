@@ -287,8 +287,8 @@ def create_agent() -> PediCompassAgent:
     db_client = get_dynamodb_client()
 
     retriever = Retriever(qdrant_manager=qdrant_mgr, reranker=reranker)
-    session_store = SessionStore(db_client=db_client)
-    analytics_store = AnalyticsStore(db_client=db_client)
+    session_store = SessionStore(db_client)
+    analytics_store = AnalyticsStore(db_client)
     output_validator = OutputValidator()
 
     return PediCompassAgent(

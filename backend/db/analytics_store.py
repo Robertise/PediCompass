@@ -3,11 +3,11 @@ from datetime import datetime, timezone
 import uuid
 from typing import Optional, Dict, Any
 
-from .dynamodb_client import DynamoDBManager
-from ..config import settings
+from .dynamodb_client import DynamoDBClient
+from config import settings
 
 class AnalyticsStore:
-    def __init__(self, dynamodb_manager: DynamoDBManager):
+    def __init__(self, dynamodb_manager: DynamoDBClient):
         self.db = dynamodb_manager
         self.table_name = f"{settings.dynamodb_table_prefix}analytics_log"
 
