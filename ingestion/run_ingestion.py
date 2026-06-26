@@ -659,7 +659,7 @@ def main() -> None:
     qdrant_host = args.qdrant_host or os.environ.get("QDRANT_HOST", "localhost")
     qdrant_port = args.qdrant_port or int(os.environ.get("QDRANT_PORT", "6333"))
     collection_name = args.collection or os.environ.get("QDRANT_COLLECTION", "pedicompass_kb")
-    aws_region = os.environ.get("AWS_REGION", "us-east-1")
+    aws_region = os.environ.get("AWS_REGION", "ap-southeast-1")
 
     # ── Validate PDF path ──────────────────────────────────────────────────
     pdf_path: Path = args.file

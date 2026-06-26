@@ -64,13 +64,13 @@ npm run dev
 You need to supply values for these variables in `.env`. Run each command to find the right value.
 
 ### AWS Region
-Use `us-east-1`. Most Bedrock models are available there first.
+Use `ap-southeast-1` (Singapore) for better latency or if cross-region inference is available for your models there.
 
 ### AWS Credentials
 ```bash
 # Create IAM user with least-privilege policy (see below), then:
 aws configure
-# Enter Access Key ID, Secret Access Key, region (us-east-1), output format (json)
+# Enter Access Key ID, Secret Access Key, region (ap-southeast-1), output format (json)
 ```
 
 Required IAM permissions:
@@ -79,7 +79,7 @@ Required IAM permissions:
   "Version": "2012-10-17",
   "Statement": [
     {"Effect": "Allow", "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"], "Resource": "*"},
-    {"Effect": "Allow", "Action": "dynamodb:*", "Resource": "arn:aws:dynamodb:us-east-1:*:table/pedicompass_*"},
+    {"Effect": "Allow", "Action": "dynamodb:*", "Resource": "arn:aws:dynamodb:ap-southeast-1:*:table/pedicompass_*"},
     {"Effect": "Allow", "Action": "cognito-idp:*", "Resource": "*"}
   ]
 }
@@ -88,22 +88,22 @@ Required IAM permissions:
 ### Bedrock Model ID
 ```bash
 # List all available inference profiles (use the inferenceProfileId, NOT foundationModelId)
-aws bedrock list-inference-profiles --region us-east-1 --query "inferenceProfileSummaries[?contains(inferenceProfileName, 'Sonnet')]"
+aws bedrock list-inference-profiles --region ap-southeast-1 --query "inferenceProfileSummaries[?contains(inferenceProfileName, 'Sonnet')]"
 ```
-Copy the `inferenceProfileId` value (e.g. `us.anthropic.claude-sonnet-4-5-20241022-v2:0`) into `BEDROCK_MODEL_ID`.
+Copy the `inferenceProfileId` value (e.g. `ap.anthropic.claude-3-5-sonnet-20241022-v2:0`) into `BEDROCK_MODEL_ID`.
 
 ```bash
 # Also get Haiku profile for ingestion (cheaper)
-aws bedrock list-inference-profiles --region us-east-1 --query "inferenceProfileSummaries[?contains(inferenceProfileName, 'Haiku')]"
+aws bedrock list-inference-profiles --region ap-southeast-1 --query "inferenceProfileSummaries[?contains(inferenceProfileName, 'Haiku')]"
 ```
 
 ### Cognito
 ```bash
 # List user pools
-aws cognito-idp list-user-pools --max-results 10 --region us-east-1
+aws cognito-idp list-user-pools --max-results 10 --region ap-southeast-1
 
 # List app clients for your pool
-aws cognito-idp list-user-pool-clients --user-pool-id YOUR_POOL_ID --region us-east-1
+aws cognito-idp list-user-pool-clients --user-pool-id YOUR_POOL_ID --region ap-southeast-1
 ```
 
 ---

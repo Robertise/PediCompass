@@ -10,9 +10,9 @@ Wraps boto3 Bedrock Runtime with two call modes:
 IMPORTANT: modelId must be the inference profile ID, not the bare model ID.
   Bare ID ("anthropic.claude-sonnet-4-5") causes:
     ValidationException: on-demand throughput isn't supported
-  Correct ID format: "us.anthropic.claude-sonnet-4-5-20241022-v2:0"
+  Correct ID format: "ap.anthropic.claude-3-5-sonnet-20241022-v2:0"
   Set BEDROCK_MODEL_ID in .env after running:
-    aws bedrock list-inference-profiles --region us-east-1
+    aws bedrock list-inference-profiles --region ap-southeast-1
 """
 
 import json

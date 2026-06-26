@@ -11,14 +11,14 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # ── AWS core ──────────────────────────────────────────────────────────────
-    aws_region: str = "us-east-1"
+    aws_region: str = "ap-southeast-1"
     aws_access_key_id: str
     aws_secret_access_key: str
 
     # ── Bedrock ───────────────────────────────────────────────────────────────
     # MUST be the inference profile ID, NOT the bare model ID.
-    # Obtain with: aws bedrock list-inference-profiles --region us-east-1
-    # Example: us.anthropic.claude-sonnet-4-5-20241022-v2:0
+    # Obtain with: aws bedrock list-inference-profiles --region ap-southeast-1
+    # Example: ap.anthropic.claude-3-5-sonnet-20241022-v2:0
     # Using bare model ID (e.g. "anthropic.claude-sonnet-4-5") causes:
     #   ValidationException: on-demand throughput isn't supported
     bedrock_model_id: str
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # ── Cognito ───────────────────────────────────────────────────────────────
     cognito_user_pool_id: str
     cognito_client_id: str
-    cognito_region: str = "us-east-1"
+    cognito_region: str = "ap-southeast-1"
 
     # ── DynamoDB ──────────────────────────────────────────────────────────────
     dynamodb_table_prefix: str = "pedicompass_"
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:5173"
 
     class Config:
-        env_file = ".env"
+        env_file = (".env", "../.env")
         env_file_encoding = "utf-8"
 
 

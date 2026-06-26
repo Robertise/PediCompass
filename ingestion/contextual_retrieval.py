@@ -95,7 +95,7 @@ class ContextualRetrieval:
             doc_summary:          Short description of the source document (generated
                                   from the parsed document title + first section).
             aws_region:           AWS region for Bedrock. Defaults to AWS_REGION env var
-                                  or 'us-east-1'.
+                                  or 'ap-southeast-1'.
             haiku_model_id:       Bedrock inference profile ID for Claude Haiku.
                                   Defaults to BEDROCK_HAIKU_MODEL_ID env var.
             max_retries:          Number of retry attempts on throttle/transient errors.
@@ -113,12 +113,12 @@ class ContextualRetrieval:
         if not self._model_id:
             raise ValueError(
                 "BEDROCK_HAIKU_MODEL_ID is not set. "
-                "Run 'aws bedrock list-inference-profiles --region us-east-1 | grep haiku' "
+                "Run 'aws bedrock list-inference-profiles --region ap-southeast-1 | grep haiku' "
                 "to find the correct inference profile ID and add it to your .env file."
             )
 
         # Build Bedrock client
-        region = aws_region or os.environ.get("AWS_REGION", "us-east-1")
+        region = aws_region or os.environ.get("AWS_REGION", "ap-southeast-1")
         self._bedrock = boto3.client("bedrock-runtime", region_name=region)
         logger.info(
             "ContextualRetrieval initialised | model=%s region=%s",
