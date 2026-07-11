@@ -5,7 +5,7 @@ from jose.utils import base64url_decode
 from typing import Dict, Any, Optional
 
 import time
-from ..config import settings
+from config import settings
 
 class CognitoClient:
     def __init__(self):

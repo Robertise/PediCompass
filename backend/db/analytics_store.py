@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 import uuid
 from typing import Optional, Dict, Any
 
-from .dynamodb_client import DynamoDBClient
-from ..config import settings
+from db.dynamodb_client import DynamoDBClient
+from config import settings
 
 class AnalyticsStore:
     def __init__(self, db_client: DynamoDBClient):

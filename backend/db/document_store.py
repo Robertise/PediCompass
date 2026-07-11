@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
-from .dynamodb_client import DynamoDBClient
-from ..config import settings
+from db.dynamodb_client import DynamoDBClient
+from config import settings
 
 class DocumentStore:
     def __init__(self, db_client: DynamoDBClient):

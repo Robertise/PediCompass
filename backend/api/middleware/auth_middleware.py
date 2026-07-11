@@ -2,7 +2,7 @@ from fastapi import Depends, HTTPException, Security
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 
-from ...auth.cognito_client import CognitoClient
+from auth.cognito_client import CognitoClient
 
 security = HTTPBearer(auto_error=False)
 cognito_client = CognitoClient()

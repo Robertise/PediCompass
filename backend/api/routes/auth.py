@@ -3,7 +3,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from jose import jwt
 
-from ..middleware.auth_middleware import cognito_client, get_current_user
+from api.middleware.auth_middleware import cognito_client, get_current_user
 
 router = APIRouter()
 
