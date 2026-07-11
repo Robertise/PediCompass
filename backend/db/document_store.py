@@ -2,33 +2,26 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional
 
-from .dynamodb_client import DynamoDBManager
+from .dynamodb_client import DynamoDBClient
 from ..config import settings
 
 class DocumentStore:
-    def __init__(self, dynamodb_manager: DynamoDBManager):
-        self.db = dynamodb_manager
+    def __init__(self, db_client: DynamoDBClient):
+        self.db = db_client
         self.table_name = f"{settings.dynamodb_table_prefix}documents"
 
-    def add_document(self, filename: str, source_authority: str, chunk_count: int, qdrant_ids: List[str]) -> str:
-        doc_id = str(uuid.uuid4())
+    async def add_document(self, doc_id: str, source_authority: str, chunk_count: int, title: str) -> None:
         now = datetime.now(timezone.utc).isoformat()
-        
         item = {
             "doc_id": doc_id,
-            "filename": filename,
             "source_authority": source_authority,
-            "upload_date": now,
             "chunk_count": chunk_count,
-            "status": "complete",
-            "qdrant_ids": qdrant_ids
+            "title": title,
+            "upload_date": now,
         }
-        
-        table = self.db.get_table(self.table_name)
-        table.put_item(Item=item)
-        return doc_id
+        await self.db.put_item(self.table_name, item)
 
-    def list_documents(self) -> List[Dict[str, Any]]:
-        table = self.db.get_table(self.table_name)
-        response = table.scan()
-        return response.get('Items', [])
+    async def list_documents(self) -> list[dict]:
+        # Missing pagination handling, but better than sync blocking call
+        response = await self.db.scan(self.table_name)
+        return response

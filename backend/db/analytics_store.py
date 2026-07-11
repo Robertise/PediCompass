@@ -3,12 +3,12 @@ from datetime import datetime, timezone
 import uuid
 from typing import Optional, Dict, Any
 
-from .dynamodb_client import DynamoDBManager
+from .dynamodb_client import DynamoDBClient
 from ..config import settings
 
 class AnalyticsStore:
-    def __init__(self, dynamodb_manager: DynamoDBManager):
-        self.db = dynamodb_manager
+    def __init__(self, db_client: DynamoDBClient):
+        self.db = db_client
         self.table_name = f"{settings.dynamodb_table_prefix}analytics_log"
 
     def _hash_user_id(self, user_id: str) -> str:
@@ -45,12 +45,7 @@ class AnalyticsStore:
             "ttl": ttl
         }
         
-        table = self.db.get_table(self.table_name)
-        # Using boto3 directly in synchronous mode (assuming dynamodb_client provides a boto3 Table resource)
-        # However, if DynamoDBManager provides async wrapping, we should use it. For simplicity with boto3,
-        # standard boto3 calls are blocking. We should wrap them or use aioboto3 if fully async.
-        # Assuming table is a boto3 Table resource:
-        table.put_item(Item=item)
+        await self.db.put_item(self.table_name, item)
 
     async def get_analytics_summary(self, days: int = 7) -> dict:
         """
