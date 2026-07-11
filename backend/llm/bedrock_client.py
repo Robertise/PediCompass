@@ -19,6 +19,7 @@ import json
 import logging
 
 import boto3
+import asyncio
 
 from config import settings
 
@@ -150,3 +151,28 @@ class BedrockClient:
                 text_parts.append(block.get("text", ""))
 
         return "\n".join(text_parts).strip()
+
+    async def ainvoke_with_tools(
+        self,
+        system: str,
+        messages: list[dict],
+        tools: list[dict],
+        max_tokens: int,
+    ) -> dict:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: self.invoke_with_tools(system, messages, tools, max_tokens)
+        )
+
+    async def ainvoke_text(
+        self,
+        system: str,
+        messages: list[dict],
+        max_tokens: int,
+    ) -> str:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            None,
+            lambda: self.invoke_text(system, messages, max_tokens)
+        )

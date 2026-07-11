@@ -51,7 +51,7 @@ class DynamoDBClient:
         Create all 4 PediCompass tables if they do not already exist.
         Idempotent — safe to call every startup.
         """
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         await loop.run_in_executor(None, self._ensure_tables_sync)
 
     def _ensure_tables_sync(self) -> None:
@@ -102,13 +102,13 @@ class DynamoDBClient:
 
     async def put_item(self, table_name: str, item: dict) -> None:
         """Put an item into DynamoDB asynchronously."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         table = self.get_table(table_name)
         await loop.run_in_executor(None, lambda: table.put_item(Item=item))
 
     async def get_item(self, table_name: str, key: dict) -> dict | None:
         """Get an item from DynamoDB by key. Returns None if not found."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         table = self.get_table(table_name)
         response = await loop.run_in_executor(
             None, lambda: table.get_item(Key=key)
@@ -124,7 +124,7 @@ class DynamoDBClient:
         expression_names: dict | None = None,
     ) -> None:
         """Update an item using an UpdateExpression."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         table = self.get_table(table_name)
         kwargs: dict = {
             "Key": key,
@@ -138,7 +138,7 @@ class DynamoDBClient:
 
     async def delete_item(self, table_name: str, key: dict) -> None:
         """Delete an item by key."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         table = self.get_table(table_name)
         await loop.run_in_executor(None, lambda: table.delete_item(Key=key))
 
@@ -151,7 +151,7 @@ class DynamoDBClient:
         expression_values: dict | None = None,
     ) -> list[dict]:
         """Query a table or GSI."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         table = self.get_table(table_name)
 
         def _query() -> list[dict]:
@@ -175,7 +175,7 @@ class DynamoDBClient:
         filter_expression: Any = None,
     ) -> list[dict]:
         """Scan a full table (use sparingly)."""
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         table = self.get_table(table_name)
 
         def _scan() -> list[dict]:

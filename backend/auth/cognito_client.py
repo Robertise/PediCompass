@@ -4,6 +4,7 @@ from jose import jwt, jwk
 from jose.utils import base64url_decode
 from typing import Dict, Any, Optional
 
+import time
 from ..config import settings
 
 class CognitoClient:
@@ -13,6 +14,8 @@ class CognitoClient:
         self.client_id = settings.cognito_client_id
         self.region = settings.cognito_region
         self.jwks: Optional[Dict[str, Any]] = None
+        self._jwks_cached_at: Optional[float] = None
+        self._JWKS_TTL = 3600
 
     def sign_up(self, email: str, password: str) -> dict:
         try:
@@ -47,23 +50,54 @@ class CognitoClient:
                 "access_token": auth_result.get('AccessToken'),
                 "refresh_token": auth_result.get('RefreshToken')
             }
+        except self.client.exceptions.UserNotConfirmedException:
+            return {"success": False, "error": "EMAIL_NOT_CONFIRMED", "message": "Please verify your email before signing in."}
+        except self.client.exceptions.NotAuthorizedException:
+            return {"success": False, "error": "INVALID_CREDENTIALS", "message": "Incorrect email or password."}
+        except Exception as e:
+            return {"success": False, "error": "UNKNOWN", "message": str(e)}
+
+    def refresh_token(self, refresh_token: str) -> dict:
+        try:
+            response = self.client.initiate_auth(
+                ClientId=self.client_id,
+                AuthFlow='REFRESH_TOKEN_AUTH',
+                AuthParameters={'REFRESH_TOKEN': refresh_token}
+            )
+            auth_result = response.get('AuthenticationResult', {})
+            return {
+                "success": True,
+                "id_token": auth_result.get('IdToken'),
+                "access_token": auth_result.get('AccessToken')
+            }
         except Exception as e:
             return {"success": False, "error": str(e)}
 
-    def _get_jwks(self) -> Dict[str, Any]:
-        if not self.jwks:
+    async def _get_jwks(self) -> Dict[str, Any]:
+        now = time.time()
+        if not self.jwks or not self._jwks_cached_at or (now - self._jwks_cached_at > self._JWKS_TTL):
             url = f"https://cognito-idp.{self.region}.amazonaws.com/{self.user_pool_id}/.well-known/jwks.json"
-            response = httpx.get(url)
+            async with httpx.AsyncClient() as client:
+                response = await client.get(url)
             self.jwks = response.json()
+            self._jwks_cached_at = now
         return self.jwks
 
-    def verify_token(self, token: str) -> Optional[dict]:
+    async def verify_token(self, token: str) -> Optional[dict]:
         try:
             headers = jwt.get_unverified_headers(token)
             kid = headers.get('kid')
             
-            jwks = self._get_jwks()
+            jwks = await self._get_jwks()
             key = next((k for k in jwks.get('keys', []) if k.get('kid') == kid), None)
+            
+            if not key:
+                # Force refresh JWKS if kid not found
+                self._jwks_cached_at = None
+                jwks = await self._get_jwks()
+                key = next((k for k in jwks.get('keys', []) if k.get('kid') == kid), None)
+                if not key:
+                    return None
             
             if not key:
                 return None
@@ -78,8 +112,12 @@ class CognitoClient:
             claims = jwt.get_unverified_claims(token)
             
             # Verify expiration
-            import time
             if time.time() > claims.get('exp', 0):
+                return None
+                
+            # Verify issuer
+            expected_iss = f"https://cognito-idp.{self.region}.amazonaws.com/{self.user_pool_id}"
+            if claims.get('iss') != expected_iss:
                 return None
                 
             # Verify audience
