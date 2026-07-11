@@ -12,16 +12,18 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     token = credentials.credentials
-    claims = cognito_client.verify_token(token)
+    claims = await cognito_client.verify_token(token)
     
     if not claims:
         raise HTTPException(status_code=401, detail="Invalid token")
         
+    groups = claims.get("cognito:groups", [])
+    is_admin = "pedicompass-admins" in groups
+
     return {
         "user_id": claims.get('sub'),
         "email": claims.get('email', ''),
-        # In a real app, you might map claims to roles
-        "isAdmin": False
+        "isAdmin": is_admin
     }
 
 async def get_optional_user(credentials: HTTPAuthorizationCredentials = Security(security)) -> Optional[dict]:
@@ -29,13 +31,16 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Security
         return None
         
     token = credentials.credentials
-    claims = cognito_client.verify_token(token)
+    claims = await cognito_client.verify_token(token)
     
     if not claims:
         return None
         
+    groups = claims.get("cognito:groups", [])
+    is_admin = "pedicompass-admins" in groups
+
     return {
         "user_id": claims.get('sub'),
         "email": claims.get('email', ''),
-        "isAdmin": False
+        "isAdmin": is_admin
     }
