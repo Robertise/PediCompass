@@ -96,7 +96,7 @@ class Stage1Analyzer:
         system = self._build_system(child_profile)
         messages = self._build_messages(context)
 
-        tool_input = self.llm.invoke_with_tools(
+        tool_input = await self.llm.ainvoke_with_tools(
             system=system,
             messages=messages,
             tools=[QUERY_ANALYSIS_TOOL],

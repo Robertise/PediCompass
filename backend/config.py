@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     #   ValidationException: on-demand throughput isn't supported
     bedrock_model_id: str
 
+    # Claude Haiku inference profile — used by the ingestion pipeline for
+    # contextual retrieval (cheaper per-token; summarisation only).
+    # Obtain with: aws bedrock list-inference-profiles --region ap-southeast-1
+    bedrock_haiku_model_id: str
+
     # ── Cognito ───────────────────────────────────────────────────────────────
     cognito_user_pool_id: str
     cognito_client_id: str

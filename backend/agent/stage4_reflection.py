@@ -89,7 +89,7 @@ class Stage4Reflector:
             }
         ]
 
-        tool_input = self.llm.invoke_with_tools(
+        tool_input = await self.llm.ainvoke_with_tools(
             system=system,
             messages=messages,
             tools=[REFLECTION_TOOL],

@@ -117,15 +117,18 @@ class PediCompassAgent:
                 age_group=emergency_age_group.value if emergency_age_group else None,
                 iterations=0,
             )
+            parent_message_str = (
+                f"⚠️ **{red_flag.reason}**\n\n"
+                f"{red_flag.immediate_action}\n\n"
+                "Please consult a qualified pediatric healthcare professional "
+                "for proper evaluation."
+            )
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", parent_message_str)
             return AgentResponse(
                 type="emergency",
                 urgency_level=UrgencyLevel.EMERGENCY,
-                parent_message=(
-                    f"⚠️ **{red_flag.reason}**\n\n"
-                    f"{red_flag.immediate_action}\n\n"
-                    "Please consult a qualified pediatric healthcare professional "
-                    "for proper evaluation."
-                ),
+                parent_message=parent_message_str,
                 reasoning_trace=trace,
                 session_id=session_id,
             )
@@ -136,17 +139,20 @@ class PediCompassAgent:
         context = history + [{"role": "user", "content": message}]
 
         analysis = await self.stage1.analyze(context, child_profile)
-        trace.stage1 = analysis.dict()
+        trace.stage1 = analysis.model_dump()
 
         # If age unknown, ask for it before anything else
         if not analysis.child_age_resolved:
+            parent_message_str = (
+                "To give you the most appropriate guidance, I need to know your "
+                "child's age. Could you please tell me how old they are?"
+            )
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", parent_message_str)
             return AgentResponse(
                 type="clarification",
                 clarification_questions=["How old is your child?"],
-                parent_message=(
-                    "To give you the most appropriate guidance, I need to know your "
-                    "child's age. Could you please tell me how old they are?"
-                ),
+                parent_message=parent_message_str,
                 reasoning_trace=trace,
                 session_id=session_id,
             )
@@ -156,13 +162,16 @@ class PediCompassAgent:
             questions = analysis.clarification_questions or [
                 "Could you tell me more about the symptoms?"
             ]
+            parent_message_str = (
+                "I have a few questions to better understand your child's situation:\n\n"
+                + "\n".join(f"- {q}" for q in questions)
+            )
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", parent_message_str)
             return AgentResponse(
                 type="clarification",
                 clarification_questions=questions,
-                parent_message=(
-                    "I have a few questions to better understand your child's situation:\n\n"
-                    + "\n".join(f"- {q}" for q in questions)
-                ),
+                parent_message=parent_message_str,
                 reasoning_trace=trace,
                 session_id=session_id,
             )
@@ -173,13 +182,14 @@ class PediCompassAgent:
         # ── Loop: Stage 2 → 3 → 4 (max MAX_ITERATIONS) ───────────────────────
         pathway: Optional[CarePathway] = None
         chunks: list[dict] = []
+        enriched_query = analysis.symptom_summary
 
         for iteration in range(self.MAX_ITERATIONS):
             trace.iterations = iteration + 1
             logger.info("Iteration %d/%d", iteration + 1, self.MAX_ITERATIONS)
 
             # Stage 2 — Retrieve
-            chunks = await self.stage2.retrieve(analysis.symptom_summary, age_group)
+            chunks = await self.stage2.retrieve(enriched_query, age_group)
             trace.stage2 = {
                 "age_group": age_group.value,
                 "chunks_retrieved": len(chunks),
@@ -188,11 +198,11 @@ class PediCompassAgent:
 
             # Stage 3 — Reason
             pathway = await self.stage3.reason(context, chunks, age_group)
-            trace.stage3 = pathway.dict()
+            trace.stage3 = pathway.model_dump()
 
             # Stage 4 — Reflect
             reflection = await self.stage4.reflect(pathway, chunks, age_group)
-            trace.stage4 = reflection.dict()
+            trace.stage4 = reflection.model_dump()
 
             if reflection.is_complete:
                 logger.info("Reflection: complete after iteration %d", iteration + 1)
@@ -204,9 +214,10 @@ class PediCompassAgent:
                 "role": "assistant",
                 "content": f"Additional information needed: {reflection.missing_info}",
             })
+            enriched_query = f"{analysis.symptom_summary}. Additional context: {reflection.missing_info}"
 
-        # pathway is guaranteed non-None here (loop runs at least once)
-        assert pathway is not None
+        if pathway is None:
+            raise RuntimeError("Agent loop completed without producing a care pathway.")
 
         # ── Stage 5: Parent-Facing Output ─────────────────────────────────────
         output = await self.stage5.generate(pathway, chunks, trace)

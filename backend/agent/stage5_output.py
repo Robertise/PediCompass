@@ -61,7 +61,7 @@ class Stage5OutputGenerator:
 
         messages = [{"role": "user", "content": user_message}]
 
-        text = self.llm.invoke_text(
+        text = await self.llm.ainvoke_text(
             system=system,
             messages=messages,
             max_tokens=self.MAX_TOKENS,

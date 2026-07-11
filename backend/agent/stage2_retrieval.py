@@ -9,6 +9,7 @@ Two-pass retrieval pipeline:
 """
 
 import logging
+import asyncio
 from typing import Optional
 
 from common.age_utils import AgeGroup
@@ -49,7 +50,7 @@ class Stage2Retriever:
             symptom_summary[:80],
         )
 
-        query_vector = embed(symptom_summary)
+        query_vector = await asyncio.get_running_loop().run_in_executor(None, embed, symptom_summary)
         chunks = await self.retriever.retrieve(
             query_vector=query_vector,
             age_group=age_group,

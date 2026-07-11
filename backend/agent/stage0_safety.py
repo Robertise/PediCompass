@@ -12,6 +12,7 @@ the emergency path can record the age group instead of None.
 """
 
 from typing import Optional
+import re
 
 # common/ is on sys.path (patched by main.py at startup)
 from common.age_utils import resolve_age_days
@@ -134,9 +135,10 @@ AGE_INDEPENDENT_FLAGS: list[dict] = [
 AGE_DEPENDENT_FLAGS: list[dict] = [
     {
         "name": "fever_young_infant",
-        "keywords": [
-            "fever", "temperature", "hot", "feverish",
-            "38", "37.8", "37.9", "39", "40", "38.5", "38.1", "38.2",
+        "patterns": [
+            r"\bfever\b", r"\btemperature\b", r"\bfebrile\b",
+            r"3[89](?:\.\d)?°", r"4[012](?:\.\d)?°",
+            r"3[89](?:\.\d)?\s*degrees",
         ],
         "age_condition": lambda d: d < 90,
         "reason": "Fever in infant under 3 months of age",
@@ -210,7 +212,11 @@ class PediatricEmergencyScreen:
         # 2. Age-dependent checks (only when age could be resolved)
         if age_days is not None:
             for flag in AGE_DEPENDENT_FLAGS:
-                kw_match = any(kw in text_lower for kw in flag["keywords"])
+                if "patterns" in flag:
+                    kw_match = any(re.search(pat, text_lower) for pat in flag["patterns"])
+                else:
+                    kw_match = any(kw in text_lower for kw in flag.get("keywords", []))
+                    
                 age_match = flag["age_condition"](age_days)
                 if kw_match and age_match:
                     red_flag = RedFlag(

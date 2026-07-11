@@ -106,7 +106,7 @@ class Stage3Reasoner:
         system = self._build_system(chunks, age_group)
         messages = list(context)  # copy to avoid mutation
 
-        tool_input = self.llm.invoke_with_tools(
+        tool_input = await self.llm.ainvoke_with_tools(
             system=system,
             messages=messages,
             tools=[CARE_PATHWAY_TOOL],
