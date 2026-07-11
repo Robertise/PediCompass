@@ -26,10 +26,6 @@ export default function Navbar() {
 
       <div className="flex items-center gap-sm relative z-10">
         <ThemeToggle />
-        <button className="hidden md:flex items-center gap-xs text-on-surface-variant hover:bg-primary-container/20 transition-colors px-sm py-xs rounded-full text-label-md font-label-md">
-          <span className="material-symbols-outlined text-[20px]">info</span>
-          <span>About</span>
-        </button>
         
         {user ? (
           <div className="relative group">

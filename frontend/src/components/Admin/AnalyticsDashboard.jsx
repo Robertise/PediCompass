@@ -62,7 +62,7 @@ export default function AnalyticsDashboard() {
             Object.entries(summary.urgency_distribution).map(([level, count]) => (
               <div key={level} className="flex justify-between mb-xs text-body-md font-body-md text-on-surface">
                 <span className="capitalize">{level.replace('_', ' ')}</span>
-                <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({Math.round((count/totalQueries)*100)}%)</span></span>
+                <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({totalQueries > 0 ? Math.round((count/totalQueries)*100) : 0}%)</span></span>
               </div>
             ))
           )}
@@ -76,7 +76,7 @@ export default function AnalyticsDashboard() {
             Object.entries(summary.age_group_distribution).map(([age, count]) => (
               <div key={age} className="flex justify-between mb-xs text-body-md font-body-md text-on-surface">
                 <span className="capitalize">{age.replace('_', ' ')}</span>
-                <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({Math.round((count/totalQueries)*100)}%)</span></span>
+                <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({totalQueries > 0 ? Math.round((count/totalQueries)*100) : 0}%)</span></span>
               </div>
             ))
           )}

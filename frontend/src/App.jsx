@@ -14,6 +14,12 @@ function ProtectedRoute({ children }) {
   return children
 }
 
+function AdminRoute({ children }) {
+  const { user, isAdmin } = useAuthStore()
+  if (!user || !isAdmin()) return <Navigate to="/" replace />
+  return children
+}
+
 import { useEffect } from 'react'
 import { useThemeStore } from './store/themeStore'
 
@@ -55,7 +61,7 @@ export default function App() {
             <ProtectedRoute><ProfilesPage /></ProtectedRoute>
           } />
           <Route path="/analytics" element={
-            <ProtectedRoute><AnalyticsPage /></ProtectedRoute>
+            <AdminRoute><AnalyticsPage /></AdminRoute>
           } />
           <Route path="*"          element={<Navigate to="/" replace />} />
         </Routes>

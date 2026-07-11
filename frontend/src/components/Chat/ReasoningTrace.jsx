@@ -42,7 +42,7 @@ export default function ReasoningTrace({ trace }) {
           <h3 className="font-label-md text-label-md uppercase tracking-wider font-bold">Reasoning Trace</h3>
         </div>
         <p className="text-body-sm font-body-sm text-on-surface-variant mt-1">
-          {trace.iterations || 1} iteration{(trace.iterations || 1) !== 1 ? 's' : ''} completed in {(trace.latency_ms / 1000).toFixed(1)}s
+          {trace.iterations || 1} iteration{(trace.iterations || 1) !== 1 ? 's' : ''} completed in {trace.latency_ms ? (trace.latency_ms / 1000).toFixed(1) : 0}s
         </p>
       </div>
 

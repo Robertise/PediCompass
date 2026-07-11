@@ -31,6 +31,9 @@ export default function ProfileSelector() {
       }
     }
     loadProfiles()
+    
+    window.addEventListener('profilesUpdated', loadProfiles)
+    return () => window.removeEventListener('profilesUpdated', loadProfiles)
   }, [user, selectedProfileId, setSelectedProfileId])
 
   useEffect(() => {

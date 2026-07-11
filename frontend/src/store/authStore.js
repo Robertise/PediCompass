@@ -61,6 +61,21 @@ export const useAuthStore = create(
 
       clearError: () => set({ error: null }),
 
+      refreshTokens: async () => {
+        const { refreshToken } = get()
+        if (!refreshToken) return false
+        try {
+          const res = await authApi.refresh(refreshToken)
+          set({
+            token: res.data.id_token,
+            refreshToken: res.data.refresh_token || refreshToken
+          })
+          return true
+        } catch (err) {
+          return false
+        }
+      },
+
       // Utility: is the current user an admin?
       isAdmin: () => get().user?.isAdmin === true,
     }),

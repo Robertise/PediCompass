@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { useAuthStore } from '../store/authStore'
+import { useAppStore } from '../store/appStore'
 
 // In development, Vite proxies /api → localhost:8000
 // In production, update VITE_API_BASE_URL env var
@@ -23,10 +24,17 @@ api.interceptors.request.use((config) => {
 // Handle 401 globally — clear auth and redirect
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
-      window.location.href = '/auth'
+  async (error) => {
+    const originalRequest = error.config
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true
+      const success = await useAuthStore.getState().refreshTokens()
+      if (success) {
+        return api(originalRequest)
+      } else {
+        useAuthStore.getState().logout()
+        useAppStore.getState().setShowAuthModal(true)
+      }
     }
     return Promise.reject(error)
   }

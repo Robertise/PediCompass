@@ -116,10 +116,7 @@ export default function ChatWindow({ messages, setMessages }) {
       {/* Input Area */}
       <div className="p-md bg-surface border-t border-outline-variant/20 sticky bottom-0 z-10 w-full">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
-          <div className="flex items-center w-full bg-surface-container-lowest rounded-full px-sm py-xs border border-outline-variant/40 focus-within:border-primary transition-colors shadow-sm">
-            <button className="p-sm text-on-surface-variant hover:text-primary transition-colors">
-              <span className="material-symbols-outlined text-[20px]">attach_file</span>
-            </button>
+          <div className="flex items-center w-full bg-surface-container-lowest rounded-full px-sm py-xs border border-outline-variant/40 focus-within:border-primary transition-colors shadow-sm pl-4">
             <textarea
               className="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline py-sm px-sm resize-none"
               placeholder="Ask a follow-up question or describe symptoms..."

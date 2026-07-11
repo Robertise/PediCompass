@@ -115,7 +115,7 @@ export default function ProfilesPage() {
                       </div>
                       <div className="flex flex-col">
                         <h3 className="text-headline-sm font-headline-sm text-on-surface">{p.nickname}</h3>
-                        <span className="text-label-sm font-label-sm text-on-surface-variant">{ageStr} old</span>
+                        <span className="text-label-sm font-label-sm text-on-surface-variant">{ageStr}</span>
                       </div>
                     </div>
                   </div>

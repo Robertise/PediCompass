@@ -100,7 +100,7 @@ export default function AuthModal() {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="mt-xs bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-xs px-md text-label-md font-label-md font-bold transition-colors disabled:opacity-50"
+                className="mt-sm bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-sm px-md text-label-md font-label-md font-bold transition-colors disabled:opacity-50"
               >
                 {isLoading ? 'Please wait...' : mode === 'login' ? 'Sign In' : 'Create Account'}
               </button>
