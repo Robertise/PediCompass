@@ -81,24 +81,20 @@ class PDFParser:
 
     # ── Public API ────────────────────────────────────────────────────────────
 
-    def parse(self, pdf_path: str | Path) -> ParsedDocument:
+    def parse(self, file_path: str | Path) -> ParsedDocument:
         """
-        Parse a PDF file and return a structured ParsedDocument.
-
-        Args:
-            pdf_path: Absolute or relative path to the PDF file.
-
-        Returns:
-            ParsedDocument with extracted sections.
-
-        Raises:
-            FileNotFoundError: If the file does not exist.
-            RuntimeError: If PyMuPDF cannot open the file.
+        Parse a PDF or Markdown file and return a structured ParsedDocument.
         """
-        pdf_path = Path(pdf_path)
-        if not pdf_path.exists():
-            raise FileNotFoundError(f"PDF not found: {pdf_path}")
+        file_path = Path(file_path)
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
 
+        if file_path.suffix.lower() == ".md":
+            return self._parse_markdown(file_path)
+        
+        return self._parse_pdf(file_path)
+
+    def _parse_pdf(self, pdf_path: Path) -> ParsedDocument:
         logger.info("Opening PDF: %s", pdf_path)
         doc = self._fitz.open(str(pdf_path))
 
@@ -154,6 +150,54 @@ class PDFParser:
             doc.close()
 
     # ── Private helpers ───────────────────────────────────────────────────────
+
+    def _parse_markdown(self, md_path: Path) -> ParsedDocument:
+        logger.info("Opening Markdown: %s", md_path)
+        content = md_path.read_text(encoding="utf-8")
+        
+        lines = content.split('\n')
+        sections = []
+        current_title = ""
+        current_text = []
+        doc_title = md_path.stem
+        
+        for line in lines:
+            if line.startswith("# ") and not current_title and not current_text:
+                doc_title = line[2:].strip()
+            elif line.startswith("## ") or line.startswith("# "):
+                if current_text or current_title:
+                    text = "\n".join(current_text).strip()
+                    sections.append(ParsedSection(
+                        title=current_title,
+                        text=text,
+                        page_start=1,
+                        page_end=1,
+                        is_table=False
+                    ))
+                current_title = line.lstrip("#").strip()
+                current_text = []
+            else:
+                current_text.append(line)
+                
+        if current_text or current_title:
+            text = "\n".join(current_text).strip()
+            sections.append(ParsedSection(
+                title=current_title,
+                text=text,
+                page_start=1,
+                page_end=1,
+                is_table=False
+            ))
+            
+        parsed = ParsedDocument(
+            source_path=str(md_path),
+            title=doc_title,
+            total_pages=1,
+            sections=[s for s in sections if s.text.strip()],
+            metadata={"source": "markdown"}
+        )
+        logger.info("Parsed %d sections from markdown", len(parsed.sections))
+        return parsed
 
     def _collect_blocks(self, doc) -> list[dict]:
         """

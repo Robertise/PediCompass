@@ -41,9 +41,9 @@ logger = logging.getLogger(__name__)
 
 # ── Defaults (overridable via constructor args or env vars) ───────────────────
 
-_DEFAULT_MAX_RETRIES: int = 3
+_DEFAULT_MAX_RETRIES: int = 7
 _DEFAULT_RETRY_BASE_DELAY: float = 1.0   # seconds; doubles each retry
-_DEFAULT_INTER_REQUEST_DELAY: float = 0.5  # seconds between Bedrock calls
+_DEFAULT_INTER_REQUEST_DELAY: float = 6.1  # 60s / 10 RPM = 6s delay to prevent any throttling
 
 # Haiku has a ~200k token context window; we send doc_summary + chunk.
 # Cap the document summary at this many characters to avoid huge prompts.
@@ -229,9 +229,9 @@ class ContextualRetrieval:
             except ClientError as exc:
                 error_code = exc.response["Error"]["Code"]
                 if error_code in ("ThrottlingException", "ServiceUnavailableException"):
-                    delay = _DEFAULT_RETRY_BASE_DELAY * (2 ** (attempt - 1))
+                    delay = 60.0  # Wait exactly 1 minute as requested
                     logger.warning(
-                        "Bedrock throttled (attempt %d/%d) — retrying in %.1fs",
+                        "Bedrock throttled (attempt %d/%d) — waiting %ds before retry",
                         attempt, self._max_retries, delay,
                     )
                     time.sleep(delay)

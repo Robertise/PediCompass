@@ -96,17 +96,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
         description="Ingest a pediatric guideline PDF into the PediCompass vector database.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Examples:
-  python run_ingestion.py --file data/nice_cg160.pdf --source NICE
-  python run_ingestion.py --file data/who_imci.pdf --source WHO --dry-run
-  python run_ingestion.py --file data/aap_fever.pdf --source AAP --skip-context
+        Examples:
+        python run_ingestion.py --file data/nice_cg160.pdf --source NICE
+        python run_ingestion.py --file data/who_imci.pdf --source WHO --dry-run
+        python run_ingestion.py --file data/aap_fever.pdf --source AAP --skip-context
         """,
     )
     parser.add_argument(
         "--file", "-f",
         required=True,
         type=Path,
-        help="Path to the PDF file to ingest (absolute or relative to CWD).",
+        help="Path to the PDF or MD file to ingest (absolute or relative to CWD).",
     )
     parser.add_argument(
         "--source", "-s",
@@ -671,8 +671,8 @@ def main() -> None:
         logger.error("PDF file not found: %s", pdf_path)
         sys.exit(1)
 
-    if pdf_path.suffix.lower() != ".pdf":
-        logger.error("File does not have a .pdf extension: %s", pdf_path)
+    if pdf_path.suffix.lower() not in [".pdf", ".md"]:
+        logger.error("File does not have a .pdf or .md extension: %s", pdf_path)
         sys.exit(1)
 
     # ── Run pipeline ───────────────────────────────────────────────────────
