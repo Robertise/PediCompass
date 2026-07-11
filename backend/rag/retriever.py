@@ -8,10 +8,12 @@ Pass 2: Cross-encoder rerank
 """
 
 import logging
+import asyncio
 
 from common.age_utils import AgeGroup
 from rag.qdrant_client import QdrantManager
-from rag.reranker import CrossEncoder, rerank
+from sentence_transformers import CrossEncoder
+from rag.reranker import rerank
 
 logger = logging.getLogger(__name__)
 
@@ -51,10 +53,14 @@ class Retriever:
         # Pass 1: Qdrant with age_group filter
         # Include both the child's specific group AND "all" (universal guidelines)
         age_filter = [age_group.value, "all"]
-        candidates = self.qdrant.search(
-            query_vector=query_vector,
-            age_group_filter=age_filter,
-            top_k=_CANDIDATE_K,
+        loop = asyncio.get_running_loop()
+        candidates = await loop.run_in_executor(
+            None,
+            lambda: self.qdrant.search(
+                query_vector=query_vector,
+                age_group_filter=age_filter,
+                top_k=_CANDIDATE_K,
+            )
         )
         logger.info(
             "Qdrant returned %d candidates for age_group=%s",
@@ -68,10 +74,15 @@ class Retriever:
         # Pass 2: Cross-encoder rerank
         # Use query_text if available; fall back to vector score ordering
         if query_text:
-            ranked = rerank(query=query_text, candidates=candidates, top_k=_TOP_K)
+            ranked = await loop.run_in_executor(
+                None,
+                lambda: rerank(query=query_text, candidates=candidates, top_k=_TOP_K)
+            )
         else:
             # No query text — sort by Qdrant vector score (already provided)
             ranked = sorted(candidates, key=lambda c: c.get("score", 0), reverse=True)[:_TOP_K]
+            for chunk in ranked:
+                chunk.setdefault("rerank_score", chunk.get("score", 0.0))
 
         logger.info("After rerank: returning %d chunks", len(ranked))
         return ranked

@@ -1,48 +1,96 @@
+"""
+Chat API routes.
+
+POST /api/chat/session     — Create a new session (auth optional)
+POST /api/chat/message     — Send a message and receive an AgentResponse
+GET  /api/chat/history/{sid} — Retrieve messages for an existing session
+"""
+
+import uuid
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from typing import Optional
 
-from ..middleware.auth_middleware import get_optional_user
-from ...agent.orchestrator import PediCompassAgent
-from ...db.session_store import SessionStore
-from ...db.profile_store import ProfileStore
-from ...db.dynamodb_client import dynamodb_manager
+from api.middleware.auth_middleware import get_optional_user
+from agent.orchestrator import create_agent
+from db.session_store import SessionStore
+from db.profile_store import ProfileStore
+from db.dynamodb_client import get_dynamodb_client
 
 router = APIRouter()
-agent = PediCompassAgent()
-session_store = SessionStore(dynamodb_manager)
-profile_store = ProfileStore(dynamodb_manager)
+logger = logging.getLogger(__name__)
+
+# ── Singletons — instantiated once at module load ─────────────────────────────
+# create_agent() wires up all dependencies (Bedrock, Qdrant, reranker, etc.)
+agent = create_agent()
+_db = get_dynamodb_client()
+session_store = SessionStore(db_client=_db)
+profile_store = ProfileStore(db_client=_db)
+
+
+# ── Request models ────────────────────────────────────────────────────────────
 
 class SessionCreateRequest(BaseModel):
     profile_id: Optional[str] = None
+
 
 class MessageRequest(BaseModel):
     session_id: str
     message: str
     profile_id: Optional[str] = None
 
+
+# ── Routes ────────────────────────────────────────────────────────────────────
+
 @router.post("/session")
-async def create_session(req: SessionCreateRequest, user: Optional[dict] = Depends(get_optional_user)):
+async def create_session(
+    req: SessionCreateRequest,
+    user: Optional[dict] = Depends(get_optional_user),
+):
+    """Create a new chat session. Auth is optional (anonymous sessions allowed)."""
     user_id = user["user_id"] if user else None
-    session_id = await session_store.create_session(user_id=user_id)
+    session_id = str(uuid.uuid4())
+    await session_store.create_session(session_id=session_id, user_id=user_id)
     return {"session_id": session_id}
 
+
 @router.post("/message")
-async def send_message(req: MessageRequest, user: Optional[dict] = Depends(get_optional_user)):
+async def send_message(
+    req: MessageRequest,
+    user: Optional[dict] = Depends(get_optional_user),
+):
+    """Send a parent message through the full agentic pipeline."""
     user_id = user["user_id"] if user else None
-    
-    # Retrieve profile if provided
+
+    # Retrieve profile if caller supplied a profile_id and is authenticated
     profile = None
     if user_id and req.profile_id:
-        profile = profile_store.get_profile(user_id, req.profile_id)
+        profile = await profile_store.get_profile(user_id, req.profile_id)
+        if profile is None:
+            logger.warning(
+                "Profile %s not found for user %s — proceeding without profile.",
+                req.profile_id, user_id,
+            )
 
-    response = await agent.run(req.message, req.session_id, profile)
+    response = await agent.run(
+        message=req.message,
+        session_id=req.session_id,
+        child_profile=profile,
+        user_id=user_id,
+    )
     return response.model_dump()
 
+
 @router.get("/history/{session_id}")
-async def get_history(session_id: str, user: Optional[dict] = Depends(get_optional_user)):
+async def get_history(
+    session_id: str,
+    user: Optional[dict] = Depends(get_optional_user),
+):
+    """Retrieve conversation history for a session."""
     session = await session_store.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    # if user and session.user_id != user["user_id"]: # authorization check would go here
-    return {"messages": session.messages}
+    # TODO: add authorization check — session.user_id == user["user_id"]
+    return {"messages": [m.model_dump() for m in session.messages]}
