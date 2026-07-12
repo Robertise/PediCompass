@@ -29,7 +29,7 @@ export default function Navbar() {
         
         {user ? (
           <div className="relative group">
-            <div className="w-10 h-10 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container text-label-md font-label-md font-bold cursor-pointer transition-colors hover:bg-tertiary/20">
+            <div className="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center text-on-tertiary-container text-label-md font-label-md font-bold cursor-pointer transition-colors hover:bg-tertiary/20">
               {user.email ? user.email.charAt(0).toUpperCase() : 'U'}
             </div>
             {/* User Dropdown */}

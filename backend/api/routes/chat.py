@@ -74,13 +74,34 @@ async def send_message(
                 req.profile_id, user_id,
             )
 
-    response = await agent.run(
-        message=req.message,
-        session_id=req.session_id,
-        child_profile=profile,
-        user_id=user_id,
-    )
-    return response.model_dump()
+    try:
+        response = await agent.run(
+            message=req.message,
+            session_id=req.session_id,
+            child_profile=profile,
+            user_id=user_id,
+        )
+        return response.model_dump()
+    except RuntimeError as exc:
+        # Bedrock / pipeline error — return structured error so frontend renders
+        # the red error card instead of a generic network failure.
+        logger.error("Agent pipeline failed: %s", exc, exc_info=True)
+        return {
+            "type": "error",
+            "reason": str(exc),
+            "session_id": req.session_id,
+            "reasoning_trace": {},
+            "parent_message": str(exc),
+        }
+    except Exception as exc:
+        logger.exception("Unexpected agent error: %s", exc)
+        return {
+            "type": "error",
+            "reason": "An unexpected error occurred. Please try again.",
+            "session_id": req.session_id,
+            "reasoning_trace": {},
+            "parent_message": "An unexpected error occurred. Please try again.",
+        }
 
 
 @router.get("/history/{session_id}")

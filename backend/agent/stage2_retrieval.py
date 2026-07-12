@@ -54,6 +54,7 @@ class Stage2Retriever:
         chunks = await self.retriever.retrieve(
             query_vector=query_vector,
             age_group=age_group,
+            query_text=symptom_summary,
         )
 
         logger.info("Stage 2: returned %d chunks", len(chunks))

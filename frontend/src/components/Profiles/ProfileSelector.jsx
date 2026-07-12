@@ -13,17 +13,29 @@ export default function ProfileSelector() {
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
 
+  // Track whether the user has ever explicitly made a selection.
+  // This prevents the auto-select logic from overriding an intentional
+  // "Guest Mode" selection (selectedProfileId === null set by the user).
+  const hasUserSelectedRef = useRef(false)
+
+  // Load profiles when user changes. If this is the very first load and the
+  // user hasn't consciously chosen yet, auto-select the first profile.
   useEffect(() => {
     async function loadProfiles() {
       if (!user) {
         setProfiles([])
+        // Clear profile on logout but don't set hasUserSelected so that
+        // the next login can auto-select again.
+        hasUserSelectedRef.current = false
         setSelectedProfileId(null)
         return
       }
       try {
         const res = await profileApi.list()
         setProfiles(res.data)
-        if (res.data.length > 0 && !selectedProfileId) {
+        // Auto-select the first profile only on first load (user hasn't chosen yet)
+        if (res.data.length > 0 && !hasUserSelectedRef.current && !selectedProfileId) {
+          hasUserSelectedRef.current = true
           setSelectedProfileId(res.data[0].profile_id)
         }
       } catch (err) {
@@ -31,10 +43,13 @@ export default function ProfileSelector() {
       }
     }
     loadProfiles()
-    
+
     window.addEventListener('profilesUpdated', loadProfiles)
     return () => window.removeEventListener('profilesUpdated', loadProfiles)
-  }, [user, selectedProfileId, setSelectedProfileId])
+  // NOTE: selectedProfileId is intentionally NOT in deps — we only want this
+  // to re-run when the user logs in/out, not when selectedProfileId changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, setSelectedProfileId])
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -47,6 +62,8 @@ export default function ProfileSelector() {
   }, [])
 
   const handleSelect = (id) => {
+    // Mark that the user has made a conscious choice — disables auto-select.
+    hasUserSelectedRef.current = true
     setSelectedProfileId(id)
     setIsOpen(false)
   }
@@ -76,8 +93,11 @@ export default function ProfileSelector() {
     const ageDays = ageDaysFromDob(selectedProfile.dob)
     const ageStr = ageDaysToDisplay(ageDays)
     displayText = `${selectedProfile.nickname} • ${ageStr}`
-  } else if (user) {
-    displayText = 'Select a child'
+  } else if (user && profiles.length > 0) {
+    // User has profiles but is in guest mode
+    displayText = 'Guest Mode'
+  } else if (user && profiles.length === 0) {
+    displayText = 'No profiles yet'
   }
 
   return (

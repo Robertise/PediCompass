@@ -119,18 +119,18 @@ export default function ChatWindow({ messages, setMessages }) {
           <div className="flex items-center w-full bg-surface-container-lowest rounded-full px-sm py-xs border border-outline-variant/40 focus-within:border-primary transition-colors shadow-sm pl-4">
             <textarea
               className="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline py-sm px-sm resize-none"
-              placeholder="Ask a follow-up question or describe symptoms..."
+              placeholder={selectedProfileId ? 'Ask a follow-up question or describe symptoms...' : 'Describe your child\'s symptoms (select a profile above for personalized guidance)...'}
               rows={1}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              disabled={loading || (!selectedProfileId && user)}
+              disabled={loading}
               onInput={(e) => { e.target.style.height = ''; e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px'; }}
             />
             <button 
               className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary hover:bg-primary-fixed-variant transition-colors shadow-sm disabled:opacity-50"
               onClick={handleSend}
-              disabled={!input.trim() || loading || (!selectedProfileId && user)}
+              disabled={!input.trim() || loading}
             >
               <span className="material-symbols-outlined text-[20px]">send</span>
             </button>
