@@ -130,10 +130,33 @@ class Stage1Analyzer:
     def _parse_tool_input(
         self, tool_input: dict, child_profile: Optional[ChildProfile]
     ) -> QueryAnalysis:
-        """Map raw tool_use input dict to a QueryAnalysis model."""
-        child_age_days: Optional[int] = tool_input.get("child_age_days")
-        child_age_resolved: bool = tool_input.get("child_age_resolved", False)
+        """Map raw tool_use input dict to a QueryAnalysis model.
 
+        Defensively sanitises fields because Claude occasionally returns:
+          - The string "null" instead of JSON null for nullable fields.
+          - The strings "true"/"false" instead of JSON booleans.
+        """
+        # ── child_age_days ────────────────────────────────────────────────────
+        raw_age = tool_input.get("child_age_days")
+        child_age_days: Optional[int] = None
+        if raw_age is not None and str(raw_age).strip().lower() not in ("null", "", "none"):
+            try:
+                child_age_days = int(raw_age)
+            except (ValueError, TypeError):
+                child_age_days = None
+
+        # ── boolean fields ────────────────────────────────────────────────────
+        def _to_bool(val, default: bool = False) -> bool:
+            if isinstance(val, bool):
+                return val
+            if isinstance(val, str):
+                return val.strip().lower() in ("true", "1", "yes")
+            return bool(val) if val is not None else default
+
+        child_age_resolved: bool = _to_bool(tool_input.get("child_age_resolved"), False)
+        needs_clarification: bool = _to_bool(tool_input.get("needs_clarification"), False)
+
+        # ── age_group ─────────────────────────────────────────────────────────
         age_group: Optional[str] = None
         if child_age_days is not None:
             try:
@@ -141,11 +164,17 @@ class Stage1Analyzer:
             except Exception:
                 age_group = None
 
+        # ── clarification_questions ───────────────────────────────────────────
+        raw_questions = tool_input.get("clarification_questions")
+        clarification_questions: list = (
+            raw_questions if isinstance(raw_questions, list) else []
+        )
+
         return QueryAnalysis(
             child_age_resolved=child_age_resolved,
             child_age_days=child_age_days,
             age_group=age_group,
             symptom_summary=tool_input.get("symptom_summary", ""),
-            needs_clarification=tool_input.get("needs_clarification", False),
-            clarification_questions=tool_input.get("clarification_questions", []),
+            needs_clarification=needs_clarification,
+            clarification_questions=clarification_questions,
         )

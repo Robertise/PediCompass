@@ -3,11 +3,15 @@ import { motion } from 'framer-motion'
 import MessageBubble from './MessageBubble'
 import { chatApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
-import { useAppStore } from '../../store/appStore'
+import { useAppStore, GUEST_PROFILE_ID } from '../../store/appStore'
 
 export default function ChatWindow({ messages, setMessages }) {
   const { user } = useAuthStore()
   const { selectedProfileId } = useAppStore()
+  // Map sentinel "guest" → null so the backend receives a real profile_id or null
+  const apiProfileId = (!selectedProfileId || selectedProfileId === GUEST_PROFILE_ID)
+    ? null
+    : selectedProfileId
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState(null)
@@ -23,7 +27,7 @@ export default function ChatWindow({ messages, setMessages }) {
 
   const startSession = async () => {
     try {
-      const res = await chatApi.createSession(selectedProfileId)
+      const res = await chatApi.createSession(apiProfileId)
       setSessionId(res.data.session_id)
       return res.data.session_id
     } catch (err) {
@@ -51,7 +55,7 @@ export default function ChatWindow({ messages, setMessages }) {
     }
 
     try {
-      const res = await chatApi.sendMessage(currentSessionId, userMessage, selectedProfileId)
+      const res = await chatApi.sendMessage(currentSessionId, userMessage, apiProfileId)
       setMessages(prev => [...prev, { role: 'agent', content: res.data }])
     } catch (err) {
       console.error(err)
@@ -94,19 +98,14 @@ export default function ChatWindow({ messages, setMessages }) {
         )}
 
         {loading && (
-          <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} 
-            className="flex items-start gap-sm max-w-3xl mx-auto w-full"
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="max-w-3xl mx-auto w-full py-xs"
           >
-            <div className="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
-              <span className="material-symbols-outlined text-primary">smart_toy</span>
-            </div>
-            <div className="bg-surface-container-low p-md rounded-2xl rounded-tl-sm shadow-[0_2px_12px_rgba(0,0,0,0.02)] flex items-center gap-2 w-32 justify-center">
-              <div className="flex gap-1 items-center">
-                <span className="w-2 h-2 rounded-full bg-primary animate-bounce"></span>
-                <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                <span className="w-2 h-2 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0.4s' }}></span>
-              </div>
+            <div className="flex gap-1 items-center h-6">
+              <span className="w-2 h-2 rounded-full bg-on-surface-variant/40 animate-bounce"></span>
+              <span className="w-2 h-2 rounded-full bg-on-surface-variant/40 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+              <span className="w-2 h-2 rounded-full bg-on-surface-variant/40 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
             </div>
           </motion.div>
         )}

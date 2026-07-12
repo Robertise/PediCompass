@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { profileApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
-import { useAppStore } from '../../store/appStore'
+import { useAppStore, GUEST_PROFILE_ID } from '../../store/appStore'
 import { ageDaysFromDob, ageDaysToDisplay } from '../../utils/ageUtils'
 
 export default function ProfileSelector() {
@@ -13,29 +13,23 @@ export default function ProfileSelector() {
   const dropdownRef = useRef(null)
   const navigate = useNavigate()
 
-  // Track whether the user has ever explicitly made a selection.
-  // This prevents the auto-select logic from overriding an intentional
-  // "Guest Mode" selection (selectedProfileId === null set by the user).
-  const hasUserSelectedRef = useRef(false)
-
-  // Load profiles when user changes. If this is the very first load and the
-  // user hasn't consciously chosen yet, auto-select the first profile.
   useEffect(() => {
     async function loadProfiles() {
       if (!user) {
         setProfiles([])
-        // Clear profile on logout but don't set hasUserSelected so that
-        // the next login can auto-select again.
-        hasUserSelectedRef.current = false
         setSelectedProfileId(null)
         return
       }
       try {
         const res = await profileApi.list()
         setProfiles(res.data)
-        // Auto-select the first profile only on first load (user hasn't chosen yet)
-        if (res.data.length > 0 && !hasUserSelectedRef.current && !selectedProfileId) {
-          hasUserSelectedRef.current = true
+
+        // Only auto-select if:
+        //  1. There are profiles available
+        //  2. The user has NOT already made an explicit selection
+        //     (null = uninitialised; "guest" or a UUID = explicit choice)
+        const isUninitialised = selectedProfileId === null
+        if (res.data.length > 0 && isUninitialised) {
           setSelectedProfileId(res.data[0].profile_id)
         }
       } catch (err) {
@@ -46,10 +40,10 @@ export default function ProfileSelector() {
 
     window.addEventListener('profilesUpdated', loadProfiles)
     return () => window.removeEventListener('profilesUpdated', loadProfiles)
-  // NOTE: selectedProfileId is intentionally NOT in deps — we only want this
-  // to re-run when the user logs in/out, not when selectedProfileId changes.
+  // selectedProfileId intentionally excluded — we read it once at startup via
+  // the closure capture and must not re-trigger when the user changes selection.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, setSelectedProfileId])
+  }, [user])
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -62,9 +56,8 @@ export default function ProfileSelector() {
   }, [])
 
   const handleSelect = (id) => {
-    // Mark that the user has made a conscious choice — disables auto-select.
-    hasUserSelectedRef.current = true
-    setSelectedProfileId(id)
+    // Use the sentinel so we can distinguish "guest chosen" from "uninitialised"
+    setSelectedProfileId(id === null ? GUEST_PROFILE_ID : id)
     setIsOpen(false)
   }
 
@@ -86,23 +79,22 @@ export default function ProfileSelector() {
     }
   }
 
-  const selectedProfile = profiles.find(p => p.profile_id === selectedProfileId)
-  
+  // Resolve the active profile object (null when in guest / uninitialised)
+  const isGuest = !selectedProfileId || selectedProfileId === GUEST_PROFILE_ID
+  const selectedProfile = isGuest ? null : profiles.find(p => p.profile_id === selectedProfileId)
+
   let displayText = 'Guest Mode'
   if (selectedProfile) {
     const ageDays = ageDaysFromDob(selectedProfile.dob)
     const ageStr = ageDaysToDisplay(ageDays)
     displayText = `${selectedProfile.nickname} • ${ageStr}`
-  } else if (user && profiles.length > 0) {
-    // User has profiles but is in guest mode
-    displayText = 'Guest Mode'
   } else if (user && profiles.length === 0) {
     displayText = 'No profiles yet'
   }
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <button 
+      <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-sm bg-surface-container-low px-sm py-xs rounded-full border border-outline-variant/30 hover:bg-surface-container transition-colors max-w-[200px] sm:max-w-xs"
       >
@@ -118,21 +110,22 @@ export default function ProfileSelector() {
       {isOpen && (
         <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden z-50 flex flex-col">
           <div className="max-h-60 overflow-y-auto py-1">
-            <button 
+            {/* Guest Mode option */}
+            <button
               onClick={() => handleSelect(null)}
-              className={`w-full text-left px-4 py-3 text-label-md font-label-md hover:bg-surface-container transition-colors flex items-center gap-sm ${!selectedProfileId ? 'bg-primary-container/10 text-primary' : 'text-on-surface'}`}
+              className={`w-full text-left px-4 py-3 text-label-md font-label-md hover:bg-surface-container transition-colors flex items-center gap-sm ${isGuest ? 'bg-primary-container/10 text-primary' : 'text-on-surface'}`}
             >
               <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
                 <span className="material-symbols-outlined text-[16px]">person</span>
               </div>
               <span>Guest Mode</span>
             </button>
-            
+
             {profiles.map(p => {
               const ageDays = ageDaysFromDob(p.dob)
               const ageStr = ageDaysToDisplay(ageDays)
               return (
-                <button 
+                <button
                   key={p.profile_id}
                   onClick={() => handleSelect(p.profile_id)}
                   className={`w-full text-left px-4 py-3 text-label-md font-label-md hover:bg-surface-container transition-colors flex items-center gap-sm ${selectedProfileId === p.profile_id ? 'bg-primary-container/10 text-primary' : 'text-on-surface'}`}
@@ -145,15 +138,15 @@ export default function ProfileSelector() {
               )
             })}
           </div>
-          
+
           <div className="border-t border-outline-variant/30 bg-surface-container-low p-2 flex flex-col gap-1">
-            <button 
+            <button
               onClick={handleManage}
               className="w-full text-left px-2 py-2 text-label-md font-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg transition-colors flex items-center gap-xs"
             >
               <span className="material-symbols-outlined text-[18px]">manage_accounts</span> Manage Profiles
             </button>
-            <button 
+            <button
               onClick={handleCreateNew}
               className="w-full text-left px-2 py-2 text-label-md font-label-md text-primary hover:bg-primary-container/20 rounded-lg transition-colors flex items-center gap-xs"
             >
