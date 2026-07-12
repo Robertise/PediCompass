@@ -46,6 +46,12 @@ export const authApi = {
   register: (email, password) =>
     api.post('/api/auth/register', { email, password }),
 
+  verify: (email, code) =>
+    api.post('/api/auth/verify', { email, code }),
+
+  resendCode: (email) =>
+    api.post('/api/auth/resend-code', { email }),
+
   login: (email, password) =>
     api.post('/api/auth/login', { email, password }),
 

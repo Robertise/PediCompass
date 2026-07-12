@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional
 import time
 from config import settings
 
+
 class CognitoClient:
     def __init__(self):
         self.client = boto3.client('cognito-idp', region_name=settings.cognito_region)
@@ -16,6 +17,8 @@ class CognitoClient:
         self.jwks: Optional[Dict[str, Any]] = None
         self._jwks_cached_at: Optional[float] = None
         self._JWKS_TTL = 3600
+
+    # ── Registration ──────────────────────────────────────────────────────────
 
     def sign_up(self, email: str, password: str) -> dict:
         try:
@@ -29,9 +32,50 @@ class CognitoClient:
             )
             return {"success": True, "user_sub": response['UserSub']}
         except self.client.exceptions.UsernameExistsException:
-            return {"success": False, "error": "User already exists"}
+            return {"success": False, "error": "USER_EXISTS"}
+        except self.client.exceptions.InvalidPasswordException:
+            return {"success": False, "error": "INVALID_PASSWORD"}
         except Exception as e:
-            return {"success": False, "error": str(e)}
+            return {"success": False, "error": "UNKNOWN", "detail": str(e)}
+
+    def confirm_sign_up(self, email: str, code: str) -> dict:
+        """
+        Confirm the Cognito sign-up with the 6-digit verification code
+        sent to the user's email.
+        """
+        try:
+            self.client.confirm_sign_up(
+                ClientId=self.client_id,
+                Username=email,
+                ConfirmationCode=code.strip(),
+            )
+            return {"success": True}
+        except self.client.exceptions.CodeMismatchException:
+            return {"success": False, "error": "CODE_MISMATCH"}
+        except self.client.exceptions.ExpiredCodeException:
+            return {"success": False, "error": "CODE_EXPIRED"}
+        except self.client.exceptions.NotAuthorizedException:
+            # Already confirmed
+            return {"success": True}
+        except Exception as e:
+            return {"success": False, "error": "UNKNOWN", "detail": str(e)}
+
+    def resend_confirmation_code(self, email: str) -> dict:
+        """Re-send the email verification code."""
+        try:
+            self.client.resend_confirmation_code(
+                ClientId=self.client_id,
+                Username=email,
+            )
+            return {"success": True}
+        except self.client.exceptions.UserNotFoundException:
+            return {"success": False, "error": "USER_NOT_FOUND"}
+        except self.client.exceptions.LimitExceededException:
+            return {"success": False, "error": "RATE_LIMIT"}
+        except Exception as e:
+            return {"success": False, "error": "UNKNOWN", "detail": str(e)}
+
+    # ── Authentication ────────────────────────────────────────────────────────
 
     def sign_in(self, email: str, password: str) -> dict:
         try:
@@ -51,11 +95,13 @@ class CognitoClient:
                 "refresh_token": auth_result.get('RefreshToken')
             }
         except self.client.exceptions.UserNotConfirmedException:
-            return {"success": False, "error": "EMAIL_NOT_CONFIRMED", "message": "Please verify your email before signing in."}
+            return {"success": False, "error": "EMAIL_NOT_CONFIRMED"}
         except self.client.exceptions.NotAuthorizedException:
-            return {"success": False, "error": "INVALID_CREDENTIALS", "message": "Incorrect email or password."}
+            return {"success": False, "error": "INVALID_CREDENTIALS"}
+        except self.client.exceptions.UserNotFoundException:
+            return {"success": False, "error": "USER_NOT_FOUND"}
         except Exception as e:
-            return {"success": False, "error": "UNKNOWN", "message": str(e)}
+            return {"success": False, "error": "UNKNOWN", "detail": str(e)}
 
     def refresh_token(self, refresh_token: str) -> dict:
         try:
@@ -73,6 +119,8 @@ class CognitoClient:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    # ── Token verification ────────────────────────────────────────────────────
+
     async def _get_jwks(self) -> Dict[str, Any]:
         now = time.time()
         if not self.jwks or not self._jwks_cached_at or (now - self._jwks_cached_at > self._JWKS_TTL):
@@ -87,10 +135,10 @@ class CognitoClient:
         try:
             headers = jwt.get_unverified_headers(token)
             kid = headers.get('kid')
-            
+
             jwks = await self._get_jwks()
             key = next((k for k in jwks.get('keys', []) if k.get('kid') == kid), None)
-            
+
             if not key:
                 # Force refresh JWKS if kid not found
                 self._jwks_cached_at = None
@@ -98,36 +146,32 @@ class CognitoClient:
                 key = next((k for k in jwks.get('keys', []) if k.get('kid') == kid), None)
                 if not key:
                     return None
-            
-            if not key:
-                return None
-                
+
             public_key = jwk.construct(key)
             message, encoded_signature = str(token).rsplit('.', 1)
             decoded_signature = base64url_decode(encoded_signature.encode('utf-8'))
-            
+
             if not public_key.verify(message.encode('utf-8'), decoded_signature):
                 return None
-                
+
             claims = jwt.get_unverified_claims(token)
-            
+
             # Verify expiration
             if time.time() > claims.get('exp', 0):
                 return None
-                
+
             # Verify issuer
             expected_iss = f"https://cognito-idp.{self.region}.amazonaws.com/{self.user_pool_id}"
             if claims.get('iss') != expected_iss:
                 return None
-                
+
             # Verify audience
             if claims.get('aud') != self.client_id:
-                # access tokens might have client_id
                 if claims.get('client_id') != self.client_id:
                     return None
-                    
+
             return claims
-            
+
         except Exception as e:
             print(f"Token verification failed: {e}")
             return None

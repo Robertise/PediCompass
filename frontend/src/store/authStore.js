@@ -9,7 +9,7 @@ import { authApi } from '../api/client'
 export const useAuthStore = create(
   persist(
     (set, get) => ({
-      user: null,          // { email, userId, isAdmin }
+      user: null,          // { email, user_id, isAdmin }
       token: null,         // Cognito id_token (JWT)
       refreshToken: null,  // Cognito refresh_token
       isLoading: false,
@@ -31,9 +31,13 @@ export const useAuthStore = create(
           })
           return { success: true }
         } catch (err) {
-          const message = err.response?.data?.detail || 'Login failed. Please check your credentials.'
+          // Backend returns { message, error_code } inside detail for auth errors
+          const detail = err.response?.data?.detail
+          const message = (typeof detail === 'object' ? detail?.message : detail)
+            || 'Login failed. Please check your credentials.'
+          const errorCode = (typeof detail === 'object' ? detail?.error_code : null) || null
           set({ isLoading: false, error: message })
-          return { success: false, error: message }
+          return { success: false, error: message, errorCode }
         }
       },
 
@@ -44,7 +48,33 @@ export const useAuthStore = create(
           set({ isLoading: false })
           return { success: true }
         } catch (err) {
-          const message = err.response?.data?.detail || 'Registration failed.'
+          const message = err.response?.data?.detail || 'Registration failed. Please try again.'
+          set({ isLoading: false, error: message })
+          return { success: false, error: message }
+        }
+      },
+
+      verify: async (email, code) => {
+        set({ isLoading: true, error: null })
+        try {
+          await authApi.verify(email, code)
+          set({ isLoading: false })
+          return { success: true }
+        } catch (err) {
+          const message = err.response?.data?.detail || 'Verification failed. Please try again.'
+          set({ isLoading: false, error: message })
+          return { success: false, error: message }
+        }
+      },
+
+      resendCode: async (email) => {
+        set({ isLoading: true, error: null })
+        try {
+          await authApi.resendCode(email)
+          set({ isLoading: false })
+          return { success: true }
+        } catch (err) {
+          const message = err.response?.data?.detail || 'Could not resend code. Please try again.'
           set({ isLoading: false, error: message })
           return { success: false, error: message }
         }
@@ -68,10 +98,10 @@ export const useAuthStore = create(
           const res = await authApi.refresh(refreshToken)
           set({
             token: res.data.id_token,
-            refreshToken: res.data.refresh_token || refreshToken
+            refreshToken: res.data.refresh_token || refreshToken,
           })
           return true
-        } catch (err) {
+        } catch {
           return false
         }
       },
