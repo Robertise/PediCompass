@@ -21,12 +21,20 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Handle 401 globally — clear auth and redirect
+// Handle 401 globally — refresh token and retry, or force re-login.
+// Auth endpoints (/api/auth/*) are excluded: they handle their own errors
+// and must NOT trigger logout (which would wipe the error message from the store).
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint = originalRequest?.url?.includes('/api/auth/')
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthEndpoint           // ← skip retry logic for all /api/auth/* routes
+    ) {
       originalRequest._retry = true
       const success = await useAuthStore.getState().refreshTokens()
       if (success) {
@@ -39,6 +47,7 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
 
 // ── Auth endpoints ───────────────────────────────────────────────────────────
 

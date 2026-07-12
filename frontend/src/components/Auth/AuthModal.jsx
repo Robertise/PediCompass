@@ -71,6 +71,9 @@ export default function AuthModal() {
 
   // Track whether password field has been touched (to show checklist)
   const [passwordTouched, setPasswordTouched] = useState(false)
+  // Show/hide password visibility per form
+  const [showLoginPw, setShowLoginPw]     = useState(false)
+  const [showRegisterPw, setShowRegisterPw] = useState(false)
   // Tracks the login error code so we can show contextual actions
   const [loginErrorCode, setLoginErrorCode] = useState(null)
 
@@ -183,7 +186,7 @@ export default function AuthModal() {
   const titles = {
     login:    'Welcome Back',
     register: 'Create Account',
-    verify:   verifySuccess ? 'Email Verified! 🎉' : 'Verify Your Email',
+    verify:   verifySuccess ? 'Email Verified!' : 'Verify Your Email',
   }
 
   const subtitles = {
@@ -243,14 +246,27 @@ export default function AuthModal() {
 
               <div className="flex flex-col gap-xs">
                 <label className="text-label-md font-label-md text-on-surface">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="current-password"
-                  className="bg-surface-container-low border border-outline-variant/40 rounded-lg px-sm py-xs text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none"
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showLoginPw ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="current-password"
+                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-lg px-sm py-xs pr-10 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPw((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors"
+                    tabIndex={-1}
+                    aria-label={showLoginPw ? 'Hide password' : 'Show password'}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {showLoginPw ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
               </div>
 
               <button
@@ -280,20 +296,33 @@ export default function AuthModal() {
 
               <div className="flex flex-col gap-xs">
                 <label className="text-label-md font-label-md text-on-surface">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  onFocus={() => setPasswordTouched(true)}
-                  autoComplete="new-password"
-                  className={`bg-surface-container-low border rounded-lg px-sm py-xs text-body-md font-body-md focus:ring-1 transition-colors outline-none ${
-                    passwordTouched && !passwordValid
-                      ? 'border-error focus:border-error focus:ring-error'
-                      : passwordTouched && passwordValid
-                        ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500'
-                        : 'border-outline-variant/40 focus:border-primary focus:ring-primary'
-                  }`}
-                />
+                <div className="relative">
+                  <input
+                    type={showRegisterPw ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onFocus={() => setPasswordTouched(true)}
+                    autoComplete="new-password"
+                    className={`w-full bg-surface-container-low border rounded-lg px-sm py-xs pr-10 text-body-md font-body-md focus:ring-1 transition-colors outline-none ${
+                      passwordTouched && !passwordValid
+                        ? 'border-error focus:border-error focus:ring-error'
+                        : passwordTouched && passwordValid
+                          ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500'
+                          : 'border-outline-variant/40 focus:border-primary focus:ring-primary'
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegisterPw((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors"
+                    tabIndex={-1}
+                    aria-label={showRegisterPw ? 'Hide password' : 'Show password'}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {showRegisterPw ? 'visibility_off' : 'visibility'}
+                    </span>
+                  </button>
+                </div>
                 <PasswordChecklist password={password} show={passwordTouched} />
               </div>
 
