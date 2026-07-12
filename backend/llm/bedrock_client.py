@@ -17,6 +17,7 @@ IMPORTANT: modelId must be the inference profile ID, not the bare model ID.
 
 import json
 import logging
+import time
 
 import boto3
 import asyncio
@@ -78,16 +79,24 @@ class BedrockClient:
             "max_tokens": max_tokens,
         }
 
-        try:
-            response = self._client.invoke_model(
-                modelId=self._model_id,
-                body=json.dumps(body),
-                contentType="application/json",
-                accept="application/json",
-            )
-        except Exception as exc:
-            logger.exception("Bedrock invoke_model failed: %s", exc)
-            raise RuntimeError(f"Bedrock API error: {exc}") from exc
+        max_retries = 3
+        for attempt in range(max_retries + 1):
+            try:
+                response = self._client.invoke_model(
+                    modelId=self._model_id,
+                    body=json.dumps(body),
+                    contentType="application/json",
+                    accept="application/json",
+                )
+                break
+            except Exception as exc:
+                if "ThrottlingException" in str(exc) and attempt < max_retries:
+                    wait_time = 2 ** attempt
+                    logger.warning("Throttled by Bedrock. Retrying in %ds... (attempt %d/%d)", wait_time, attempt + 1, max_retries)
+                    time.sleep(wait_time)
+                else:
+                    logger.exception("Bedrock invoke_model failed: %s", exc)
+                    raise RuntimeError(f"Bedrock API error: {exc}") from exc
 
         response_body = json.loads(response["body"].read())
         logger.debug("Bedrock response stop_reason=%s", response_body.get("stop_reason"))
@@ -132,16 +141,24 @@ class BedrockClient:
             "max_tokens": max_tokens,
         }
 
-        try:
-            response = self._client.invoke_model(
-                modelId=self._model_id,
-                body=json.dumps(body),
-                contentType="application/json",
-                accept="application/json",
-            )
-        except Exception as exc:
-            logger.exception("Bedrock invoke_model (text) failed: %s", exc)
-            raise RuntimeError(f"Bedrock API error: {exc}") from exc
+        max_retries = 3
+        for attempt in range(max_retries + 1):
+            try:
+                response = self._client.invoke_model(
+                    modelId=self._model_id,
+                    body=json.dumps(body),
+                    contentType="application/json",
+                    accept="application/json",
+                )
+                break
+            except Exception as exc:
+                if "ThrottlingException" in str(exc) and attempt < max_retries:
+                    wait_time = 2 ** attempt
+                    logger.warning("Throttled by Bedrock (text). Retrying in %ds... (attempt %d/%d)", wait_time, attempt + 1, max_retries)
+                    time.sleep(wait_time)
+                else:
+                    logger.exception("Bedrock invoke_model (text) failed: %s", exc)
+                    raise RuntimeError(f"Bedrock API error: {exc}") from exc
 
         response_body = json.loads(response["body"].read())
 

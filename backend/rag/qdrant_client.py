@@ -93,16 +93,16 @@ class QdrantManager:
                 ]
             )
 
-        results = self.client.search(
+        results = self.client.query_points(
             collection_name=self.collection_name,
-            query_vector=query_vector,
+            query=query_vector,
             query_filter=query_filter,
             limit=top_k,
             with_payload=True,
         )
 
         chunks = []
-        for hit in results:
+        for hit in results.points:
             payload = hit.payload or {}
             chunks.append({
                 "chunk_id": str(hit.id),

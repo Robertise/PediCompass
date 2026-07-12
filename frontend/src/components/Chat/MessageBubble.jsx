@@ -13,8 +13,8 @@ import PreVisitChecklist from './PreVisitChecklist'
 export default function MessageBubble({ role, content }) {
   if (role === 'user') {
     return (
-      <div className="flex justify-end max-w-3xl mx-auto w-full">
-        <div className="bg-surface-container text-on-surface px-md py-sm rounded-2xl rounded-tr-sm text-body-md font-body-md whitespace-pre-wrap max-w-[75%]">
+      <div className="flex justify-end max-w-4xl mx-auto w-full px-4 md:px-0">
+        <div className="bg-surface-container text-on-surface px-md py-sm rounded-2xl rounded-tr-sm text-body-md font-body-md whitespace-pre-wrap max-w-[85%] md:max-w-[75%]">
           {content}
         </div>
       </div>
@@ -23,7 +23,7 @@ export default function MessageBubble({ role, content }) {
 
   // Agent response — rendered directly on page, no bubble wrapper or icon
   return (
-    <div className="max-w-3xl mx-auto w-full">
+    <div className="max-w-4xl mx-auto w-full px-4 md:px-0">
       <AgentResponseCard response={content} />
     </div>
   )

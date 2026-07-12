@@ -74,7 +74,7 @@ export default function ChatWindow({ messages, setMessages }) {
 
   return (
     <main className="flex-1 flex flex-col h-full bg-surface-lowest relative">
-      <div className={`flex-1 relative ${messages.length === 0 ? 'overflow-hidden flex items-center justify-center' : 'overflow-y-auto p-md lg:p-lg space-y-lg'}`}>
+      <div className={`flex-1 relative ${messages.length === 0 ? 'overflow-hidden flex items-center justify-center px-4 md:px-8' : 'overflow-y-auto py-md lg:py-lg px-4 md:px-8 space-y-lg'}`}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-on-surface-variant max-w-lg mx-auto text-center gap-sm">
             <img src="/logo_trans_bg.svg" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 mb-sm grayscale-[20%]" />
@@ -100,12 +100,15 @@ export default function ChatWindow({ messages, setMessages }) {
         {loading && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="max-w-3xl mx-auto w-full py-xs"
+            className="max-w-4xl mx-auto w-full py-xs"
           >
-            <div className="flex gap-1 items-center h-6">
-              <span className="w-2 h-2 rounded-full bg-on-surface-variant/40 animate-bounce"></span>
-              <span className="w-2 h-2 rounded-full bg-on-surface-variant/40 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-              <span className="w-2 h-2 rounded-full bg-on-surface-variant/40 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+            <div className="flex items-center gap-3 w-fit text-on-surface-variant font-body-md">
+              <div className="flex gap-1.5 items-center">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0s' }}></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+              </div>
+              <span className="animate-pulse text-sm">Thinking...</span>
             </div>
           </motion.div>
         )}
@@ -113,7 +116,7 @@ export default function ChatWindow({ messages, setMessages }) {
       </div>
 
       {/* Input Area */}
-      <div className="p-md bg-surface border-t border-outline-variant/20 sticky bottom-0 z-10 w-full">
+      <div className="py-md px-4 md:px-8 bg-surface border-t border-outline-variant/20 sticky bottom-0 z-10 w-full">
         <div className="max-w-4xl mx-auto flex flex-col items-center">
           <div className="flex items-center w-full bg-surface-container-lowest rounded-full px-sm py-xs border border-outline-variant/40 focus-within:border-primary transition-colors shadow-sm pl-4">
             <textarea
