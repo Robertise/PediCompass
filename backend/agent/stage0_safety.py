@@ -1,42 +1,29 @@
 """
-Stage 0 — Deterministic Safety Screen.
+Stage 0 — Deterministic Safety Screen with Hybrid Context Check.
 
-No LLM. Runs in <10ms. Checks for paediatric emergency red flags using
-keyword matching on two categories:
-  1. Age-independent flags: trigger regardless of child age.
-  2. Age-dependent flags: trigger only when the resolved age satisfies a condition.
+Runs fast keyword matching for unambiguous red flags (<10ms).
+For ambiguous red flags (e.g. "difficulty breathing"), triggers a fast 
+LLM context check (Haiku) to eliminate false positives from negated symptoms.
 
 Returns (Optional[RedFlag], Optional[int]) — the red flag (if any) and the
-resolved age in days. The age is always returned so that analytics logging on
-the emergency path can record the age group instead of None.
+resolved age in days.
 """
 
-from typing import Optional
+import asyncio
+import json
+import logging
 import re
+from typing import Optional
 
 # common/ is on sys.path (patched by main.py at startup)
 from common.age_utils import resolve_age_days
-
+from config import settings
 from agent.models import RedFlag
 
+logger = logging.getLogger(__name__)
 
-# ── Age-independent red flags ─────────────────────────────────────────────────
-# These trigger regardless of the child's age.
-#
-# IMPORTANT keyword-safety notes (to prevent false positives):
-#
-#  * "fit" is NOT included bare → matches "a fit of crying" (tantrum, not seizure).
-#    Use unambiguous synonyms: "seizure", "convulsion", "fitting", etc.
-#
-#  * "limp" is NOT included bare → matches "limping after the fall" (leg injury).
-#    Use "went limp" or "floppy" which capture the intended meaning (body went
-#    limp/unresponsive) without catching benign walking descriptions.
-#
-#  * "grunting" is NOT included bare → matches "grunting while pooping"
-#    (straining during a bowel movement, totally benign).
-#    Qualified to respiratory-context phrases only.
-
-AGE_INDEPENDENT_FLAGS: list[dict] = [
+# ── Age-independent red flags (Layer A - Unambiguous) ──────────────────────────
+UNAMBIGUOUS_FLAGS: list[dict] = [
     {
         "name": "cyanosis",
         "keywords": [
@@ -59,7 +46,6 @@ AGE_INDEPENDENT_FLAGS: list[dict] = [
         "action": "Go to the Pediatric Emergency Department immediately.",
     },
     {
-        # bare "fit" excluded — see module-level docstring.
         "name": "febrile_seizure",
         "keywords": [
             "seizure", "convulsion", "convulsing", "seizing",
@@ -70,18 +56,22 @@ AGE_INDEPENDENT_FLAGS: list[dict] = [
         "action": "Call emergency services (999/911) immediately.",
     },
     {
-        # bare "limp" excluded — see module-level docstring.
-        "name": "unresponsive",
+        "name": "petechiae_purpura",
         "keywords": [
-            "unresponsive", "won't wake", "won't wake up", "unconscious",
-            "went limp", "floppy", "not responding", "cannot wake",
-            "can't wake", "passed out", "lost consciousness",
+            "petechiae", "purpura", "non-blanching rash",
+            "purple spots", "blood spots under skin",
         ],
-        "reason": "Child is unresponsive or cannot be woken",
-        "action": "Call emergency services (999/911) immediately.",
+        "reason": "Non-blanching rash / petechiae reported — possible meningococcal disease",
+        "action": (
+            "Call emergency services (999/911) immediately. "
+            "Non-blanching rash in a child is a medical emergency."
+        ),
     },
+]
+
+# ── Age-independent red flags (Layer B - Context Sensitive) ───────────────────
+CONTEXT_SENSITIVE_FLAGS: list[dict] = [
     {
-        # bare "grunting" excluded — see module-level docstring.
         "name": "breathing_difficulty",
         "keywords": [
             "can't breathe", "cannot breathe", "difficulty breathing",
@@ -92,6 +82,16 @@ AGE_INDEPENDENT_FLAGS: list[dict] = [
             "working hard to breathe",
         ],
         "reason": "Signs of respiratory distress",
+        "action": "Call emergency services (999/911) immediately.",
+    },
+    {
+        "name": "unresponsive",
+        "keywords": [
+            "unresponsive", "won't wake", "won't wake up", "unconscious",
+            "went limp", "floppy", "not responding", "cannot wake",
+            "can't wake", "passed out", "lost consciousness",
+        ],
+        "reason": "Child is unresponsive or cannot be woken",
         "action": "Call emergency services (999/911) immediately.",
     },
     {
@@ -114,24 +114,9 @@ AGE_INDEPENDENT_FLAGS: list[dict] = [
         "reason": "High-pitched or inconsolable cry reported",
         "action": "Seek urgent paediatric care immediately.",
     },
-    {
-        "name": "petechiae_purpura",
-        "keywords": [
-            "petechiae", "purpura", "non-blanching rash",
-            "purple spots", "blood spots under skin",
-        ],
-        "reason": "Non-blanching rash / petechiae reported — possible meningococcal disease",
-        "action": (
-            "Call emergency services (999/911) immediately. "
-            "Non-blanching rash in a child is a medical emergency."
-        ),
-    },
 ]
 
-
 # ── Age-dependent red flags ───────────────────────────────────────────────────
-# These only trigger when the resolved age satisfies the `age_condition` lambda.
-
 AGE_DEPENDENT_FLAGS: list[dict] = [
     {
         "name": "fever_young_infant",
@@ -141,6 +126,7 @@ AGE_DEPENDENT_FLAGS: list[dict] = [
             r"3[89](?:\.\d)?\s*degrees",
         ],
         "age_condition": lambda d: d < 90,
+        "context_sensitive": True,
         "reason": "Fever in infant under 3 months of age",
         "action": (
             "Go to the Pediatric Emergency Department immediately — "
@@ -155,76 +141,145 @@ AGE_DEPENDENT_FLAGS: list[dict] = [
             "refuses breast", "not taking bottle",
         ],
         "age_condition": lambda d: d < 28,
+        "context_sensitive": True,
         "reason": "Feeding refusal in newborn (under 28 days)",
         "action": "Seek emergency paediatric care immediately.",
     },
 ]
 
+HAIKU_PROMPT = """You are a pediatric emergency screening assistant. 
+A keyword related to a possible emergency was detected in a parent's message.
+Determine ONLY if the parent is REPORTING this symptom as currently present 
+(not denying it, not asking about it, not ruling it out).
+
+Respond ONLY with valid JSON: {"is_emergency_present": true, "reason": "..."} or {"is_emergency_present": false, "reason": "..."}
+
+Be very conservative: if ambiguous, return true."""
 
 class PediatricEmergencyScreen:
     """
-    Layer 1 safety screen — deterministic, no LLM, <10ms.
-
-    Checks for emergency red flags in the parent's message using keyword
-    matching. Age-dependent flags require the child's age to be resolved
-    (via Profile DOB or regex parsing of the message text).
+    Layer 1 safety screen — Hybrid approach.
+    
+    1. Deterministic keyword matching (fast, no LLM).
+    2. If an ambiguous keyword matches, calls Haiku (fast LLM) to check context
+       and eliminate false positives (e.g. "no difficulty breathing").
     """
 
-    def screen(
+    def __init__(self, bedrock_client=None) -> None:
+        self.llm = bedrock_client
+
+    async def _haiku_context_check(self, keyword_or_pattern: str, message: str) -> bool:
+        """
+        Ask Haiku if the keyword actually implies an emergency in context.
+        Returns True if emergency is confirmed, False if denied/benign.
+        """
+        if not self.llm:
+            logger.warning("No bedrock_client provided to Stage 0. Defaulting to emergency.")
+            return True
+
+        if not settings.bedrock_haiku_model_id:
+            logger.warning("bedrock_haiku_model_id not configured. Defaulting to emergency.")
+            return True
+
+        user_text = f"Keyword detected: '{keyword_or_pattern}'\nFull parent message: '{message}'"
+        
+        try:
+            body = {
+                "anthropic_version": "bedrock-2023-05-31",
+                "system": HAIKU_PROMPT,
+                "messages": [{"role": "user", "content": user_text}],
+                "max_tokens": 150,
+            }
+            
+            loop = asyncio.get_running_loop()
+            
+            def _call_haiku():
+                response = self.llm._client.invoke_model(
+                    modelId=settings.bedrock_haiku_model_id,
+                    body=json.dumps(body),
+                    contentType="application/json",
+                    accept="application/json",
+                )
+                return json.loads(response["body"].read())
+                
+            response_body = await asyncio.wait_for(loop.run_in_executor(None, _call_haiku), timeout=3.0)
+            
+            # Extract JSON from response
+            text = ""
+            for block in response_body.get("content", []):
+                if block.get("type") == "text":
+                    text += block.get("text", "")
+            
+            # Parse JSON
+            match = re.search(r'\{.*\}', text, re.DOTALL)
+            if match:
+                parsed = json.loads(match.group(0))
+                is_emergency = parsed.get("is_emergency_present", True)
+                logger.info("Haiku context check result: %s. Reason: %s", is_emergency, parsed.get("reason"))
+                return is_emergency
+            else:
+                logger.warning("Could not parse JSON from Haiku: %s", text)
+                return True
+                
+        except (asyncio.TimeoutError, Exception) as exc:
+            logger.warning("Haiku context check failed (%s) — defaulting to emergency", exc)
+            return True
+
+    async def screen(
         self,
         message: str,
         profile_dob: Optional[str] = None,
     ) -> tuple[Optional[RedFlag], Optional[int]]:
         """
         Screen the message for emergency red flags.
-
-        Age resolution priority:
-          1. Child Profile DOB (exact, reliable)
-          2. Regex parse from message text (approximate, safe)
-          3. None → age-dependent flags cannot trigger
-
-        Args:
-            message: The parent's free-text message.
-            profile_dob: ISO date string "YYYY-MM-DD" from the child's profile,
-                         or None if no profile is attached.
-
-        Returns:
-            Tuple of (red_flag, age_days).
-            - red_flag: RedFlag if an emergency pattern was detected, else None.
-            - age_days: Resolved age in days (may be None if not determinable).
-              Always returned — even when a red flag IS detected — so callers
-              on the emergency path can log the age group without it being lost.
         """
         age_days = resolve_age_days(message, profile_dob)
         text_lower = message.lower()
 
-        # 1. Age-independent checks (always run, no age required)
-        for flag in AGE_INDEPENDENT_FLAGS:
+        # 1. Age-independent Unambiguous checks
+        for flag in UNAMBIGUOUS_FLAGS:
             if any(kw in text_lower for kw in flag["keywords"]):
-                red_flag = RedFlag(
-                    detected=True,
-                    reason=flag["reason"],
-                    immediate_action=flag["action"],
-                    triggered_pattern=flag["name"],
-                )
-                return red_flag, age_days
+                return self._create_red_flag(flag), age_days
 
-        # 2. Age-dependent checks (only when age could be resolved)
+        # 2. Age-independent Context-Sensitive checks
+        for flag in CONTEXT_SENSITIVE_FLAGS:
+            for kw in flag["keywords"]:
+                if kw in text_lower:
+                    is_real = await self._haiku_context_check(kw, message)
+                    if is_real:
+                        return self._create_red_flag(flag), age_days
+                    break # if false positive, skip this flag and continue
+
+        # 3. Age-dependent checks
         if age_days is not None:
             for flag in AGE_DEPENDENT_FLAGS:
+                matched_pattern = None
                 if "patterns" in flag:
-                    kw_match = any(re.search(pat, text_lower) for pat in flag["patterns"])
+                    for pat in flag["patterns"]:
+                        if re.search(pat, text_lower):
+                            matched_pattern = pat
+                            break
                 else:
-                    kw_match = any(kw in text_lower for kw in flag.get("keywords", []))
+                    for kw in flag.get("keywords", []):
+                        if kw in text_lower:
+                            matched_pattern = kw
+                            break
                     
                 age_match = flag["age_condition"](age_days)
-                if kw_match and age_match:
-                    red_flag = RedFlag(
-                        detected=True,
-                        reason=flag["reason"],
-                        immediate_action=flag["action"],
-                        triggered_pattern=flag["name"],
-                    )
-                    return red_flag, age_days
+                if matched_pattern and age_match:
+                    if flag.get("context_sensitive", False):
+                        is_real = await self._haiku_context_check(matched_pattern, message)
+                        if not is_real:
+                            continue
+                            
+                    return self._create_red_flag(flag), age_days
 
         return None, age_days
+
+    def _create_red_flag(self, flag: dict) -> RedFlag:
+        return RedFlag(
+            detected=True,
+            reason=flag["reason"],
+            immediate_action=flag["action"],
+            triggered_pattern=flag["name"],
+        )

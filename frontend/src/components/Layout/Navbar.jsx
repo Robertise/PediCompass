@@ -6,12 +6,12 @@ import ThemeToggle from './ThemeToggle'
 
 export default function Navbar() {
   const { user, logout } = useAuthStore()
-  const { setShowAuthModal } = useAppStore()
+  const { setShowAuthModal, triggerChatReset } = useAppStore()
 
   return (
     <header className="bg-surface/80 dark:bg-surface-container/80 backdrop-blur-lg sticky top-0 z-50 flex justify-between items-center px-gutter py-base w-full border-b border-outline-variant/30 relative">
       <div className="flex items-center gap-sm relative z-10">
-        <Link to="/" className="flex items-center gap-sm transition-transform active:scale-95">
+        <Link to="/" onClick={() => triggerChatReset()} className="flex items-center gap-sm transition-transform active:scale-95">
           <img src="/logo_trans_bg.svg" alt="PediCompass Logo" className="w-8 h-8 object-contain" />
           <div className="flex flex-col">
             <span className="text-headline-md font-manrope-md font-bold text-primary dark:text-primary-fixed-dim leading-none">PediCompass</span>

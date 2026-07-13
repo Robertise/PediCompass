@@ -28,6 +28,12 @@ export const useAppStore = create(
       // "<uuid>"   → a specific child profile
       selectedProfileId: null,
       setSelectedProfileId: (id) => set({ selectedProfileId: id }),
+
+      chatResetKey: 0,
+      triggerChatReset: () => set((state) => ({ chatResetKey: state.chatResetKey + 1 })),
+
+      isChatActive: false,
+      setIsChatActive: (active) => set({ isChatActive: active }),
     }),
     {
       name: 'pedicompass-app',

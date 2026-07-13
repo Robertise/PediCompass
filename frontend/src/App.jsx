@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from './store/authStore'
+import { useAppStore } from './store/appStore'
 import Navbar from './components/Layout/Navbar'
 import ChatPage from './pages/ChatPage'
 import ProfilesPage from './pages/ProfilesPage'
@@ -52,11 +53,13 @@ function MainLayout({ children }) {
 }
 
 export default function App() {
+  const { chatResetKey } = useAppStore()
+  
   return (
     <BrowserRouter>
       <MainLayout>
         <Routes>
-          <Route path="/"          element={<ChatPage />} />
+          <Route path="/"          element={<ChatPage key={chatResetKey} />} />
           <Route path="/profiles"  element={
             <ProtectedRoute><ProfilesPage /></ProtectedRoute>
           } />

@@ -7,7 +7,7 @@ import { useAppStore, GUEST_PROFILE_ID } from '../../store/appStore'
 
 export default function ChatWindow({ messages, setMessages }) {
   const { user } = useAuthStore()
-  const { selectedProfileId } = useAppStore()
+  const { selectedProfileId, setIsChatActive } = useAppStore()
   // Map sentinel "guest" → null so the backend receives a real profile_id or null
   const apiProfileId = (!selectedProfileId || selectedProfileId === GUEST_PROFILE_ID)
     ? null
@@ -24,6 +24,10 @@ export default function ChatWindow({ messages, setMessages }) {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  useEffect(() => {
+    setIsChatActive(messages.length > 0)
+  }, [messages.length, setIsChatActive])
 
   const startSession = async () => {
     try {

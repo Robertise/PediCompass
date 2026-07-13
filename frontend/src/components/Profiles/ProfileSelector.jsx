@@ -7,7 +7,7 @@ import { ageDaysFromDob, ageDaysToDisplay } from '../../utils/ageUtils'
 
 export default function ProfileSelector() {
   const { user } = useAuthStore()
-  const { setShowAuthModal, setShowProfileModal, selectedProfileId, setSelectedProfileId } = useAppStore()
+  const { setShowAuthModal, setShowProfileModal, selectedProfileId, setSelectedProfileId, isChatActive, triggerChatReset } = useAppStore()
   const [profiles, setProfiles] = useState([])
   const [isOpen, setIsOpen] = useState(false)
   const dropdownRef = useRef(null)
@@ -57,7 +57,23 @@ export default function ProfileSelector() {
 
   const handleSelect = (id) => {
     // Use the sentinel so we can distinguish "guest chosen" from "uninitialised"
-    setSelectedProfileId(id === null ? GUEST_PROFILE_ID : id)
+    const targetId = id === null ? GUEST_PROFILE_ID : id
+    
+    if (targetId === selectedProfileId) {
+      setIsOpen(false)
+      return
+    }
+
+    if (isChatActive) {
+      const confirm = window.confirm("You have an active chat. Switching profiles will clear the current chat history. Do you want to proceed?")
+      if (!confirm) {
+        setIsOpen(false)
+        return
+      }
+    }
+
+    setSelectedProfileId(targetId)
+    triggerChatReset()
     setIsOpen(false)
   }
 

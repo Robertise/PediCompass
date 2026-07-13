@@ -96,7 +96,7 @@ class PediCompassAgent:
         profile_dob = child_profile.dob if child_profile else None
 
         # ── Stage 0: Deterministic Safety Screen ─────────────────────────────
-        red_flag, screened_age_days = self.safety_screen.screen(message, profile_dob)
+        red_flag, screened_age_days = await self.safety_screen.screen(message, profile_dob)
         trace.stage0 = {
             "checked": True,
             "red_flag_detected": red_flag.detected if red_flag else False,
@@ -212,7 +212,7 @@ class PediCompassAgent:
             # Append missing info as assistant turn to guide next retrieval
             context.append({
                 "role": "assistant",
-                "content": f"Additional information needed: {reflection.missing_info}",
+                "content": f"Additional information needed: {reflection.missing_info}".strip(),
             })
             enriched_query = f"{analysis.symptom_summary}. Additional context: {reflection.missing_info}"
 
@@ -303,7 +303,7 @@ def create_agent() -> PediCompassAgent:
     output_validator = OutputValidator()
 
     return PediCompassAgent(
-        safety_screen=PediatricEmergencyScreen(),
+        safety_screen=PediatricEmergencyScreen(bedrock_client=bedrock),
         stage1=Stage1Analyzer(bedrock),
         stage2=Stage2Retriever(retriever),
         stage3=Stage3Reasoner(bedrock),

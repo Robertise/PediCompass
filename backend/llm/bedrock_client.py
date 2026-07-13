@@ -44,6 +44,21 @@ class BedrockClient:
         self._model_id = settings.bedrock_model_id
         logger.info("BedrockClient initialised with model_id=%s", self._model_id)
 
+    def _sanitize_messages(self, messages: list[dict]) -> list[dict]:
+        """
+        Strip trailing whitespace from assistant messages.
+        Anthropic API rejects messages where the final assistant turn 
+        ends with whitespace (space, newline, tab).
+        """
+        sanitized = []
+        for msg in messages:
+            if msg.get("role") == "assistant":
+                content = msg.get("content", "")
+                if isinstance(content, str):
+                    msg = {**msg, "content": content.rstrip()}
+            sanitized.append(msg)
+        return sanitized
+
     def invoke_with_tools(
         self,
         system: str,
@@ -70,6 +85,7 @@ class BedrockClient:
             ValueError: If the model does not return a tool_use block.
             RuntimeError: If the Bedrock API call fails.
         """
+        messages = self._sanitize_messages(messages)
         body = {
             "anthropic_version": _ANTHROPIC_VERSION,
             "system": system,
@@ -134,6 +150,7 @@ class BedrockClient:
         Raises:
             RuntimeError: If the Bedrock API call fails.
         """
+        messages = self._sanitize_messages(messages)
         body = {
             "anthropic_version": _ANTHROPIC_VERSION,
             "system": system,
