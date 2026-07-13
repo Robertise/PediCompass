@@ -78,18 +78,9 @@ export default function ChatWindow({ messages, setMessages }) {
 
   return (
     <main className="flex-1 flex flex-col h-full bg-transparent relative">
-      <div className={`flex-1 relative ${messages.length === 0 ? 'overflow-hidden flex flex-col justify-center px-4 md:px-8 pb-32' : 'overflow-y-auto py-md lg:py-lg px-4 md:px-8 space-y-lg'}`}>
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center text-on-surface-variant max-w-lg mx-auto text-center gap-md">
-            <img src="/logo_light.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 mb-sm grayscale-[20%] dark:hidden block" />
-            <img src="/logo_dark.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 mb-sm grayscale-[20%] hidden dark:block" />
-            <h2 className="text-headline-md font-headline-md text-on-surface">How can I help you today?</h2>
-            <p className="text-body-md font-body-md">
-              Select a child profile above and describe their symptoms. I will guide you through evidence-based pediatric care pathways.
-            </p>
-          </div>
-        ) : (
-          messages.map((msg, idx) => (
+      {messages.length > 0 && (
+        <div className="flex-1 relative overflow-y-auto py-md lg:py-lg px-4 md:px-8 space-y-lg">
+          {messages.map((msg, idx) => (
             <motion.div 
               key={idx}
               initial={{ opacity: 0, y: 10 }}
@@ -99,31 +90,53 @@ export default function ChatWindow({ messages, setMessages }) {
             >
               <MessageBubble role={msg.role} content={msg.content} />
             </motion.div>
-          ))
-        )}
+          ))}
 
-        {loading && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="max-w-4xl mx-auto w-full flex justify-start items-center py-xs"
-          >
-            <div className="flex items-center gap-3 text-on-surface-variant font-body-md text-left">
-              <div className="flex gap-1.5 items-center">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0s' }}></span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-                <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="max-w-4xl mx-auto w-full flex justify-start items-center py-xs"
+            >
+              <div className="flex items-center gap-3 text-on-surface-variant font-body-md text-left">
+                <div className="flex gap-1.5 items-center">
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0s' }}></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                </div>
+                <span className="animate-pulse text-sm">Thinking...</span>
               </div>
-              <span className="animate-pulse text-sm">Thinking...</span>
-            </div>
-          </motion.div>
-        )}
-        <div ref={messagesEndRef} className="h-20"></div> {/* padding bottom */}
-      </div>
+            </motion.div>
+          )}
+          <div ref={messagesEndRef} className="h-20"></div> {/* padding bottom */}
+        </div>
+      )}
 
       {/* Input Area */}
-      <div className="py-md px-4 md:px-8 sticky bottom-0 z-10 w-full">
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none" />
+      <motion.div 
+        layout
+        transition={{ type: "spring", bounce: 0.05, duration: 0.5 }}
+        className={`px-4 md:px-8 w-full ${messages.length === 0 ? 'm-auto' : 'py-md sticky bottom-0 z-10'}`}
+      >
+        {messages.length > 0 && (
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none" />
+        )}
         <div className="max-w-4xl mx-auto flex flex-col items-center relative z-10">
+          
+          {/* Empty state text positioned absolute above the input */}
+          {messages.length === 0 && (
+            <motion.div 
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+              className="absolute bottom-full mb-10 flex flex-col items-center justify-center text-on-surface-variant w-full max-w-lg text-center gap-md"
+            >
+              <img src="/logo_light.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] dark:hidden block" />
+              <img src="/logo_dark.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] hidden dark:block" />
+              <h2 className="text-headline-md font-headline-md text-on-surface">How can I help you today?</h2>
+              <p className="text-body-md font-body-md">
+                Select a child profile above and describe their symptoms. I will guide you through evidence-based pediatric care pathways.
+              </p>
+            </motion.div>
+          )}
+
           <div className="flex items-center w-full bg-surface dark:bg-surface-container-high rounded-full px-[8px] py-xs focus-within:border-primary/50 transition-all shadow-soft dark:shadow-soft-dark pl-4">
             <textarea
               className="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline py-sm px-sm resize-none"
@@ -143,11 +156,14 @@ export default function ChatWindow({ messages, setMessages }) {
               <span className="material-symbols-outlined text-[20px]">send</span>
             </button>
           </div>
-          <div className="text-center mt-sm text-[11px] text-on-surface-variant flex items-center justify-center gap-xs">
-            <span className="material-symbols-outlined text-[14px]">lock</span> Your information is private and secure. Not a medical diagnosis.
-          </div>
+          
+          {messages.length > 0 && (
+            <div className="text-center mt-sm text-[11px] text-on-surface-variant flex items-center justify-center gap-xs">
+              <span className="material-symbols-outlined text-[14px]">lock</span> Your information is private and secure. Not a medical diagnosis.
+            </div>
+          )}
         </div>
-      </div>
+      </motion.div>
     </main>
   )
 }
