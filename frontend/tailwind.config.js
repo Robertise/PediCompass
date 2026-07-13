@@ -111,6 +111,11 @@ export default {
           '70%': { boxShadow: '0 0 0 10px rgba(230, 57, 70, 0)' },
           '100%': { boxShadow: '0 0 0 0 rgba(230, 57, 70, 0)' },
         }
+      },
+      boxShadow: {
+        'soft': '0 4px 24px -4px rgba(0, 0, 0, 0.05)',
+        'soft-lg': '0 8px 32px -4px rgba(0, 0, 0, 0.08)',
+        'soft-dark': '0 4px 24px -4px rgba(0, 0, 0, 0.3)',
       }
     }
   },

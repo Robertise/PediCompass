@@ -5,8 +5,8 @@ export default function AnalyticsPage() {
   const navigate = useNavigate()
 
   return (
-    <main className="flex-1 flex flex-col h-full bg-surface-lowest overflow-y-auto">
-      <div className="w-full max-w-6xl mx-auto px-gutter py-xl">
+    <main className="flex-1 flex flex-col h-full bg-transparent overflow-y-auto">
+      <div className="w-full max-w-6xl mx-auto px-6 py-xl">
         <div className="flex items-center gap-sm mb-lg">
           <button 
             onClick={() => navigate('/')}

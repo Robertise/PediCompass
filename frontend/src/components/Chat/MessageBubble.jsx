@@ -14,7 +14,7 @@ export default function MessageBubble({ role, content }) {
   if (role === 'user') {
     return (
       <div className="flex justify-end max-w-4xl mx-auto w-full">
-        <div className="bg-surface-container text-on-surface px-md py-sm rounded-2xl rounded-tr-sm text-body-md font-body-md whitespace-pre-wrap max-w-[85%] md:max-w-[75%]">
+        <div className="bg-surface-container text-on-surface px-md py-sm rounded-2xl rounded-tr-[4px] text-body-md font-body-md whitespace-pre-wrap max-w-[85%] md:max-w-[75%] shadow-sm">
           {content}
         </div>
       </div>
@@ -85,11 +85,11 @@ function AgentResponseCard({ response }) {
           To better understand the situation, I need a bit more information:
         </p>
         {response.clarification_questions?.length > 0 && (
-          <div className="flex flex-col gap-xs">
+          <div className="flex flex-col gap-sm">
             {response.clarification_questions.map((q, i) => (
               <div
                 key={i}
-                className="bg-surface-container-low border border-outline-variant/30 px-sm py-sm rounded-xl text-body-md font-body-md text-on-surface flex items-start gap-2"
+                className="bg-surface-container shadow-sm px-sm py-sm rounded-xl text-body-md font-body-md text-on-surface flex items-start gap-2"
               >
                 <span className="material-symbols-outlined text-primary text-[18px] shrink-0 mt-[2px]">help_outline</span>
                 <span>{q}</span>
@@ -107,21 +107,21 @@ function AgentResponseCard({ response }) {
 
     return (
       <div className="flex flex-col gap-md">
-        <div className="bg-surface border border-outline-variant/40 rounded-[20px] p-md shadow-[0_8px_32px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col gap-md">
+        <div className="bg-transparent p-1 overflow-hidden flex flex-col gap-md">
           {/* Urgency Badge */}
           {urgency_level && <UrgencyBadge level={urgency_level} />}
 
           {/* Care Pathway cards */}
           {care_pathway && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
-              <div className="flex gap-sm p-sm bg-surface-container-lowest rounded-xl border border-outline-variant/20">
+              <div className="flex gap-sm p-sm bg-surface-container-low rounded-xl">
                 <span className="material-symbols-outlined text-primary text-[28px]">local_hospital</span>
                 <div className="flex flex-col">
                   <span className="text-label-sm font-label-sm text-on-surface-variant mb-[2px]">Recommended Care Setting</span>
                   <span className="text-label-md font-label-md text-on-surface">{care_pathway.care_setting}</span>
                 </div>
               </div>
-              <div className="flex gap-sm p-sm bg-surface-container-lowest rounded-xl border border-outline-variant/20">
+              <div className="flex gap-sm p-sm bg-surface-container-low rounded-xl">
                 <span className="material-symbols-outlined text-tertiary text-[28px]">schedule</span>
                 <div className="flex flex-col">
                   <span className="text-label-sm font-label-sm text-on-surface-variant mb-[2px]">Timeframe</span>
@@ -138,12 +138,12 @@ function AgentResponseCard({ response }) {
             </div>
           )}
 
-          <hr className="border-outline-variant/20" />
+          <div className="w-full h-px bg-black/10 dark:bg-white/15 my-xs" />
 
           {/* Actions & Warnings */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
             {care_pathway?.immediate_actions?.length > 0 && (
-              <div className="flex flex-col gap-sm">
+              <div className="flex flex-col gap-sm bg-[#0ea5e9]/10 p-sm rounded-xl border-none">
                 <span className="text-label-md font-label-md text-on-surface">What You Can Do Now:</span>
                 <ul className="space-y-sm">
                   {care_pathway.immediate_actions.map((action, i) => (
@@ -157,7 +157,7 @@ function AgentResponseCard({ response }) {
             )}
 
             {warning_signs?.length > 0 && (
-              <div className="flex flex-col gap-sm bg-error-container/10 p-sm rounded-xl border border-error-container/30">
+              <div className="flex flex-col gap-sm bg-[#ef4444]/10 p-sm rounded-xl border-none">
                 <span className="text-label-md font-label-md text-error">Warning Signs — Seek Care Immediately:</span>
                 <ul className="space-y-[4px]">
                   {warning_signs.map((sign, i) => (
@@ -173,7 +173,7 @@ function AgentResponseCard({ response }) {
           <PreVisitChecklist items={pre_visit_checklist} />
           <CitedSources sources={cited_sources} />
 
-          <div className="bg-surface-container-low p-sm rounded-lg text-label-sm font-label-sm text-on-surface-variant text-center mt-2">
+          <div className="bg-transparent p-sm text-label-sm font-label-sm text-on-surface-variant text-center mt-2">
             This is not a medical diagnosis. Trust your instincts and seek medical help if concerned.
           </div>
         </div>

@@ -15,7 +15,7 @@ export default function CitedSources({ sources }) {
       </span>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
         {sources.map((source, idx) => (
-          <div key={source.chunk_id || idx} className="flex gap-sm p-xs bg-surface-container-lowest rounded-xl border border-outline-variant/20 items-center">
+          <div key={source.chunk_id || idx} className="flex gap-sm p-xs bg-surface-container dark:bg-black/20 rounded-xl border-none items-center shadow-sm dark:shadow-none">
             <div className="w-8 h-8 rounded-full bg-tertiary-container flex items-center justify-center shrink-0">
               <span className="material-symbols-outlined text-on-tertiary-container text-[16px]">
                 {authorityIcons[source.source_authority] || 'menu_book'}

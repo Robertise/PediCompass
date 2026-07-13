@@ -11,7 +11,7 @@ export default function PreVisitChecklist({ items }) {
   const checkedCount = Object.values(checked).filter(Boolean).length
 
   return (
-    <div className="flex flex-col gap-sm bg-surface-container-low p-sm rounded-xl border border-outline-variant/30">
+    <div className="flex flex-col gap-sm bg-surface-container dark:bg-black/20 p-sm rounded-xl border-none shadow-sm dark:shadow-none">
       <div className="flex justify-between items-center">
         <span className="text-label-md font-label-md text-on-surface flex items-center gap-xs">
           <span className="material-symbols-outlined text-primary text-[20px]">checklist</span> Before Your Visit

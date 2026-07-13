@@ -77,11 +77,12 @@ export default function ChatWindow({ messages, setMessages }) {
   }
 
   return (
-    <main className="flex-1 flex flex-col h-full bg-surface-lowest relative">
-      <div className={`flex-1 relative ${messages.length === 0 ? 'overflow-hidden flex items-center justify-center px-4 md:px-8' : 'overflow-y-auto py-md lg:py-lg px-4 md:px-8 space-y-lg'}`}>
+    <main className="flex-1 flex flex-col h-full bg-transparent relative">
+      <div className={`flex-1 relative ${messages.length === 0 ? 'overflow-hidden flex flex-col justify-center px-4 md:px-8 pb-32' : 'overflow-y-auto py-md lg:py-lg px-4 md:px-8 space-y-lg'}`}>
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-on-surface-variant max-w-lg mx-auto text-center gap-sm">
-            <img src="/logo.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 mb-sm grayscale-[20%]" />
+          <div className="flex flex-col items-center justify-center text-on-surface-variant max-w-lg mx-auto text-center gap-md">
+            <img src="/logo_light.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 mb-sm grayscale-[20%] dark:hidden block" />
+            <img src="/logo_dark.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 mb-sm grayscale-[20%] hidden dark:block" />
             <h2 className="text-headline-md font-headline-md text-on-surface">How can I help you today?</h2>
             <p className="text-body-md font-body-md">
               Select a child profile above and describe their symptoms. I will guide you through evidence-based pediatric care pathways.
@@ -104,13 +105,13 @@ export default function ChatWindow({ messages, setMessages }) {
         {loading && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="max-w-4xl mx-auto w-full py-xs"
+            className="max-w-4xl mx-auto w-full flex justify-start items-center py-xs"
           >
-            <div className="flex items-center gap-3 w-fit text-on-surface-variant font-body-md">
+            <div className="flex items-center gap-3 text-on-surface-variant font-body-md text-left">
               <div className="flex gap-1.5 items-center">
-                <span className="w-2.5 h-2.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0s' }}></span>
-                <span className="w-2.5 h-2.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-                <span className="w-2.5 h-2.5 rounded-full bg-primary/60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0s' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
               </div>
               <span className="animate-pulse text-sm">Thinking...</span>
             </div>
@@ -120,9 +121,10 @@ export default function ChatWindow({ messages, setMessages }) {
       </div>
 
       {/* Input Area */}
-      <div className="py-md px-4 md:px-8 bg-surface border-t border-outline-variant/20 sticky bottom-0 z-10 w-full">
-        <div className="max-w-4xl mx-auto flex flex-col items-center">
-          <div className="flex items-center w-full bg-surface-container-lowest rounded-full px-sm py-xs border border-outline-variant/40 focus-within:border-primary transition-colors shadow-sm pl-4">
+      <div className="py-md px-4 md:px-8 sticky bottom-0 z-10 w-full">
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none" />
+        <div className="max-w-4xl mx-auto flex flex-col items-center relative z-10">
+          <div className="flex items-center w-full bg-surface dark:bg-surface-container-high rounded-full px-[8px] py-xs focus-within:border-primary/50 transition-all shadow-soft dark:shadow-soft-dark pl-4">
             <textarea
               className="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline py-sm px-sm resize-none"
               placeholder={selectedProfileId ? 'Ask a follow-up question or describe symptoms...' : 'Describe your child\'s symptoms (select a profile above for personalized guidance)...'}
@@ -134,14 +136,14 @@ export default function ChatWindow({ messages, setMessages }) {
               onInput={(e) => { e.target.style.height = ''; e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px'; }}
             />
             <button 
-              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary hover:bg-primary-fixed-variant transition-colors shadow-sm disabled:opacity-50"
+              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary hover:bg-primary-fixed-variant transition-colors shadow-sm disabled:opacity-30 disabled:hover:bg-primary"
               onClick={handleSend}
               disabled={!input.trim() || loading}
             >
               <span className="material-symbols-outlined text-[20px]">send</span>
             </button>
           </div>
-          <div className="text-center mt-xs text-[11px] text-on-surface-variant flex items-center justify-center gap-xs">
+          <div className="text-center mt-sm text-[11px] text-on-surface-variant flex items-center justify-center gap-xs">
             <span className="material-symbols-outlined text-[14px]">lock</span> Your information is private and secure. Not a medical diagnosis.
           </div>
         </div>

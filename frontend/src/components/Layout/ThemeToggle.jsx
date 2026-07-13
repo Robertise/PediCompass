@@ -4,21 +4,15 @@ export default function ThemeToggle() {
   const { theme, setTheme } = useThemeStore()
 
   const toggleTheme = () => {
-    if (theme === 'light') setTheme('dark')
-    else if (theme === 'dark') setTheme('system')
-    else setTheme('light')
+    setTheme(theme === 'light' ? 'dark' : 'light')
   }
 
   const getIcon = () => {
-    if (theme === 'light') return 'light_mode'
-    if (theme === 'dark') return 'dark_mode'
-    return 'brightness_auto'
+    return theme === 'light' ? 'light_mode' : 'dark_mode'
   }
 
   const getTooltip = () => {
-    if (theme === 'light') return 'Light Mode'
-    if (theme === 'dark') return 'Dark Mode'
-    return 'System Theme'
+    return theme === 'light' ? 'Light Mode' : 'Dark Mode'
   }
 
   return (

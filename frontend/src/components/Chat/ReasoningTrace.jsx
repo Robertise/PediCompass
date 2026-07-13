@@ -53,7 +53,7 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
   if (!isOpen) {
     return (
       <aside
-        className="w-12 bg-surface-container-low dark:bg-surface-container-highest h-full border-l border-outline-variant/30 flex flex-col items-center py-md gap-md shadow-sm shrink-0"
+        className="w-12 bg-surface-container-low dark:bg-surface-container h-full border-l border-black/5 dark:border-white/5 flex flex-col items-center py-md gap-md shadow-sm shrink-0"
         style={{ width: 48 }}
       >
         {/* Re-open button */}
@@ -78,7 +78,7 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
   // ── Expanded state ───────────────────────────────────────────────────────────
   return (
     <aside
-      className="bg-surface-container-low dark:bg-surface-container-highest h-full border-l border-outline-variant/30 flex flex-col shadow-sm shrink-0 relative"
+      className="bg-surface-container-low dark:bg-surface-container h-full border-l border-black/5 dark:border-white/5 flex flex-col shadow-sm shrink-0 relative"
       style={{ width }}
     >
       {/* Drag-to-resize handle — left edge */}
@@ -88,11 +88,11 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
         title="Drag to resize"
       >
         {/* Visual drag pill */}
-        <div className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-outline-variant/40 group-hover:bg-primary/50 rounded-full transition-colors" />
+        <div className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-black/10 dark:bg-white/10 group-hover:bg-primary/50 rounded-full transition-colors" />
       </div>
 
       {/* Header */}
-      <div className="pl-4 pr-2 py-3 border-b border-outline-variant/30 bg-surface-container/50 flex items-center justify-between gap-2 shrink-0">
+      <div className="pl-4 pr-2 py-3 border-b border-black/5 dark:border-white/5 bg-surface-container/50 flex items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-xs text-on-surface min-w-0">
           <span className="material-symbols-outlined text-[20px] text-tertiary shrink-0">memory</span>
           <h3 className="font-label-md text-label-md uppercase tracking-wider font-bold truncate">
@@ -113,14 +113,14 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
 
       {/* Sub-header: iteration/latency info */}
       {trace ? (
-        <div className="px-4 py-2 border-b border-outline-variant/20 bg-surface-container/30 shrink-0">
+        <div className="px-4 py-2 border-b border-black/5 dark:border-white/5 bg-surface-container/30 shrink-0">
           <p className="text-body-sm font-body-sm text-on-surface-variant">
             {trace.iterations || 1} iteration{(trace.iterations || 1) !== 1 ? 's' : ''} completed
             {trace.latency_ms ? ` in ${(trace.latency_ms / 1000).toFixed(1)}s` : ''}
           </p>
         </div>
       ) : (
-        <div className="px-4 py-2 border-b border-outline-variant/20 shrink-0">
+        <div className="px-4 py-2 border-b border-black/5 dark:border-white/5 shrink-0">
           <p className="text-body-sm font-body-sm text-on-surface-variant">
             Waiting for AI analysis…
           </p>
@@ -157,10 +157,10 @@ function TraceStageRow({ meta, data, isLast }) {
   return (
     <div className="flex gap-sm">
       <div className="flex flex-col items-center">
-        <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center border border-outline-variant/30 shrink-0 z-10">
-          <span className="material-symbols-outlined text-[16px] text-on-surface-variant">{meta.icon}</span>
+        <div className="w-8 h-8 rounded-full bg-surface-variant/50 dark:bg-surface-container-high flex items-center justify-center shrink-0 z-10 shadow-sm">
+          <span className="material-symbols-outlined text-[16px] text-primary">{meta.icon}</span>
         </div>
-        {!isLast && <div className="w-[2px] h-full bg-outline-variant/30 my-1"></div>}
+        {!isLast && <div className="w-[2px] h-full bg-black/5 dark:bg-white/5 my-1"></div>}
       </div>
       <div className="flex flex-col gap-xs pb-sm w-full min-w-0">
         <div className="flex justify-between items-start">
@@ -187,7 +187,7 @@ function TraceStageRow({ meta, data, isLast }) {
               transition={{ duration: 0.15 }}
               className="overflow-hidden"
             >
-              <pre className="mt-2 p-sm bg-surface-container-lowest rounded-lg border border-outline-variant/30 text-[11px] font-mono text-on-surface-variant overflow-x-auto whitespace-pre-wrap break-words max-h-[250px] overflow-y-auto shadow-inner">
+              <pre className="mt-2 p-sm bg-black/5 dark:bg-black/30 rounded-lg text-[11px] font-mono text-on-surface-variant overflow-x-auto whitespace-pre-wrap break-words max-h-[250px] overflow-y-auto shadow-inner">
                 {JSON.stringify(data, null, 2)}
               </pre>
             </motion.div>

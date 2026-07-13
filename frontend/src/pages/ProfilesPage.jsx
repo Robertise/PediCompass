@@ -56,8 +56,8 @@ export default function ProfilesPage() {
   }
 
   return (
-    <main className="flex-1 flex flex-col h-full bg-surface-lowest overflow-y-auto">
-      <div className="w-full max-w-4xl mx-auto px-gutter py-xl">
+    <main className="flex-1 flex flex-col h-full bg-transparent overflow-y-auto">
+      <div className="w-full max-w-4xl mx-auto px-6 py-xl">
         <div className="flex justify-between items-center mb-lg">
           <div className="flex items-center gap-sm">
             <button 
@@ -70,7 +70,7 @@ export default function ProfilesPage() {
             <h2 className="text-display-sm font-display-sm font-bold text-on-surface">Manage Profiles</h2>
           </div>
           <button 
-            className="bg-primary hover:bg-primary-fixed-variant text-on-primary px-md py-xs rounded-full text-label-md font-label-md font-bold transition-colors flex items-center gap-xs shadow-sm" 
+            className="bg-primary hover:bg-primary-fixed-variant text-on-primary px-6 py-2.5 rounded-full text-label-md font-label-md font-bold transition-colors flex items-center gap-xs shadow-sm" 
             onClick={handleCreate}
           >
             <span className="material-symbols-outlined text-[20px]">add</span> Add Profile
@@ -82,9 +82,9 @@ export default function ProfilesPage() {
             <span className="material-symbols-outlined animate-spin text-primary text-[40px]">progress_activity</span>
           </div>
         ) : profiles.length === 0 ? (
-          <div className="text-center p-xl bg-surface border border-outline-variant/30 rounded-[24px] shadow-sm flex flex-col items-center gap-md">
-            <div className="w-16 h-16 rounded-full bg-primary-container/20 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-[32px]">child_care</span>
+          <div className="text-center p-xl bg-surface dark:bg-surface-container-high rounded-[24px] shadow-md dark:shadow-soft-dark flex flex-col items-center gap-md">
+            <div className="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-[64px]">child_care</span>
             </div>
             <div>
               <h3 className="text-headline-md font-headline-md text-on-surface mb-xs">No Profiles Yet</h3>
@@ -93,7 +93,7 @@ export default function ProfilesPage() {
               </p>
             </div>
             <button 
-              className="bg-primary hover:bg-primary-fixed-variant text-on-primary px-lg py-sm rounded-full text-label-lg font-label-lg font-bold transition-colors shadow-sm" 
+              className="bg-primary hover:bg-primary-fixed-variant text-on-primary px-8 py-3 rounded-full text-label-lg font-label-lg font-bold transition-colors shadow-sm" 
               onClick={handleCreate}
             >
               Create Your First Profile
@@ -107,7 +107,7 @@ export default function ProfilesPage() {
               const stale = isProfileStale(p.last_updated)
 
               return (
-                <div key={p.profile_id} className="bg-surface border border-outline-variant/40 rounded-[20px] p-md shadow-sm flex flex-col hover:shadow-md transition-shadow">
+                <div key={p.profile_id} className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
                   <div className="flex justify-between items-start mb-md">
                     <div className="flex items-center gap-sm">
                       <div className="w-12 h-12 rounded-full bg-tertiary-container flex items-center justify-center shrink-0">
@@ -120,7 +120,7 @@ export default function ProfilesPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-sm flex-1 bg-surface-container-lowest rounded-xl p-sm border border-outline-variant/20 mb-md">
+                  <div className="flex flex-col gap-sm flex-1 bg-surface-container-low dark:bg-black/20 rounded-xl p-sm mb-md">
                     <div className="grid grid-cols-2 gap-y-xs gap-x-sm">
                       <div className="flex flex-col">
                         <span className="text-[11px] font-label-sm text-on-surface-variant uppercase tracking-wider">DOB</span>
@@ -152,15 +152,15 @@ export default function ProfilesPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-sm border-t border-outline-variant/30 pt-md mt-auto">
+                  <div className="flex gap-sm mt-md">
                     <button 
-                      className="flex-1 bg-surface-variant hover:bg-surface-container-high text-on-surface rounded-full py-xs text-label-md font-label-md transition-colors" 
+                      className="flex-1 bg-surface-variant/50 hover:bg-surface-container-high text-on-surface rounded-full py-3.5 text-label-md font-label-md transition-colors" 
                       onClick={() => handleEdit(p)}
                     >
                       Edit Profile
                     </button>
                     <button 
-                      className="flex-1 bg-error-container/20 hover:bg-error-container/40 text-error border border-error/20 rounded-full py-xs text-label-md font-label-md transition-colors" 
+                      className="flex-1 bg-[#ef4444]/15 hover:bg-[#ef4444]/25 text-[#ef4444] rounded-full py-3.5 text-label-md font-label-md transition-colors border-none" 
                       onClick={() => handleDelete(p.profile_id)}
                     >
                       Delete

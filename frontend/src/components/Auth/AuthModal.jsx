@@ -201,7 +201,7 @@ export default function AuthModal() {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4">
-      <div className="bg-surface-container-lowest rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.08)] w-full max-w-md overflow-hidden flex flex-col border border-outline-variant/20 relative">
+      <div className="bg-surface dark:bg-surface-container-high rounded-[24px] shadow-soft-lg dark:shadow-soft-dark w-full max-w-md overflow-hidden flex flex-col relative">
 
         {/* Close button */}
         <button
@@ -232,33 +232,33 @@ export default function AuthModal() {
           {/* ── LOGIN form ───────────────────────────────────────────────── */}
           {mode === 'login' && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-sm" noValidate>
-              <div className="flex flex-col gap-xs">
-                <label className="text-label-md font-label-md text-on-surface">Email</label>
+              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                  className="bg-surface-container-low border border-outline-variant/40 rounded-lg px-sm py-xs text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none"
+                  className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0"
                   required
                 />
               </div>
 
-              <div className="flex flex-col gap-xs">
-                <label className="text-label-md font-label-md text-on-surface">Password</label>
-                <div className="relative">
+              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all relative">
+                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Password</label>
+                <div className="flex items-center">
                   <input
                     type={showLoginPw ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
-                    className="w-full bg-surface-container-low border border-outline-variant/40 rounded-lg px-sm py-xs pr-10 text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none"
+                    className="bg-transparent border-none outline-none p-0 pr-8 text-body-md font-body-md text-on-surface w-full focus:ring-0"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowLoginPw((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors"
+                    className="absolute right-3 text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors flex items-center justify-center"
                     tabIndex={-1}
                     aria-label={showLoginPw ? 'Hide password' : 'Show password'}
                   >
@@ -272,7 +272,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={isLoading || !canSubmitLogin}
-                className="mt-sm bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-sm px-md text-label-md font-label-md font-bold transition-colors disabled:opacity-50"
+                className="mt-xs bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-3.5 px-6 text-label-md font-label-md font-bold transition-colors disabled:opacity-50 shadow-sm"
               >
                 {isLoading ? 'Signing in…' : 'Sign In'}
               </button>
@@ -282,39 +282,37 @@ export default function AuthModal() {
           {/* ── REGISTER form ─────────────────────────────────────────────── */}
           {mode === 'register' && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-sm" noValidate>
-              <div className="flex flex-col gap-xs">
-                <label className="text-label-md font-label-md text-on-surface">Email</label>
+              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                  className="bg-surface-container-low border border-outline-variant/40 rounded-lg px-sm py-xs text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none"
+                  className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0"
                   required
                 />
               </div>
 
-              <div className="flex flex-col gap-xs">
-                <label className="text-label-md font-label-md text-on-surface">Password</label>
-                <div className="relative">
+              <div className={`flex flex-col rounded-xl px-4 py-2 focus-within:ring-2 transition-all relative ${
+                  passwordTouched && passwordValid
+                    ? 'bg-emerald-500/10 focus-within:ring-emerald-500/50'
+                    : 'bg-surface-container dark:bg-black/20 focus-within:ring-primary/30'
+              }`}>
+                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Password</label>
+                <div className="flex items-center">
                   <input
                     type={showRegisterPw ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setPasswordTouched(true)}
                     autoComplete="new-password"
-                    className={`w-full bg-surface-container-low border rounded-lg px-sm py-xs pr-10 text-body-md font-body-md focus:ring-1 transition-colors outline-none ${
-                      passwordTouched && !passwordValid
-                        ? 'border-error focus:border-error focus:ring-error'
-                        : passwordTouched && passwordValid
-                          ? 'border-emerald-500 focus:border-emerald-500 focus:ring-emerald-500'
-                          : 'border-outline-variant/40 focus:border-primary focus:ring-primary'
-                    }`}
+                    className="bg-transparent border-none outline-none p-0 pr-8 text-body-md font-body-md text-on-surface w-full focus:ring-0"
                   />
                   <button
                     type="button"
                     onClick={() => setShowRegisterPw((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors"
+                    className="absolute right-3 text-on-surface-variant hover:text-on-surface p-1 rounded transition-colors flex items-center justify-center"
                     tabIndex={-1}
                     aria-label={showRegisterPw ? 'Hide password' : 'Show password'}
                   >
@@ -323,13 +321,13 @@ export default function AuthModal() {
                     </span>
                   </button>
                 </div>
-                <PasswordChecklist password={password} show={passwordTouched} />
               </div>
+              <PasswordChecklist password={password} show={passwordTouched} />
 
               <button
                 type="submit"
                 disabled={isLoading || !canSubmitRegister}
-                className="mt-sm bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-sm px-md text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="mt-xs bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-3.5 px-6 text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {isLoading ? 'Creating account…' : 'Create Account'}
               </button>
@@ -340,20 +338,22 @@ export default function AuthModal() {
           {mode === 'verify' && !verifySuccess && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-sm" noValidate>
               <div className="flex flex-col gap-xs">
-                <label className="text-label-md font-label-md text-on-surface">
-                  Verification Code
-                </label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="123456"
-                  autoComplete="one-time-code"
-                  className="bg-surface-container-low border border-outline-variant/40 rounded-lg px-sm py-xs text-body-md font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-colors outline-none tracking-[0.3em] text-center text-headline-sm"
-                />
-                <p className="text-label-sm font-label-sm text-on-surface-variant">
+                <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+                  <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5 text-center">
+                    Verification Code
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="123456"
+                    autoComplete="one-time-code"
+                    className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0 tracking-[0.3em] text-center text-headline-sm placeholder:text-outline-variant/60"
+                  />
+                </div>
+                <p className="text-label-sm font-label-sm text-on-surface-variant text-center mt-2">
                   Check your spam folder if you don't see it.
                 </p>
               </div>
@@ -361,7 +361,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={isLoading || !canSubmitVerify}
-                className="bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-sm px-md text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-3.5 px-6 text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {isLoading ? 'Verifying…' : 'Verify Email'}
               </button>

@@ -112,7 +112,7 @@ export default function ProfileSelector() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-sm bg-surface-container-low px-sm py-xs rounded-full border border-outline-variant/30 hover:bg-surface-container transition-colors max-w-[200px] sm:max-w-xs"
+        className="flex items-center gap-sm bg-surface dark:bg-surface-container-high px-sm py-xs rounded-full hover:bg-surface-container dark:hover:bg-surface-container transition-colors max-w-[200px] sm:max-w-xs shadow-sm dark:shadow-soft-dark"
       >
         <div className="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
           <span className="material-symbols-outlined text-primary text-[20px]">child_care</span>
@@ -124,15 +124,15 @@ export default function ProfileSelector() {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-surface-container-lowest border border-outline-variant/30 rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] overflow-hidden z-50 flex flex-col">
+        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-surface dark:bg-surface-container-high border border-black/5 dark:border-white/5 rounded-xl shadow-soft dark:shadow-soft-dark overflow-hidden z-50 flex flex-col">
           <div className="max-h-60 overflow-y-auto py-1">
             {/* Guest Mode option */}
             <button
               onClick={() => handleSelect(null)}
-              className={`w-full text-left px-4 py-3 text-label-md font-label-md hover:bg-surface-container transition-colors flex items-center gap-sm ${isGuest ? 'bg-primary-container/10 text-primary' : 'text-on-surface'}`}
+              className={`w-full text-left px-3 py-3 text-label-md font-label-md hover:bg-surface-container transition-colors flex items-center gap-sm ${isGuest ? 'bg-primary-container/10 text-primary' : 'text-on-surface'}`}
             >
               <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[16px]">person</span>
+                <span className="material-symbols-outlined text-[20px]">person</span>
               </div>
               <span>Guest Mode</span>
             </button>
@@ -144,29 +144,28 @@ export default function ProfileSelector() {
                 <button
                   key={p.profile_id}
                   onClick={() => handleSelect(p.profile_id)}
-                  className={`w-full text-left px-4 py-3 text-label-md font-label-md hover:bg-surface-container transition-colors flex items-center gap-sm ${selectedProfileId === p.profile_id ? 'bg-primary-container/10 text-primary' : 'text-on-surface'}`}
+                  className={`w-full text-left px-3 py-3 text-label-md font-label-md transition-colors flex items-center gap-sm ${selectedProfileId === p.profile_id ? 'bg-primary-container/30 text-primary font-bold' : 'text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container'}`}
                 >
                   <div className="w-6 h-6 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-primary text-[16px]">child_care</span>
+                    <span className="material-symbols-outlined text-primary text-[20px]">child_care</span>
                   </div>
-                  <span className="truncate">{p.nickname} • {ageStr}</span>
+                  <span className="truncate">{p.nickname} - {ageStr}</span>
                 </button>
               )
             })}
           </div>
 
-          <div className="border-t border-outline-variant/30 bg-surface-container-low p-2 flex flex-col gap-1">
+          <div className="border-t border-black/5 dark:border-white/5 bg-surface-container/30 p-2 flex flex-col gap-1">
             <button
               onClick={handleManage}
-              className="w-full text-left px-2 py-2 text-label-md font-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 rounded-lg transition-colors flex items-center gap-xs"
+              className="w-full text-left px-2 py-3 text-label-md font-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container rounded-lg transition-colors flex items-center gap-sm"
             >
-              <span className="material-symbols-outlined text-[18px]">manage_accounts</span> Manage Profiles
+              <span className="material-symbols-outlined text-[20px]">manage_accounts</span> Manage Profiles
             </button>
             <button
               onClick={handleCreateNew}
-              className="w-full text-left px-2 py-2 text-label-md font-label-md text-primary hover:bg-primary-container/20 rounded-lg transition-colors flex items-center gap-xs"
-            >
-              <span className="material-symbols-outlined text-[18px]">add_circle</span> Create New Profile
+              className="w-full text-left px-2 py-2 pb-3 text-label-md font-label-md text-primary hover:bg-primary-container/20 rounded-lg transition-colors flex items-center gap-xs"
+            > Create New Profile
             </button>
           </div>
         </div>
