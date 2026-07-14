@@ -112,7 +112,7 @@ export default function ProfileSelector() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-sm bg-surface dark:bg-surface-container-high px-sm py-xs rounded-full hover:bg-surface-container dark:hover:bg-surface-container transition-colors max-w-[200px] sm:max-w-xs shadow-sm dark:shadow-soft-dark"
+        className="flex items-center gap-sm bg-surface dark:bg-surface-container-high px-sm py-xs rounded-full hover:bg-surface-container dark:hover:bg-surface-container transition-colors max-w-[200px] sm:max-w-xs shadow-[0_0_10px_1px_rgba(0,0,0,0.1)] dark:shadow-soft-dark"
       >
         <div className="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
           <span className="material-symbols-outlined text-primary text-[20px]">child_care</span>

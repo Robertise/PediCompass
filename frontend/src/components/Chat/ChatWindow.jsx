@@ -95,13 +95,13 @@ export default function ChatWindow({ messages, setMessages }) {
           {loading && (
             <motion.div
               initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-              className="max-w-4xl mx-auto w-full flex justify-start items-center py-xs"
+              className="max-w-[52rem] mx-auto w-full flex justify-start items-center py-xs"
             >
               <div className="flex items-center gap-3 text-on-surface-variant font-body-md text-left">
-                <div className="flex gap-1.5 items-center">
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0s' }}></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
-                  <span className="w-2.5 h-2.5 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
+                <div className="flex gap-1 items-center">
+                  <span className="w-2 h-2 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0s' }}></span>
+                  <span className="w-2 h-2 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.15s' }}></span>
+                  <span className="w-2 h-2 rounded-full bg-primary opacity-60 animate-bounce" style={{ animationDelay: '0.3s' }}></span>
                 </div>
                 <span className="animate-pulse text-sm">Thinking...</span>
               </div>
@@ -120,7 +120,7 @@ export default function ChatWindow({ messages, setMessages }) {
         {messages.length > 0 && (
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/90 to-transparent pointer-events-none" />
         )}
-        <div className="max-w-4xl mx-auto flex flex-col items-center relative z-10">
+        <div className="max-w-[52rem] mx-auto flex flex-col items-center relative z-10">
           
           {/* Empty state text positioned absolute above the input */}
           {messages.length === 0 && (
@@ -137,7 +137,7 @@ export default function ChatWindow({ messages, setMessages }) {
             </motion.div>
           )}
 
-          <div className="flex items-center w-full bg-surface dark:bg-surface-container-high rounded-full px-[8px] py-xs focus-within:border-primary/50 transition-all shadow-soft dark:shadow-soft-dark pl-4">
+          <div className="flex items-center w-full bg-surface dark:bg-surface-container-high rounded-full px-[8px] py-xs focus-within:border-primary/50 transition-all shadow-[0_0_15px_1px_rgba(0,0,0,0.1)] dark:shadow-soft-dark pl-4">
             <textarea
               className="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline py-sm px-sm resize-none"
               placeholder={selectedProfileId ? 'Ask a follow-up question or describe symptoms...' : 'Describe your child\'s symptoms (select a profile above for personalized guidance)...'}
