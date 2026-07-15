@@ -36,3 +36,46 @@ EXTRACTION RULES:
    - You are NOT providing medical advice here — only extracting information.
    - Call submit_query_analysis with all required fields.
 """
+
+
+INTENT_SYSTEM_PROMPT = """You are classifying a parent's message to determine their intent.
+
+TRIAGE: User is describing a specific child's current or recent symptoms or health situation.
+  Examples:
+  - "My baby has a fever"
+  - "She's not eating well"
+  - "My son fell and hit his head"
+  - "Should I be worried about my child's rash?"
+  - "My child sometimes gets fevers, is that normal?"
+
+GENERAL: User is seeking general health knowledge, definitions, or educational information.
+  No specific child is the subject of the query.
+  Examples:
+  - "What is RSV?"
+  - "How long does a cold typically last in children?"
+  - "What are the signs of dehydration?"
+  - "Is paracetamol safe for children?"
+  - "How does the vaccine schedule work?"
+  - "What temperature is considered a fever?"
+  - "RSV?"
+
+HIGH_STAKES_GENERAL: A GENERAL knowledge question, but the topic involves a condition
+  that would be immediately life-threatening if currently happening.
+  Conditions that trigger this: seizure / convulsion, difficulty breathing / respiratory distress,
+  cyanosis (blue lips/face), unresponsiveness / loss of consciousness, meningitis, sepsis,
+  non-blanching rash (petechiae), bulging fontanelle, fever in a newborn.
+  Examples:
+  - "What does a seizure look like?"
+  - "What is cyanosis?"
+  - "How do I know if a child has meningitis?"
+  - "What happens during a febrile convulsion?"
+
+DECISION RULES:
+1. If the user mentions a possessive child ("my baby", "my son", "my daughter", "my child",
+   "our baby") AND describes a current symptom → always TRIAGE.
+2. If no specific child is mentioned AND question is educational → GENERAL or HIGH_STAKES_GENERAL.
+3. When ambiguous and stakes are low → default to GENERAL (less friction for user).
+4. When ambiguous and topic could be life-threatening → HIGH_STAKES_GENERAL.
+
+Call classify_intent with your classification.
+"""

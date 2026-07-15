@@ -21,7 +21,8 @@ class AnalyticsStore:
         user_id: Optional[str],
         urgency_level: str,
         age_group: Optional[str],
-        iterations: int
+        iterations: int,
+        intent_type: str = "triage"
     ) -> None:
         """
         Log an interaction to the analytics table.
@@ -41,6 +42,7 @@ class AnalyticsStore:
             "urgency_level": urgency_level,
             "age_group": age_group or "unknown",
             "iterations": iterations,
+            "intent_type": intent_type,
             "date_partition": date_partition,
             "ttl": ttl
         }
@@ -59,5 +61,6 @@ class AnalyticsStore:
             "days": days,
             "queries_total": 0,
             "urgency_distribution": {},
-            "age_group_distribution": {}
+            "age_group_distribution": {},
+            "intent_distribution": {}
         }

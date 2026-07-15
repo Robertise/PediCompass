@@ -11,15 +11,38 @@ max_tokens = 300 (sufficient for structured tool call, not prose).
 import logging
 from typing import Optional
 
-from agent.models import ChildProfile, QueryAnalysis
+from agent.models import ChildProfile, QueryAnalysis, IntentClassification, IntentType
 from common.age_utils import AgeGroup, map_age_to_group
 from guardrails.prompt_constraints import SAFETY_SYSTEM_PROMPT_SNIPPET
 from llm.bedrock_client import BedrockClient
-from llm.prompts.stage1_prompt import STAGE1_SYSTEM_PROMPT
+from llm.prompts.stage1_prompt import STAGE1_SYSTEM_PROMPT, INTENT_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
 
 # ── Tool definition (Anthropic Messages API format) ───────────────────────────
+
+INTENT_CLASSIFICATION_TOOL: dict = {
+    "name": "classify_intent",
+    "description": "Classify the parent's message intent.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "intent": {
+                "type": "string",
+                "enum": ["triage", "general", "high_stakes_general"],
+            },
+            "topic_summary": {
+                "type": "string",
+                "description": "One-sentence summary of the topic being asked about.",
+            },
+            "high_stakes_reason": {
+                "type": "string",
+                "description": "Why flagged high-stakes. Empty string if not high_stakes_general.",
+            },
+        },
+        "required": ["intent", "topic_summary", "high_stakes_reason"],
+    },
+}
 
 QUERY_ANALYSIS_TOOL: dict = {
     "name": "submit_query_analysis",
@@ -64,6 +87,31 @@ QUERY_ANALYSIS_TOOL: dict = {
         ],
     },
 }
+
+
+class IntentDetector:
+    MAX_TOKENS = 150  # Structured tool call — minimal output needed
+
+    def __init__(self, bedrock_client: BedrockClient) -> None:
+        self.llm = bedrock_client
+
+    async def classify(self, context: list[dict]) -> IntentClassification:
+        # Convert context dicts to Bedrock format
+        messages = []
+        for msg in context:
+            messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+            
+        tool_input = await self.llm.ainvoke_with_tools(
+            system=INTENT_SYSTEM_PROMPT,
+            messages=messages,
+            tools=[INTENT_CLASSIFICATION_TOOL],
+            max_tokens=self.MAX_TOKENS,
+        )
+        return IntentClassification(
+            intent=IntentType(tool_input["intent"]),
+            topic_summary=tool_input.get("topic_summary", ""),
+            high_stakes_reason=tool_input.get("high_stakes_reason", ""),
+        )
 
 
 class Stage1Analyzer:

@@ -115,6 +115,36 @@ class QdrantManager:
             })
         return chunks
 
+    def search_no_filter(
+        self,
+        query_vector: list[float],
+        top_k: int = 10,
+    ) -> list[dict]:
+        """
+        Search the entire collection without any age_group filter.
+        Used for GENERAL intent queries where age-stratification is irrelevant.
+        """
+        results = self.client.query_points(
+            collection_name=self.collection_name,
+            query=query_vector,
+            limit=top_k,
+            with_payload=True,
+        )
+
+        chunks = []
+        for hit in results.points:
+            payload = hit.payload or {}
+            chunks.append({
+                "chunk_id": str(hit.id),
+                "score": hit.score,
+                "text": payload.get("text", ""),
+                "source_authority": payload.get("source_authority", "Unknown"),
+                "age_group": payload.get("age_group", "all"),
+                "content_type": payload.get("content_type", ""),
+                "doc_id": payload.get("doc_id", ""),
+            })
+        return chunks
+
     def upsert(self, points: list[dict]) -> None:
         """
         Upsert vectors and payloads into the collection.

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import MessageBubble from './MessageBubble'
+import ConversationStarter from './ConversationStarter'
 import { chatApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
 import { useAppStore, GUEST_PROFILE_ID } from '../../store/appStore'
@@ -40,10 +41,10 @@ export default function ChatWindow({ messages, setMessages }) {
     }
   }
 
-  const handleSend = async () => {
-    if (!input.trim() || loading) return
+  const handleSendWithText = async (textToSend) => {
+    if (!textToSend.trim() || loading) return
 
-    const userMessage = input.trim()
+    const userMessage = textToSend.trim()
     setInput('')
     setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setLoading(true)
@@ -69,6 +70,13 @@ export default function ChatWindow({ messages, setMessages }) {
     }
   }
 
+  const handleSend = () => handleSendWithText(input)
+
+  const handleQuickReply = async (text) => {
+    setInput(text)
+    await handleSendWithText(text)
+  }
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -88,7 +96,7 @@ export default function ChatWindow({ messages, setMessages }) {
               transition={{ duration: 0.3 }}
               className="w-full"
             >
-              <MessageBubble role={msg.role} content={msg.content} />
+              <MessageBubble role={msg.role} content={msg.content} onQuickReply={handleQuickReply} />
             </motion.div>
           ))}
 
@@ -126,14 +134,12 @@ export default function ChatWindow({ messages, setMessages }) {
           {messages.length === 0 && (
             <motion.div 
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="absolute bottom-full mb-10 flex flex-col items-center justify-center text-on-surface-variant w-full max-w-lg text-center gap-md"
+              className="absolute bottom-full mb-7 flex flex-col items-center justify-center text-on-surface-variant w-full max-w-[38rem] text-center gap-md"
             >
               <img src="/logo_light.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] dark:hidden block" />
               <img src="/logo_dark.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] hidden dark:block" />
               <h2 className="text-headline-md font-headline-md text-on-surface">How can I help you today?</h2>
-              <p className="text-body-md font-body-md">
-                Select a child profile above and describe their symptoms. I will guide you through evidence-based pediatric care pathways.
-              </p>
+              <ConversationStarter onSelect={handleQuickReply} />
             </motion.div>
           )}
 

@@ -2,11 +2,13 @@ import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const STAGE_META = {
-  stage0: { label: 'Safety Screen',      icon: 'health_and_safety', description: 'Pediatric emergency red flags checked' },
-  stage1: { label: 'Query Analysis',     icon: 'analytics',         description: 'Age detection and symptom parsing'     },
-  stage2: { label: 'Retrieval',          icon: 'database',          description: 'Age-stratified guideline retrieval'    },
-  stage3: { label: 'Pathway Reasoning',  icon: 'psychology',        description: 'Care pathway and urgency assessment'   },
-  stage4: { label: 'Reflection',         icon: 'published_with_changes', description: 'Completeness and accuracy check'       },
+  stage0:        { label: 'Safety Screen',     icon: 'health_and_safety',      description: 'Pediatric emergency red flags checked'            },
+  content_check: { label: 'Content Check',     icon: 'filter_alt',             description: 'Input completeness and relevance check'           },
+  intent:        { label: 'Intent Detection',  icon: 'psychology_alt',         description: 'Triage vs. general knowledge classification'      },
+  stage1:        { label: 'Query Analysis',    icon: 'analytics',              description: 'Age detection and symptom parsing'                },
+  stage2:        { label: 'Retrieval',         icon: 'database',               description: 'Age-stratified guideline retrieval'               },
+  stage3:        { label: 'Pathway Reasoning', icon: 'psychology',             description: 'Care pathway and urgency assessment'              },
+  stage4:        { label: 'Reflection',        icon: 'published_with_changes', description: 'Completeness and accuracy check'                  },
 }
 
 const MIN_WIDTH = 260

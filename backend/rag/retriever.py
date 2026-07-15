@@ -86,3 +86,33 @@ class Retriever:
 
         logger.info("After rerank: returning %d chunks", len(ranked))
         return ranked
+
+    async def retrieve_general(
+        self,
+        query_vector: list[float],
+        query_text: str = "",
+    ) -> list[dict]:
+        """
+        Retrieve top-3 chunks without age_group filter.
+        Used for GENERAL intent queries.
+        """
+        loop = asyncio.get_running_loop()
+        candidates = await loop.run_in_executor(
+            None,
+            lambda: self.qdrant.search_no_filter(
+                query_vector=query_vector,
+                top_k=_CANDIDATE_K,
+            )
+        )
+        if not candidates:
+            return []
+        if query_text:
+            ranked = await loop.run_in_executor(
+                None,
+                lambda: rerank(query=query_text, candidates=candidates, top_k=_TOP_K)
+            )
+        else:
+            ranked = sorted(candidates, key=lambda c: c.get("score", 0), reverse=True)[:_TOP_K]
+            for chunk in ranked:
+                chunk.setdefault("rerank_score", chunk.get("score", 0.0))
+        return ranked

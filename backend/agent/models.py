@@ -31,6 +31,22 @@ class RedFlag(BaseModel):
     triggered_pattern: str = Field(..., description="Internal name of the flag pattern that triggered")
 
 
+# ── Intent Detection ──────────────────────────────────────────────────────────
+
+class IntentType(str, Enum):
+    TRIAGE = "triage"
+    GENERAL = "general"
+    HIGH_STAKES_GENERAL = "high_stakes_general"
+
+
+class IntentClassification(BaseModel):
+    """Output of Intent Detection step."""
+
+    intent: IntentType
+    topic_summary: str = Field(..., description="One-sentence summary of what user is asking")
+    high_stakes_reason: str = Field(default="", description="Why flagged high-stakes. Empty if not.")
+
+
 # ── Stage 1 ───────────────────────────────────────────────────────────────────
 
 class QueryAnalysis(BaseModel):
@@ -86,6 +102,8 @@ class ReasoningTrace(BaseModel):
     """Debug/transparency trace of all stages in a single agent run."""
 
     stage0: Optional[dict[str, Any]] = None
+    content_check: Optional[dict[str, Any]] = None
+    intent: Optional[dict[str, Any]] = None
     stage1: Optional[dict[str, Any]] = None
     stage2: Optional[dict[str, Any]] = None
     stage3: Optional[dict[str, Any]] = None
@@ -96,7 +114,7 @@ class ReasoningTrace(BaseModel):
 class AgentResponse(BaseModel):
     """Final response returned by the orchestrator to the API layer."""
 
-    type: Literal["emergency", "clarification", "recommendation"]
+    type: Literal["emergency", "clarification", "recommendation", "greeting", "general", "confirmation"]
     urgency_level: Optional[UrgencyLevel] = None
     care_pathway: Optional[CarePathway] = None
     clarification_questions: Optional[list[str]] = None
@@ -106,6 +124,7 @@ class AgentResponse(BaseModel):
     pre_visit_checklist: Optional[list[str]] = None
     warning_signs: Optional[list[str]] = None
     cited_sources: Optional[list[dict[str, Any]]] = None
+    confirmation_options: Optional[list[str]] = None
     reasoning_trace: ReasoningTrace
     session_id: str
 

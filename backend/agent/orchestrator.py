@@ -28,10 +28,14 @@ from agent.models import (
     ChildProfile,
     CarePathway,
     ReasoningTrace,
+    ReasoningTrace,
     UrgencyLevel,
+    IntentType,
 )
+from agent.stage_content_check import ContentCheck, GREETING_RESPONSE_TEXT
 from agent.stage0_safety import PediatricEmergencyScreen
-from agent.stage1_analysis import Stage1Analyzer
+from agent.stage1_analysis import Stage1Analyzer, IntentDetector
+from agent.stage_general_rag import GeneralRAGHandler
 from agent.stage2_retrieval import Stage2Retriever
 from agent.stage3_reasoning import Stage3Reasoner
 from agent.stage4_reflection import Stage4Reflector
@@ -54,6 +58,8 @@ class PediCompassAgent:
     def __init__(
         self,
         safety_screen: PediatricEmergencyScreen,
+        intent_detector: IntentDetector,
+        general_rag_handler: GeneralRAGHandler,
         stage1: Stage1Analyzer,
         stage2: Stage2Retriever,
         stage3: Stage3Reasoner,
@@ -64,6 +70,8 @@ class PediCompassAgent:
         output_validator: OutputValidator,
     ) -> None:
         self.safety_screen = safety_screen
+        self.intent_detector = intent_detector
+        self.general_rag_handler = general_rag_handler
         self.stage1 = stage1
         self.stage2 = stage2
         self.stage3 = stage3
@@ -116,6 +124,7 @@ class PediCompassAgent:
                 urgency_level="emergency",
                 age_group=emergency_age_group.value if emergency_age_group else None,
                 iterations=0,
+                intent_type="emergency",
             )
             parent_message_str = (
                 f"⚠️ **{red_flag.reason}**\n\n"
@@ -133,11 +142,91 @@ class PediCompassAgent:
                 session_id=session_id,
             )
 
-        # ── Stage 1: Query Analysis (OUTSIDE loop) ────────────────────────────
+        # ── CONTENT CHECK ─────────────────────────────────────────────────────────────
+        # Load history before content check (needed to determine multi-turn vs first msg)
         session = await self.session_store.get_session(session_id)
         history = [{"role": m.role, "content": m.content} for m in session.messages]
         context = history + [{"role": "user", "content": message}]
 
+        content_check = ContentCheck.check(message=message, history=history)
+        trace.content_check = {"passed": content_check.should_pass, "reason": content_check.reason}
+
+        if not content_check.should_pass:
+            greeting_msg = GREETING_RESPONSE_TEXT
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", greeting_msg)
+            await self.analytics_store.log_query(
+                session_id=session_id,
+                user_id=user_id,
+                urgency_level="n/a",
+                age_group=None,
+                iterations=0,
+                intent_type="greeting",
+            )
+            return AgentResponse(
+                type="greeting",
+                parent_message=greeting_msg,
+                reasoning_trace=trace,
+                session_id=session_id,
+            )
+
+        # ── INTENT DETECTION ──────────────────────────────────────────────────────────
+        intent = await self.intent_detector.classify(context)
+        trace.intent = intent.model_dump()
+
+        if intent.intent == IntentType.HIGH_STAKES_GENERAL:
+            confirmation_msg = (
+                f"I want to make sure I give you the right information. "
+                f"Are you asking about {intent.topic_summary} to learn in general, "
+                f"or is your child currently experiencing this?"
+            )
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", confirmation_msg)
+            await self.analytics_store.log_query(
+                session_id=session_id,
+                user_id=user_id,
+                urgency_level="n/a",
+                age_group=None,
+                iterations=0,
+                intent_type="confirmation",
+            )
+            return AgentResponse(
+                type="confirmation",
+                parent_message=confirmation_msg,
+                confirmation_options=[
+                    "My child is experiencing this right now",
+                    "I'm asking to learn in general",
+                ],
+                reasoning_trace=trace,
+                session_id=session_id,
+            )
+
+        if intent.intent == IntentType.GENERAL:
+            general_result = await self.general_rag_handler.handle(
+                topic_summary=intent.topic_summary,
+                context=context,
+            )
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", general_result.text)
+            await self.analytics_store.log_query(
+                session_id=session_id,
+                user_id=user_id,
+                urgency_level="n/a",
+                age_group=None,
+                iterations=0,
+                intent_type="general",
+            )
+            return AgentResponse(
+                type="general",
+                parent_message=general_result.text,
+                cited_sources=general_result.cited_sources,
+                reasoning_trace=trace,
+                session_id=session_id,
+            )
+
+        # ── TRIAGE PATH — Stage 1 analyze runs HERE, unchanged ───────────────────────
+        # IMPORTANT: stage1.analyze() MUST be called here, not before intent detection.
+        # IntentDetector and Stage1Analyzer are separate classes — no shared state.
         analysis = await self.stage1.analyze(context, child_profile)
         trace.stage1 = analysis.model_dump()
 
@@ -304,6 +393,8 @@ def create_agent() -> PediCompassAgent:
 
     return PediCompassAgent(
         safety_screen=PediatricEmergencyScreen(bedrock_client=bedrock),
+        intent_detector=IntentDetector(bedrock),
+        general_rag_handler=GeneralRAGHandler(retriever=retriever, bedrock_client=bedrock),
         stage1=Stage1Analyzer(bedrock),
         stage2=Stage2Retriever(retriever),
         stage3=Stage3Reasoner(bedrock),

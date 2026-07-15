@@ -3,6 +3,8 @@ import UrgencyBadge from './UrgencyBadge'
 import CitedSources from './CitedSources'
 import PreVisitChecklist from './PreVisitChecklist'
 
+const MARKDOWN_STYLES = "space-y-3 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:pl-1 [&>ul>li]:mt-1 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:pl-1 [&>ol>li]:mt-1 [&>p]:leading-relaxed"
+
 /**
  * MessageBubble — renders a single conversation turn.
  *
@@ -10,7 +12,7 @@ import PreVisitChecklist from './PreVisitChecklist'
  *   • User messages: bubble aligned right, surface-container background
  *   • AI messages:   text rendered directly on page background (no floating bubble)
  */
-export default function MessageBubble({ role, content }) {
+export default function MessageBubble({ role, content, onQuickReply }) {
   if (role === 'user') {
     return (
       <div className="flex justify-end max-w-[52rem] mx-auto w-full">
@@ -24,13 +26,65 @@ export default function MessageBubble({ role, content }) {
   // Agent response — rendered directly on page, no bubble wrapper or icon
   return (
     <div className="max-w-[52rem] mx-auto w-full">
-      <AgentResponseCard response={content} />
+      <AgentResponseCard response={content} onQuickReply={onQuickReply} />
     </div>
   )
 }
 
-function AgentResponseCard({ response }) {
+function AgentResponseCard({ response, onQuickReply }) {
   if (!response) return null
+
+  // ── Greeting response ──────────────────────────────────────────────────────
+  if (response.type === 'greeting') {
+    return (
+      <div className={`text-body-md font-body-md text-on-surface ${MARKDOWN_STYLES}`}>
+        <ReactMarkdown>{response.parent_message}</ReactMarkdown>
+      </div>
+    )
+  }
+
+  // ── General response ───────────────────────────────────────────────────────
+  if (response.type === 'general') {
+    return (
+      <div className="flex flex-col gap-md">
+        <div className="flex items-center gap-xs text-on-surface-variant">
+          <span className="material-symbols-outlined text-[16px]">menu_book</span>
+          <span className="text-label-sm font-label-sm uppercase tracking-wider">General Knowledge</span>
+        </div>
+        <div className={`text-body-md font-body-md text-on-surface ${MARKDOWN_STYLES}`}>
+          <ReactMarkdown>{response.parent_message}</ReactMarkdown>
+        </div>
+        {response.cited_sources?.length > 0 && (
+          <CitedSources sources={response.cited_sources} />
+        )}
+        <div className="text-label-sm font-label-sm text-on-surface-variant text-center mt-1">
+          General health information only. Not a substitute for professional medical advice.
+        </div>
+      </div>
+    )
+  }
+
+  // ── Confirmation response ──────────────────────────────────────────────────
+  if (response.type === 'confirmation') {
+    return (
+      <div className="flex flex-col gap-sm">
+        <p className="text-body-md font-body-md text-on-surface">
+          {response.parent_message}
+        </p>
+        {response.confirmation_options?.map((option, i) => (
+          <button
+            key={i}
+            onClick={() => onQuickReply?.(option)}
+            className="w-full text-left bg-surface-container hover:bg-surface-container-high
+                       border border-outline/20 rounded-xl px-md py-sm text-body-md
+                       font-body-md text-on-surface transition-colors cursor-pointer"
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   // ── Error response ─────────────────────────────────────────────────────────
   if (response.type === 'error') {
@@ -133,7 +187,7 @@ function AgentResponseCard({ response }) {
 
           {/* Clinical reasoning prose */}
           {care_pathway?.clinical_reasoning && (
-            <div className="text-body-sm text-on-surface-variant">
+            <div className={`text-body-sm text-on-surface-variant ${MARKDOWN_STYLES}`}>
               <ReactMarkdown>{care_pathway.clinical_reasoning}</ReactMarkdown>
             </div>
           )}
