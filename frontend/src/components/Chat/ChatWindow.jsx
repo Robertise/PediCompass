@@ -41,12 +41,15 @@ export default function ChatWindow({ messages, setMessages }) {
     }
   }
 
-  const handleSendWithText = async (textToSend) => {
+  // textToSend  — what gets sent to the backend (may contain a token prefix)
+  // displayText — what is shown in the user bubble (defaults to textToSend)
+  const handleSendWithText = async (textToSend, displayText) => {
     if (!textToSend.trim() || loading) return
 
-    const userMessage = textToSend.trim()
+    const bubbleText = (displayText || textToSend).trim()
+    const payloadText = textToSend.trim()
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
+    setMessages(prev => [...prev, { role: 'user', content: bubbleText }])
     setLoading(true)
 
     let currentSessionId = sessionId
@@ -60,7 +63,7 @@ export default function ChatWindow({ messages, setMessages }) {
     }
 
     try {
-      const res = await chatApi.sendMessage(currentSessionId, userMessage, apiProfileId)
+      const res = await chatApi.sendMessage(currentSessionId, payloadText, apiProfileId)
       setMessages(prev => [...prev, { role: 'agent', content: res.data }])
     } catch (err) {
       console.error(err)
@@ -72,9 +75,43 @@ export default function ChatWindow({ messages, setMessages }) {
 
   const handleSend = () => handleSendWithText(input)
 
-  const handleQuickReply = async (text) => {
-    setInput(text)
-    await handleSendWithText(text)
+  // Called when user clicks a confirmation button (e.g. "I'm asking to learn in general").
+  // Sends the prefixed token to backend but shows the clean option text in the user bubble.
+  const handleConfirmReply = async (option, tokenPrefix) => {
+    if (loading) return  // guard against double-click before re-render
+
+    const prefixedMessage = `${tokenPrefix} ${option}`
+
+    // Show clean label in UI (no token visible to user)
+    setMessages(prev => [...prev, { role: 'user', content: option }])
+    setLoading(true)
+
+    let currentSessionId = sessionId
+    if (!currentSessionId) {
+      currentSessionId = await startSession()
+      if (!currentSessionId) {
+        setMessages(prev => [...prev, { role: 'agent', content: { type: 'error', reason: 'Failed to connect to server.' } }])
+        setLoading(false)
+        return
+      }
+    }
+
+    try {
+      const res = await chatApi.sendMessage(currentSessionId, prefixedMessage, apiProfileId)
+      setMessages(prev => [...prev, { role: 'agent', content: res.data }])
+    } catch (err) {
+      console.error(err)
+      setMessages(prev => [...prev, { role: 'agent', content: { type: 'error', reason: 'Sorry, I encountered an error processing your request.' } }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // payload     — what gets sent to backend (may contain token prefix from ConversationStarter)
+  // displayText — clean label shown in user bubble (optional, defaults to payload)
+  const handleQuickReply = async (payload, displayText) => {
+    if (!displayText) setInput(payload)
+    await handleSendWithText(payload, displayText)
   }
 
   const handleKeyDown = (e) => {
@@ -96,7 +133,14 @@ export default function ChatWindow({ messages, setMessages }) {
               transition={{ duration: 0.3 }}
               className="w-full"
             >
-              <MessageBubble role={msg.role} content={msg.content} onQuickReply={handleQuickReply} />
+              <MessageBubble
+                role={msg.role}
+                content={msg.content}
+                onQuickReply={handleQuickReply}
+                onConfirmReply={handleConfirmReply}
+                isLastMessage={idx === messages.length - 1}
+                loading={loading}
+              />
             </motion.div>
           ))}
 

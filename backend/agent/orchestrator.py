@@ -28,7 +28,6 @@ from agent.models import (
     ChildProfile,
     CarePathway,
     ReasoningTrace,
-    ReasoningTrace,
     UrgencyLevel,
     IntentType,
 )
@@ -54,6 +53,31 @@ class PediCompassAgent:
     """
 
     MAX_ITERATIONS = 2
+
+    # Special prefix tokens sent by frontend when user clicks a button.
+    # These bypass Content Check and Intent Detection, routing directly to the
+    # appropriate path. Tokens are stripped before persisting to session history.
+    CONFIRM_GENERAL_PREFIX = "__CONFIRM_GENERAL__"
+    CONFIRM_TRIAGE_PREFIX = "__CONFIRM_TRIAGE__"
+    GENERAL_INTRO_PREFIX = "__GENERAL_INTRO__"
+
+    # Rich intro response returned when user clicks 'Learn about children's health'.
+    # Predefined — no RAG needed, covers what the KB actually contains.
+    GENERAL_INTRO_RESPONSE = (
+        "I'm here to help with general pediatric health questions! "
+        "Here are some topics I can answer:\n\n"
+        "- **Fever management** — when to worry, how to treat at home, warning signs\n"
+        "- **Respiratory illnesses** — RSV, croup, bronchiolitis, coughs, wheezing\n"
+        "- **Ear & throat infections** — recognising symptoms, when to see a doctor\n"
+        "- **Stomach bugs & diarrhea** — rehydration, when to seek care\n"
+        "- **Skin conditions** — rashes, eczema, jaundice in newborns\n"
+        "- **Vaccinations** — recommended schedules, common side effects\n"
+        "- **Nutrition & feeding** — breastfeeding, introducing solids, age-appropriate food\n"
+        "- **Growth & development** — developmental milestones, red flags\n"
+        "- **Medications** — paracetamol and ibuprofen dosing, safety guidelines\n\n"
+        "Feel free to ask any specific question and I'll provide evidence-based information "
+        "from WHO, CDC, and AAP guidelines."
+    )
 
     def __init__(
         self,
@@ -102,6 +126,46 @@ class PediCompassAgent:
         """
         trace = ReasoningTrace()
         profile_dob = child_profile.dob if child_profile else None
+
+        # ── CONFIRMATION TOKEN DETECTION (must be first — before Stage 0) ─────
+        # Frontend prefixes confirmation button presses with a special token so
+        # the backend can route them without going through Intent Detection again.
+        # The clean message (without the token) is what gets persisted to session.
+
+        if message.startswith(self.CONFIRM_GENERAL_PREFIX):
+            clean_message = message[len(self.CONFIRM_GENERAL_PREFIX):].strip()
+            return await self._handle_confirm_general(
+                clean_message=clean_message,
+                session_id=session_id,
+                user_id=user_id,
+                trace=trace,
+            )
+
+        if message.startswith(self.CONFIRM_TRIAGE_PREFIX):
+            # Strip token and let normal flow handle it
+            message = message[len(self.CONFIRM_TRIAGE_PREFIX):].strip()
+            # Fall through to Stage 0 below
+
+        if message.startswith(self.GENERAL_INTRO_PREFIX):
+            # User clicked 'Learn about children's health' button — return predefined rich intro
+            clean_message = message[len(self.GENERAL_INTRO_PREFIX):].strip()
+            session = await self.session_store.get_session(session_id)
+            await self.session_store.append_message(session_id, "user", clean_message)
+            await self.session_store.append_message(session_id, "assistant", self.GENERAL_INTRO_RESPONSE)
+            await self.analytics_store.log_query(
+                session_id=session_id,
+                user_id=user_id,
+                urgency_level="n/a",
+                age_group=None,
+                iterations=0,
+                intent_type="general_intro",
+            )
+            return AgentResponse(
+                type="general",
+                parent_message=self.GENERAL_INTRO_RESPONSE,
+                reasoning_trace=trace,
+                session_id=session_id,
+            )
 
         # ── Stage 0: Deterministic Safety Screen ─────────────────────────────
         red_flag, screened_age_days = await self.safety_screen.screen(message, profile_dob)
@@ -364,6 +428,87 @@ class PediCompassAgent:
             "If you are concerned about your child's wellbeing right now, "
             "please contact your local emergency services or go to the nearest "
             "Pediatric Emergency Department."
+        )
+
+    def _extract_topic_from_confirmation(
+        self, history: list[dict], fallback: str
+    ) -> str:
+        """
+        Extract the topic the user originally asked about by scanning backwards
+        through session history for the last assistant confirmation message.
+
+        A confirmation message has the pattern:
+            "Are you asking about <TOPIC> to learn in general..."
+
+        Returns the extracted topic, or `fallback` if extraction fails.
+        """
+        import re as _re
+        for msg in reversed(history):
+            if msg.get("role") != "assistant":
+                continue
+            content = msg.get("content", "")
+            # Match the standard phrasing produced by the orchestrator
+            match = _re.search(
+                r"Are you asking about (.+?) to learn in general",
+                content,
+                _re.IGNORECASE,
+            )
+            if match:
+                topic = match.group(1).strip()
+                logger.info("Extracted confirmation topic from history: %r", topic)
+                return topic
+        logger.warning(
+            "Could not extract topic from confirmation history — using fallback: %r",
+            fallback,
+        )
+        return fallback
+
+    async def _handle_confirm_general(
+        self,
+        clean_message: str,
+        session_id: str,
+        user_id: Optional[str],
+        trace: "ReasoningTrace",
+    ) -> AgentResponse:
+        """
+        Handle the CONFIRM_GENERAL confirmation path.
+
+        The user clicked 'I'm asking to learn in general'. We:
+          1. Load session history.
+          2. Extract the original topic from the previous confirmation message.
+          3. Call GeneralRAGHandler with that topic.
+          4. Persist clean_message (no token) to session and log analytics.
+        """
+        session = await self.session_store.get_session(session_id)
+        history = [{"role": m.role, "content": m.content} for m in session.messages]
+
+        topic_summary = self._extract_topic_from_confirmation(
+            history=history,
+            fallback=clean_message,
+        )
+        context = history + [{"role": "user", "content": clean_message}]
+
+        general_result = await self.general_rag_handler.handle(
+            topic_summary=topic_summary,
+            context=context,
+        )
+
+        await self.session_store.append_message(session_id, "user", clean_message)
+        await self.session_store.append_message(session_id, "assistant", general_result.text)
+        await self.analytics_store.log_query(
+            session_id=session_id,
+            user_id=user_id,
+            urgency_level="n/a",
+            age_group=None,
+            iterations=0,
+            intent_type="general",
+        )
+        return AgentResponse(
+            type="general",
+            parent_message=general_result.text,
+            cited_sources=general_result.cited_sources,
+            reasoning_trace=trace,
+            session_id=session_id,
         )
 
 

@@ -5,6 +5,7 @@ without age stratification and generating a prose response.
 
 from dataclasses import dataclass
 import asyncio
+import logging
 
 from common.embedder import embed
 from rag.retriever import Retriever
@@ -12,12 +13,28 @@ from llm.bedrock_client import BedrockClient
 from llm.prompts.general_rag_prompt import GENERAL_RAG_SYSTEM_PROMPT
 from guardrails.prompt_constraints import SAFETY_SYSTEM_PROMPT_SNIPPET
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class GeneralRAGResult:
     text: str
     cited_sources: list[dict]
 
+
+# Minimum sigmoid-normalized reranker score to consider a chunk as relevant.
+# ms-marco-MiniLM-L-6-v2 raw logit → sigmoid. Threshold 0.25 ≈ raw logit ~-1.1,
+# which reliably separates topic-adjacent noise from actual relevant content.
+# Calibrate by observing logged raw/normalized scores in production.
+MIN_RELEVANCE_SCORE = 0.25
+
+OUT_OF_SCOPE_RESPONSE = (
+    "That topic isn't covered in my pediatric knowledge base. "
+    "My expertise covers common childhood illnesses, symptoms, and care guidance "
+    "based on WHO, CDC, and AAP guidelines.\n\n"
+    "If you have concerns about your child's health, please consult a qualified "
+    "pediatric healthcare professional."
+)
 
 SOFT_NUDGE = (
     "If you're asking because your child is currently showing these symptoms, "
@@ -45,21 +62,53 @@ class GeneralRAGHandler:
             query_text=topic_summary,
         )
 
-        # 3. Build system + user message
+        # 3. Grounding check — log scores and short-circuit if not relevant enough
+        if not chunks:
+            logger.info(
+                "GeneralRAG: no chunks retrieved for topic=%r — returning out-of-scope",
+                topic_summary,
+            )
+            return GeneralRAGResult(text=OUT_OF_SCOPE_RESPONSE, cited_sources=[])
+
+        best_chunk = chunks[0]
+        best_normalized = best_chunk.get("rerank_score", 0.0)
+        best_raw = best_chunk.get("rerank_score_raw", None)
+        logger.info(
+            "GeneralRAG: topic=%r | best_score_normalized=%.4f | best_score_raw=%s | threshold=%.2f",
+            topic_summary,
+            best_normalized,
+            f"{best_raw:.4f}" if best_raw is not None else "n/a (vector-score-only)",
+            MIN_RELEVANCE_SCORE,
+        )
+
+        if best_normalized < MIN_RELEVANCE_SCORE:
+            logger.info(
+                "GeneralRAG: score %.4f below threshold %.2f — returning out-of-scope",
+                best_normalized,
+                MIN_RELEVANCE_SCORE,
+            )
+            return GeneralRAGResult(text=OUT_OF_SCOPE_RESPONSE, cited_sources=[])
+
+        # 4. Build system + user message
         system = GENERAL_RAG_SYSTEM_PROMPT + "\n\n" + SAFETY_SYSTEM_PROMPT_SNIPPET
         user_msg = self._build_user_message(topic_summary, chunks)
 
-        # 4. Generate prose
+        # 5. Generate prose
         text = await self.llm.ainvoke_text(
             system=system,
             messages=[{"role": "user", "content": user_msg}],
             max_tokens=400,
         )
 
-        # 5. Append soft nudge
-        full_text = text.strip() + "\n\n" + SOFT_NUDGE
+        # 6. If LLM returned the sentinel grounding phrase, map to canonical OOS response
+        stripped = text.strip()
+        if "isn't covered in my pediatric knowledge base" in stripped:
+            logger.info("GeneralRAG: LLM returned out-of-scope sentinel — using OOS response")
+            return GeneralRAGResult(text=OUT_OF_SCOPE_RESPONSE, cited_sources=[])
+
+        # 7. Append soft nudge and return
+        full_text = stripped + "\n\n" + SOFT_NUDGE
         cited_sources = self._build_citations(chunks)
-        
         return GeneralRAGResult(text=full_text, cited_sources=cited_sources)
 
     def _build_user_message(self, topic_summary: str, chunks: list[dict]) -> str:

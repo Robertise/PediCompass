@@ -9,7 +9,7 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || ''
 const api = axios.create({
   baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 30000, // 30s — LLM calls can be slow
+  timeout: 60000, // 60s — Agentic RAG loops with multiple LLM calls can take up to 45-50s
 })
 
 // Attach JWT token to every request if authenticated

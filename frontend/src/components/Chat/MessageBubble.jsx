@@ -12,7 +12,7 @@ const MARKDOWN_STYLES = "space-y-3 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:pl-1 [
  *   • User messages: bubble aligned right, surface-container background
  *   • AI messages:   text rendered directly on page background (no floating bubble)
  */
-export default function MessageBubble({ role, content, onQuickReply }) {
+export default function MessageBubble({ role, content, onQuickReply, onConfirmReply, isLastMessage, loading }) {
   if (role === 'user') {
     return (
       <div className="flex justify-end max-w-[52rem] mx-auto w-full">
@@ -26,12 +26,18 @@ export default function MessageBubble({ role, content, onQuickReply }) {
   // Agent response — rendered directly on page, no bubble wrapper or icon
   return (
     <div className="max-w-[52rem] mx-auto w-full">
-      <AgentResponseCard response={content} onQuickReply={onQuickReply} />
+      <AgentResponseCard
+        response={content}
+        onQuickReply={onQuickReply}
+        onConfirmReply={onConfirmReply}
+        isLastMessage={isLastMessage}
+        loading={loading}
+      />
     </div>
   )
 }
 
-function AgentResponseCard({ response, onQuickReply }) {
+function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessage, loading }) {
   if (!response) return null
 
   // ── Greeting response ──────────────────────────────────────────────────────
@@ -66,6 +72,10 @@ function AgentResponseCard({ response, onQuickReply }) {
 
   // ── Confirmation response ──────────────────────────────────────────────────
   if (response.type === 'confirmation') {
+    // Token map: index 0 = TRIAGE, index 1 = GENERAL (matches orchestrator order)
+    const TOKEN_MAP = ['__CONFIRM_TRIAGE__', '__CONFIRM_GENERAL__']
+    // Buttons are disabled once a reply has been sent (not last message) or while loading
+    const buttonsDisabled = !isLastMessage || loading
     return (
       <div className="flex flex-col gap-sm">
         <p className="text-body-md font-body-md text-on-surface">
@@ -74,10 +84,15 @@ function AgentResponseCard({ response, onQuickReply }) {
         {response.confirmation_options?.map((option, i) => (
           <button
             key={i}
-            onClick={() => onQuickReply?.(option)}
-            className="w-full text-left bg-surface-container hover:bg-surface-container-high
-                       border border-outline/20 rounded-xl px-md py-sm text-body-md
-                       font-body-md text-on-surface transition-colors cursor-pointer"
+            onClick={() => !buttonsDisabled && onConfirmReply?.(option, TOKEN_MAP[i])}
+            disabled={buttonsDisabled}
+            className={`w-full text-left border rounded-xl px-md py-sm text-body-md
+                       font-body-md transition-colors
+                       ${
+                         buttonsDisabled
+                           ? 'bg-surface-container/50 border-outline/10 text-on-surface-variant opacity-40 cursor-not-allowed'
+                           : 'bg-surface-container hover:bg-surface-container-high border-outline/20 text-on-surface cursor-pointer'
+                       }`}
           >
             {option}
           </button>

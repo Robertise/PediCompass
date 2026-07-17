@@ -19,6 +19,12 @@ VAGUE_PATTERNS: list[str] = [
 ]
 
 MEDICAL_KEYWORD_PASSLIST: list[str] = [
+    # Symptom descriptors (most common parent phrasing)
+    "sick", "ill", "unwell", "not well", "not feeling well",
+    "lethargic", "fussy", "irritable", "crying", "screaming",
+    "swollen", "painful", "hurts", "hurt", "pain",
+    "vomiting", "bleeding", "limping", "redness", "discharge",
+    # Specific symptoms
     "rsv", "fever", "cough", "rash", "seizure", "vomit",
     "diarrhea", "dehydration", "vaccine", "fontanelle",
     "newborn", "infant", "toddler", "pediatric", "temperature",
@@ -77,7 +83,11 @@ class ContentCheck:
         # Word count after removing stop words
         words = re.findall(r'\b\w+\b', msg_lower)
         content_words = [w for w in words if w not in STOP_WORDS]
-        if len(content_words) < 3:
+        # Block only if there are zero content-bearing words after stop-word removal.
+        # Threshold of < 1 avoids false positives on short-but-meaningful queries
+        # like "my baby is sick" (2 words) or "what is AWS" (1 word "aws").
+        # Out-of-scope filtering is handled downstream by Intent Detection + RAG grounding.
+        if len(content_words) < 1:
             return ContentCheckResult(should_pass=False, reason="insufficient_content")
 
         return ContentCheckResult(should_pass=True, reason="sufficient_content")
