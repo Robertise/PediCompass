@@ -17,6 +17,13 @@ export default function ChatWindow({ messages, setMessages }) {
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState(null)
   const messagesEndRef = useRef(null)
+  const textareaRef = useRef(null)
+
+  useEffect(() => {
+    if (textareaRef.current && input === '') {
+      textareaRef.current.style.height = ''
+    }
+  }, [input])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -187,8 +194,9 @@ export default function ChatWindow({ messages, setMessages }) {
             </motion.div>
           )}
 
-          <div className="flex items-center w-full bg-surface dark:bg-surface-container-high rounded-full px-[8px] py-xs focus-within:border-primary/50 transition-all shadow-[0_0_15px_1px_rgba(0,0,0,0.1)] dark:shadow-soft-dark pl-4">
+          <div className="flex items-end w-full bg-surface dark:bg-surface-container-high rounded-[26px] px-[8px] py-xs focus-within:border-primary/50 transition-all shadow-[0_0_15px_1px_rgba(0,0,0,0.1)] dark:shadow-soft-dark pl-4">
             <textarea
+              ref={textareaRef}
               className="flex-1 bg-transparent border-none focus:ring-0 text-body-md font-body-md text-on-surface placeholder:text-outline py-sm px-sm resize-none"
               placeholder={selectedProfileId ? 'Ask a follow-up question or describe symptoms...' : 'Describe your child\'s symptoms (select a profile above for personalized guidance)...'}
               rows={1}
@@ -199,7 +207,7 @@ export default function ChatWindow({ messages, setMessages }) {
               onInput={(e) => { e.target.style.height = ''; e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px'; }}
             />
             <button 
-              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary hover:bg-primary-fixed-variant transition-colors shadow-sm disabled:opacity-30 disabled:hover:bg-primary"
+              className="w-10 h-10 mb-xs shrink-0 rounded-full bg-primary flex items-center justify-center text-on-primary hover:bg-primary-fixed-variant transition-colors shadow-sm disabled:opacity-30 disabled:hover:bg-primary"
               onClick={handleSend}
               disabled={!input.trim() || loading}
             >
