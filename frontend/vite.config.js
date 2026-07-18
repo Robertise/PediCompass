@@ -11,6 +11,14 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
+        // Disable response buffering so SSE events are forwarded immediately.
+        // Without this, Vite may batch events and deliver them all at once
+        // at the end of the request instead of streaming them.
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
+            proxyReq.setHeader('X-Accel-Buffering', 'no')
+          })
+        },
       },
     },
   },

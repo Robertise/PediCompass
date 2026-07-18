@@ -44,3 +44,23 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Security
         "email": claims.get('email', ''),
         "isAdmin": is_admin
     }
+
+async def get_optional_user_from_query_token(
+    token: Optional[str] = None,
+) -> Optional[dict]:
+    """Read JWT from query param — used by SSE endpoint (EventSource limitation)."""
+    if not token:
+        return None
+    try:
+        claims = await cognito_client.verify_token(token)
+        if not claims:
+            return None
+        groups = claims.get("cognito:groups", [])
+        is_admin = "pedicompass-admins" in groups
+        return {
+            "user_id": claims.get('sub'),
+            "email": claims.get('email', ''),
+            "isAdmin": is_admin
+        }
+    except Exception:
+        return None

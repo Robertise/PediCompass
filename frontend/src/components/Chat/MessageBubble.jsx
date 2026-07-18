@@ -1,9 +1,93 @@
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import UrgencyBadge from './UrgencyBadge'
 import CitedSources from './CitedSources'
 import PreVisitChecklist from './PreVisitChecklist'
 
 const MARKDOWN_STYLES = "space-y-3 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:pl-1 [&>ul>li]:mt-1 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:pl-1 [&>ol>li]:mt-1 [&>p]:leading-relaxed"
+
+// STAGE_ORDER strings must match StageNames constants in backend/agent/models.py exactly.
+// If backend stage name changes, update here too.
+const STAGE_ORDER = ['stage0', 'content_check', 'intent', 'stage1', 'stage2', 'stage3', 'stage4', 'stage5']
+const STAGE_META_INLINE = {
+  stage0:        { label: 'Safety screen',         icon: 'health_and_safety' },
+  content_check: { label: 'Content check',         icon: 'filter_alt' },
+  intent:        { label: 'Intent detection',      icon: 'psychology_alt' },
+  stage1:        { label: 'Query analysis',        icon: 'analytics' },
+  stage2:        { label: 'Retrieving guidelines', icon: 'database' },
+  stage3:        { label: 'Reasoning pathway',     icon: 'psychology' },
+  stage4:        { label: 'Reflection',            icon: 'published_with_changes' },
+  stage5:        { label: 'Generating response',   icon: 'edit_note' },
+}
+
+function StreamingPlaceholder({ trace = {}, latencies = {}, lastMessage }) {
+  const completedStages = STAGE_ORDER.filter(s => s in trace)
+  const nextStage = STAGE_ORDER.find(s => !(s in trace))
+
+  return (
+    <div className="flex flex-col gap-1.5 py-1">
+      {completedStages.map(stage => {
+        const lat = latencies[stage]
+        return (
+          <div key={stage} className="flex items-center gap-2 text-sm text-on-surface-variant">
+            <span className="material-symbols-outlined text-emerald-500 text-[15px]">check_circle</span>
+            <span className="flex-1">{STAGE_META_INLINE[stage]?.label}</span>
+            {lat != null && (
+              <span className="text-[11px] text-on-surface-variant/50 font-mono tabular-nums">
+                {lat < 1000 ? `${lat}ms` : `${(lat / 1000).toFixed(1)}s`}
+              </span>
+            )}
+          </div>
+        )
+      })}
+      {nextStage && (
+        <div className="flex items-center gap-2 text-sm text-on-surface-variant mt-0.5">
+          <span className="material-symbols-outlined text-primary text-[15px]">
+            {STAGE_META_INLINE[nextStage]?.icon}
+          </span>
+          <span className="flex-1 animate-pulse">
+            {lastMessage || `${STAGE_META_INLINE[nextStage]?.label}...`}
+          </span>
+          <span className="flex gap-0.5">
+            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-1 h-1 rounded-full bg-primary animate-bounce" style={{ animationDelay: '300ms' }} />
+          </span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function generateTraceSummary(content) {
+  const t = content.type
+  if (t === 'greeting') return 'Screened input and replied to greeting'
+  if (t === 'error') return 'Encountered an internal processing error'
+  if (t === 'emergency') return 'Detected emergency red flags during safety screen'
+  if (t === 'general') return 'Identified general intent and retrieved knowledge base'
+  if (t === 'confirmation') return 'Identified ambiguous intent and requested clarification'
+  if (t === 'clarification') return 'Analyzed input and requested missing clinical information'
+  if (t === 'recommendation') {
+    const trace = content.reasoning_trace || {}
+    let items = []
+    if (trace.stage1) items.push('analyzed symptoms')
+    if (trace.stage2) {
+      const n = trace.stage2.chunks_retrieved
+      items.push(n ? `retrieved ${n} guidelines` : 'retrieved guidelines')
+    }
+    if (trace.stage3) items.push('reasoned clinical pathway')
+    
+    if (items.length > 0) {
+      const capitalized = items[0].charAt(0).toUpperCase() + items[0].slice(1)
+      items[0] = capitalized
+      if (items.length === 1) return items[0]
+      if (items.length === 2) return `${items[0]} and ${items[1]}`
+      return `${items.slice(0, -1).join(', ')}, and ${items[items.length - 1]}`
+    }
+    return 'Analyzed clinical presentation and formulated recommendation'
+  }
+  return 'Processed clinical reasoning trace'
+}
 
 /**
  * MessageBubble — renders a single conversation turn.
@@ -12,7 +96,9 @@ const MARKDOWN_STYLES = "space-y-3 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:pl-1 [
  *   • User messages: bubble aligned right, surface-container background
  *   • AI messages:   text rendered directly on page background (no floating bubble)
  */
-export default function MessageBubble({ role, content, onQuickReply, onConfirmReply, isLastMessage, loading }) {
+export default function MessageBubble({ role, content, onQuickReply, onConfirmReply, isLastMessage, loading, isSelected, onSelectTrace }) {
+  const [isHovered, setIsHovered] = useState(false)
+
   if (role === 'user') {
     return (
       <div className="flex justify-end max-w-[52rem] mx-auto w-full">
@@ -23,22 +109,65 @@ export default function MessageBubble({ role, content, onQuickReply, onConfirmRe
     )
   }
 
+  // Determine whether this message has a trace that can be selected
+  const hasTrace = content?.reasoning_trace || content?.type === 'streaming'
+  const isCompletedTrace = hasTrace && content?.type !== 'streaming'
+
   // Agent response — rendered directly on page, no bubble wrapper or icon
   return (
-    <div className="max-w-[52rem] mx-auto w-full">
-      <AgentResponseCard
-        response={content}
-        onQuickReply={onQuickReply}
-        onConfirmReply={onConfirmReply}
-        isLastMessage={isLastMessage}
-        loading={loading}
-      />
+    <div className="max-w-[52rem] mx-auto w-full flex flex-col items-start">
+      {/* Subtle Trace summary text (Claude-style) */}
+      {onSelectTrace && isCompletedTrace && (
+        <button
+          onClick={onSelectTrace}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          className="mb-2 text-[13px] leading-relaxed transition-colors duration-300 text-left cursor-pointer flex items-center"
+          style={{
+            color: isHovered ? 'var(--color-on-surface-variant)' : '#9ca3af',
+          }}
+        >
+          <span>{generateTraceSummary(content)}</span>
+          <span 
+            className="font-mono text-[11px] leading-none mt-[1px] inline-block overflow-hidden transition-all duration-300 ease-out"
+            style={{
+              opacity: isHovered ? 1 : 0,
+              maxWidth: isHovered ? '12px' : '0px',
+              marginLeft: isHovered ? '6px' : '0px',
+              transform: isHovered ? 'translateX(0)' : 'translateX(-6px)'
+            }}
+          >
+            &gt;
+          </span>
+        </button>
+      )}
+      
+      <div className="w-full relative">
+        <AgentResponseCard
+          response={content}
+          onQuickReply={onQuickReply}
+          onConfirmReply={onConfirmReply}
+          isLastMessage={isLastMessage}
+          loading={loading}
+        />
+      </div>
     </div>
   )
 }
 
 function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessage, loading }) {
   if (!response) return null
+
+  // ── Streaming placeholder ─────────────────────────────────────────────────
+  if (response.type === 'streaming') {
+    return (
+      <StreamingPlaceholder
+        trace={response.trace}
+        latencies={response.latencies}
+        lastMessage={response.lastMessage}
+      />
+    )
+  }
 
   // ── Greeting response ──────────────────────────────────────────────────────
   if (response.type === 'greeting') {

@@ -2,13 +2,41 @@ import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const STAGE_META = {
-  stage0:        { label: 'Safety Screen',     icon: 'health_and_safety',      description: 'Pediatric emergency red flags checked'            },
-  content_check: { label: 'Content Check',     icon: 'filter_alt',             description: 'Input completeness and relevance check'           },
-  intent:        { label: 'Intent Detection',  icon: 'psychology_alt',         description: 'Triage vs. general knowledge classification'      },
-  stage1:        { label: 'Query Analysis',    icon: 'analytics',              description: 'Age detection and symptom parsing'                },
-  stage2:        { label: 'Retrieval',         icon: 'database',               description: 'Age-stratified guideline retrieval'               },
-  stage3:        { label: 'Pathway Reasoning', icon: 'psychology',             description: 'Care pathway and urgency assessment'              },
-  stage4:        { label: 'Reflection',        icon: 'published_with_changes', description: 'Completeness and accuracy check'                  },
+  stage0: {
+    label: 'Safety Screen',
+    icon: 'health_and_safety',
+    description: 'Pediatric emergency red flags — keyword match + Haiku context check',
+  },
+  content_check: {
+    label: 'Content Check',
+    icon: 'filter_alt',
+    description: 'Rule-based input filtering — greetings, vague, insufficient content',
+  },
+  intent: {
+    label: 'Intent Classification',
+    icon: 'psychology_alt',
+    description: 'Sonnet tool_use: TRIAGE / GENERAL / HIGH_STAKES_GENERAL',
+  },
+  stage1: {
+    label: 'Query Analysis',
+    icon: 'analytics',
+    description: 'Age detection and symptom parsing',
+  },
+  stage2: {
+    label: 'Retrieval',
+    icon: 'database',
+    description: 'Age-stratified guideline retrieval from Qdrant',
+  },
+  stage3: {
+    label: 'Pathway Reasoning',
+    icon: 'psychology',
+    description: 'Care pathway and urgency assessment via ESI v4',
+  },
+  stage4: {
+    label: 'Reflection',
+    icon: 'published_with_changes',
+    description: 'Completeness and accuracy check',
+  },
 }
 
 const MIN_WIDTH = 260
@@ -25,7 +53,7 @@ const DEFAULT_WIDTH = 360
  *   width        — controlled width in px
  *   onWidthChange — callback(newWidth) from drag-to-resize
  */
-export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidthChange }) {
+export default function ReasoningTrace({ trace, isStreaming, isOpen, onToggle, width, onWidthChange }) {
   // ── Drag-to-resize ───────────────────────────────────────────────────────────
   const dragStartX = useRef(null)
   const dragStartWidth = useRef(null)
@@ -100,6 +128,16 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
           <h3 className="font-label-md text-label-md uppercase tracking-wider font-bold truncate">
             Reasoning Trace
           </h3>
+          {/* Live badge — pulsing dot, only shown during active stream */}
+          {isStreaming && (
+            <span className="ml-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-primary">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary" />
+              </span>
+              Live
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1 shrink-0">
           {/* Collapse button */}
@@ -118,7 +156,7 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
         <div className="px-4 py-2 border-b border-black/5 dark:border-white/5 bg-surface-container/30 shrink-0">
           <p className="text-body-sm font-body-sm text-on-surface-variant">
             {trace.iterations || 1} iteration{(trace.iterations || 1) !== 1 ? 's' : ''} completed
-            {trace.latency_ms ? ` in ${(trace.latency_ms / 1000).toFixed(1)}s` : ''}
+            {trace.latencies && Object.keys(trace.latencies).length > 0 && ` · ${Object.values(trace.latencies).reduce((a, b) => a + b, 0) < 1000 ? `${Object.values(trace.latencies).reduce((a, b) => a + b, 0)}ms` : `${(Object.values(trace.latencies).reduce((a, b) => a + b, 0) / 1000).toFixed(1)}s`} total`}
           </p>
         </div>
       ) : (
@@ -144,6 +182,7 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
                 key={stageKey}
                 meta={meta}
                 data={trace[stageKey]}
+                latency_ms={trace.latencies?.[stageKey] ?? null}
                 isLast={index === arr.length - 1}
               />
             ))
@@ -153,7 +192,7 @@ export default function ReasoningTrace({ trace, isOpen, onToggle, width, onWidth
   )
 }
 
-function TraceStageRow({ meta, data, isLast }) {
+function TraceStageRow({ meta, data, isLast, latency_ms }) {
   const [detailOpen, setDetailOpen] = useState(false)
 
   return (
@@ -170,14 +209,21 @@ function TraceStageRow({ meta, data, isLast }) {
             <span className="text-label-md font-label-md text-on-surface">{meta.label}</span>
             <span className="text-body-sm font-body-sm text-on-surface-variant leading-tight">{meta.description}</span>
           </div>
-          {data && (
-            <button 
-              onClick={() => setDetailOpen(!detailOpen)}
-              className="text-[12px] font-label-sm text-primary hover:bg-primary-container/20 px-2 py-1 rounded transition-colors shrink-0 ml-1"
-            >
-              {detailOpen ? 'Hide' : 'View'}
-            </button>
-          )}
+          <div className="flex items-center gap-2 shrink-0 ml-1">
+            {latency_ms != null && (
+              <span className="text-[11px] font-mono tabular-nums text-on-surface-variant/50">
+                {latency_ms < 1000 ? `${latency_ms}ms` : `${(latency_ms / 1000).toFixed(1)}s`}
+              </span>
+            )}
+            {data && (
+              <button 
+                onClick={() => setDetailOpen(!detailOpen)}
+                className="text-[12px] font-label-sm text-primary hover:bg-primary-container/20 px-2 py-1 rounded transition-colors"
+              >
+                {detailOpen ? 'Hide' : 'View'}
+              </button>
+            )}
+          </div>
         </div>
         
         <AnimatePresence>

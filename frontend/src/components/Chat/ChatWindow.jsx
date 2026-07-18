@@ -6,7 +6,7 @@ import { chatApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
 import { useAppStore, GUEST_PROFILE_ID } from '../../store/appStore'
 
-export default function ChatWindow({ messages, setMessages }) {
+export default function ChatWindow({ messages, setMessages, selectedMessageIndex, onSelectMessage }) {
   const { user } = useAuthStore()
   const { selectedProfileId, setIsChatActive } = useAppStore()
   // Map sentinel "guest" → null so the backend receives a real profile_id or null
@@ -18,6 +18,15 @@ export default function ChatWindow({ messages, setMessages }) {
   const [sessionId, setSessionId] = useState(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
+  const activeSourceRef = useRef(null)
+
+  useEffect(() => {
+    return () => {
+      if (activeSourceRef.current) {
+        activeSourceRef.current.close()
+      }
+    }
+  }, [])
 
   useEffect(() => {
     if (textareaRef.current && input === '') {
@@ -69,13 +78,117 @@ export default function ChatWindow({ messages, setMessages }) {
       }
     }
 
+    // Step 1: Register message to get request_id
+    let requestId
     try {
-      const res = await chatApi.sendMessage(currentSessionId, payloadText, apiProfileId)
-      setMessages(prev => [...prev, { role: 'agent', content: res.data }])
+      const res = await chatApi.registerMessage(currentSessionId, payloadText, apiProfileId)
+      requestId = res.data.request_id
     } catch (err) {
-      console.error(err)
-      setMessages(prev => [...prev, { role: 'agent', content: { type: 'error', reason: 'Sorry, I encountered an error processing your request.' } }])
-    } finally {
+      console.error('Failed to register message:', err)
+      setMessages(prev => [...prev, {
+        role: 'agent',
+        content: { type: 'error', reason: 'Failed to send message. Please try again.' }
+      }])
+      setLoading(false)
+      return
+    }
+
+    // Add streaming placeholder with a stable id.
+    // NOTE: placeholder does NOT need reasoning_trace field — ChatPage.jsx
+    // auto-select condition now checks for type==='streaming' directly.
+    const streamingMsgId = `streaming_${Date.now()}`
+    setMessages(prev => [...prev, {
+      role: 'agent',
+      id: streamingMsgId,
+      content: { type: 'streaming', trace: {}, latencies: {}, lastMessage: null },
+    }])
+
+    // Step 2: Open SSE stream
+    const { token } = useAuthStore.getState()
+    const source = chatApi.openStream(requestId, token)
+    activeSourceRef.current = source
+
+    let liveLatencies = {}
+
+    source.onmessage = (event) => {
+      const sseEvent = JSON.parse(event.data)
+
+      if (sseEvent.event === 'heartbeat') return  // No-op — just keeps ALB alive
+
+      if (sseEvent.event === 'stage_update') {
+        // Accumulate completed stage trace data and latencies.
+        // Only update on status==='done' events (not 'running' events).
+        const newTrace = {}
+
+        if (sseEvent.stage && sseEvent.status === 'done') {
+          if (sseEvent.data) newTrace[sseEvent.stage] = sseEvent.data
+          if (sseEvent.latency_ms != null) {
+            liveLatencies = { ...liveLatencies, [sseEvent.stage]: sseEvent.latency_ms }
+          }
+        }
+
+        setMessages(prev => prev.map(m =>
+          m.id === streamingMsgId
+            ? {
+                ...m,
+                content: {
+                  type: 'streaming',
+                  trace: {
+                    ...(m.content.trace || {}),
+                    ...newTrace,
+                    latencies: liveLatencies,
+                  },
+                  latencies: liveLatencies,
+                  lastMessage: sseEvent.message ?? m.content.lastMessage,
+                }
+              }
+            : m
+        ))
+      }
+
+      if (sseEvent.event === 'final_response') {
+        // Replace streaming placeholder with real response.
+        // Attach accumulated latencies into reasoning_trace for display in sidebar.
+        const finalContent = {
+          ...sseEvent.data,
+          reasoning_trace: {
+            ...(sseEvent.data.reasoning_trace || {}),
+            latencies: liveLatencies,
+          },
+        }
+        setMessages(prev => prev.map(m =>
+          m.id === streamingMsgId
+            ? { ...m, id: undefined, content: finalContent }
+            : m
+        ))
+      }
+
+      if (sseEvent.event === 'error') {
+        setMessages(prev => prev.map(m =>
+          m.id === streamingMsgId
+            ? { ...m, id: undefined, content: { type: 'error', reason: sseEvent.message } }
+            : m
+        ))
+        source.close()
+        activeSourceRef.current = null
+        setLoading(false)
+      }
+
+      if (sseEvent.event === 'done') {
+        source.close()
+        activeSourceRef.current = null
+        setLoading(false)
+      }
+    }
+
+    source.onerror = () => {
+      setMessages(prev => prev.map(m =>
+        m.id === streamingMsgId
+          ? { ...m, id: undefined, content: { type: 'error', reason: 'Connection lost. Please try again.' } }
+          : m
+      ))
+      source.close()
+      activeSourceRef.current = null
       setLoading(false)
     }
   }
@@ -86,32 +199,8 @@ export default function ChatWindow({ messages, setMessages }) {
   // Sends the prefixed token to backend but shows the clean option text in the user bubble.
   const handleConfirmReply = async (option, tokenPrefix) => {
     if (loading) return  // guard against double-click before re-render
-
     const prefixedMessage = `${tokenPrefix} ${option}`
-
-    // Show clean label in UI (no token visible to user)
-    setMessages(prev => [...prev, { role: 'user', content: option }])
-    setLoading(true)
-
-    let currentSessionId = sessionId
-    if (!currentSessionId) {
-      currentSessionId = await startSession()
-      if (!currentSessionId) {
-        setMessages(prev => [...prev, { role: 'agent', content: { type: 'error', reason: 'Failed to connect to server.' } }])
-        setLoading(false)
-        return
-      }
-    }
-
-    try {
-      const res = await chatApi.sendMessage(currentSessionId, prefixedMessage, apiProfileId)
-      setMessages(prev => [...prev, { role: 'agent', content: res.data }])
-    } catch (err) {
-      console.error(err)
-      setMessages(prev => [...prev, { role: 'agent', content: { type: 'error', reason: 'Sorry, I encountered an error processing your request.' } }])
-    } finally {
-      setLoading(false)
-    }
+    await handleSendWithText(prefixedMessage, option)
   }
 
   // payload     — what gets sent to backend (may contain token prefix from ConversationStarter)
@@ -147,6 +236,8 @@ export default function ChatWindow({ messages, setMessages }) {
                 onConfirmReply={handleConfirmReply}
                 isLastMessage={idx === messages.length - 1}
                 loading={loading}
+                isSelected={idx === selectedMessageIndex}
+                onSelectTrace={() => onSelectMessage(idx)}
               />
             </motion.div>
           ))}

@@ -24,7 +24,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from config import settings
 from api.middleware.cors import configure_cors
-from api.routes import auth, chat, profiles, analytics
+from api.routes import auth, chat, profiles, analytics, chat_stream
 
 logging.basicConfig(
     level=logging.INFO,
@@ -47,6 +47,7 @@ configure_cors(app)
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(chat_stream.router, prefix="/api/chat", tags=["chat-stream"])
 app.include_router(profiles.router, prefix="/api/profiles", tags=["profiles"])
 app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"])
 

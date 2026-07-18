@@ -160,3 +160,38 @@ class Session(BaseModel):
     child_age_days: Optional[int] = None
     created_at: str
     ttl: int  # Unix timestamp for DynamoDB TTL
+
+
+# ── SSE Stage Names (single source of truth) ─────────────────────────────────
+# Frontend STAGE_ORDER must use exactly these string values.
+# Changing any value here requires a matching change in MessageBubble.jsx STAGE_ORDER.
+
+class StageNames:
+    SAFETY_SCREEN = "stage0"
+    CONTENT_CHECK = "content_check"
+    INTENT        = "intent"
+    AGE_DETECTION = "stage1"
+    RETRIEVAL     = "stage2"
+    PATHWAY       = "stage3"
+    REFLECTION    = "stage4"
+    OUTPUT        = "stage5"
+
+
+# ── SSE Event Models ──────────────────────────────────────────────────────────
+
+class SSEEventType(str, Enum):
+    STAGE_UPDATE   = "stage_update"
+    HEARTBEAT      = "heartbeat"     # No-op event to keep ALB connection alive
+    FINAL_RESPONSE = "final_response"
+    ERROR          = "error"
+    DONE           = "done"
+
+
+class SSEStageEvent(BaseModel):
+    """One SSE event pushed to frontend at each stage boundary."""
+    event:      SSEEventType
+    stage:      Optional[str] = None   # StageNames constant value
+    status:     str = "done"           # "running" | "done" | "skipped"
+    data:       Optional[dict] = None  # Stage trace payload
+    latency_ms: Optional[int] = None   # Wall-clock time for this stage
+    message:    Optional[str] = None   # Human-readable UI summary

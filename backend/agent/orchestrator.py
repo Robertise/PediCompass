@@ -18,7 +18,9 @@ an extra LLM call. This differs from the original proposal pseudocode, but is
 the correct engineering decision (documented in implementation_plan.md).
 """
 
+import asyncio
 import logging
+import time
 import uuid
 from datetime import datetime, timezone
 from typing import Optional
@@ -30,6 +32,9 @@ from agent.models import (
     ReasoningTrace,
     UrgencyLevel,
     IntentType,
+    SSEEventType,
+    SSEStageEvent,
+    StageNames,
 )
 from agent.stage_content_check import ContentCheck, GREETING_RESPONSE_TEXT
 from agent.stage0_safety import PediatricEmergencyScreen
@@ -411,6 +416,360 @@ class PediCompassAgent:
         )
 
     # ── private helpers ───────────────────────────────────────────────────────
+
+    async def _call_with_heartbeat(
+        self,
+        coro,
+        heartbeat_interval: float = 15.0,
+    ):
+        """
+        Run an async coroutine, yielding HEARTBEAT SSE events every
+        `heartbeat_interval` seconds until the coroutine completes.
+
+        AWS ALB has a default idle connection timeout of 60 seconds.
+        Bedrock calls (especially Stage 3 and Stage 5) can take 30–60s.
+        Without heartbeats, ALB drops the SSE connection mid-stream.
+
+        Usage (inside run_streaming):
+            result = None
+            async for hb_or_result in self._call_with_heartbeat(some_async_fn(args)):
+                if isinstance(hb_or_result, SSEStageEvent):
+                    yield hb_or_result   # forward heartbeat to caller
+                else:
+                    result = hb_or_result  # final coroutine return value
+        """
+        task = asyncio.create_task(coro)
+        while not task.done():
+            try:
+                await asyncio.wait_for(asyncio.shield(task), timeout=heartbeat_interval)
+            except asyncio.TimeoutError:
+                if not task.done():
+                    yield SSEStageEvent(event=SSEEventType.HEARTBEAT)
+        yield await task
+
+    async def run_streaming(
+        self,
+        message: str,
+        session_id: str,
+        child_profile: Optional[ChildProfile] = None,
+        user_id: Optional[str] = None,
+    ):
+        """
+        Streaming version of run(). Yields SSEStageEvent at each stage boundary.
+        run() is NOT modified — tests continue to use run() unchanged.
+
+        Session messages (user + assistant) are persisted to DynamoDB at the end,
+        same as run(). Analytics logging is also performed.
+        """
+        trace = ReasoningTrace()
+        profile_dob = child_profile.dob if child_profile else None
+        start_time = time.monotonic()
+
+        # ── Confirmation token detection (same as run()) ──────────────────────────
+        if message.startswith(self.CONFIRM_GENERAL_PREFIX):
+            clean_message = message[len(self.CONFIRM_GENERAL_PREFIX):].strip()
+            result = await self._handle_confirm_general(clean_message, session_id, user_id, trace)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        if message.startswith(self.CONFIRM_TRIAGE_PREFIX):
+            message = message[len(self.CONFIRM_TRIAGE_PREFIX):].strip()
+
+        if message.startswith(self.GENERAL_INTRO_PREFIX):
+            clean_message = message[len(self.GENERAL_INTRO_PREFIX):].strip()
+            await self.session_store.append_message(session_id, "user", clean_message)
+            await self.session_store.append_message(session_id, "assistant", self.GENERAL_INTRO_RESPONSE)
+            await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
+                urgency_level="n/a", age_group=None, iterations=0, intent_type="general_intro")
+            result = AgentResponse(type="general", parent_message=self.GENERAL_INTRO_RESPONSE,
+                                   reasoning_trace=trace, session_id=session_id)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        # ── Stage 0: Safety Screen ────────────────────────────────────────────────
+        yield SSEStageEvent(event=SSEEventType.STAGE_UPDATE, stage=StageNames.SAFETY_SCREEN,
+                            status="running", message="Running safety screen...")
+        t0 = time.monotonic()
+
+        # Use _call_with_heartbeat for the Haiku context check sub-call within screen()
+        # (Stage 0 itself is fast, but if Haiku is invoked it may take a few seconds)
+        red_flag, screened_age_days = await self.safety_screen.screen(message, profile_dob)
+        latency_ms = int((time.monotonic() - t0) * 1000)
+
+        trace.stage0 = {
+            "checked": True,
+            "red_flag_detected": bool(red_flag and red_flag.detected),
+            "triggered_pattern": red_flag.triggered_pattern if red_flag else None,
+            "age_days_resolved": screened_age_days,
+        }
+        yield SSEStageEvent(
+            event=SSEEventType.STAGE_UPDATE, stage=StageNames.SAFETY_SCREEN, status="done",
+            data=trace.stage0, latency_ms=latency_ms,
+            message="Safety screen passed" if not (red_flag and red_flag.detected)
+                    else f"Red flag: {red_flag.triggered_pattern}",
+        )
+
+        if red_flag and red_flag.detected:
+            emergency_age_group = map_age_to_group(screened_age_days) if screened_age_days else None
+            parent_msg = (f"⚠️ **{red_flag.reason}**\n\n{red_flag.immediate_action}\n\n"
+                          "Please consult a qualified pediatric healthcare professional.")
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", parent_msg)
+            await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
+                urgency_level="emergency", age_group=emergency_age_group.value if emergency_age_group else None,
+                iterations=0, intent_type="emergency")
+            result = AgentResponse(type="emergency", urgency_level=UrgencyLevel.EMERGENCY,
+                                   parent_message=parent_msg, reasoning_trace=trace, session_id=session_id)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        # ── Content Check ─────────────────────────────────────────────────────────
+        yield SSEStageEvent(event=SSEEventType.STAGE_UPDATE, stage=StageNames.CONTENT_CHECK,
+                            status="running", message="Checking input...")
+        t0 = time.monotonic()
+        session = await self.session_store.get_session(session_id)
+        history = [{"role": m.role, "content": m.content} for m in session.messages]
+        context = history + [{"role": "user", "content": message}]
+        content_check = ContentCheck.check(message=message, history=history)
+        trace.content_check = {"passed": content_check.should_pass, "reason": content_check.reason}
+        latency_ms = int((time.monotonic() - t0) * 1000)
+
+        yield SSEStageEvent(
+            event=SSEEventType.STAGE_UPDATE, stage=StageNames.CONTENT_CHECK, status="done",
+            data=trace.content_check, latency_ms=latency_ms,
+            message="Input accepted" if content_check.should_pass else f"Blocked: {content_check.reason}",
+        )
+
+        if not content_check.should_pass:
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", GREETING_RESPONSE_TEXT)
+            await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
+                urgency_level="n/a", age_group=None, iterations=0, intent_type="greeting")
+            result = AgentResponse(type="greeting", parent_message=GREETING_RESPONSE_TEXT,
+                                   reasoning_trace=trace, session_id=session_id)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        # ── Intent Detection ──────────────────────────────────────────────────────
+        yield SSEStageEvent(event=SSEEventType.STAGE_UPDATE, stage=StageNames.INTENT,
+                            status="running", message="Classifying intent...")
+        t0 = time.monotonic()
+        # Heartbeat wrapper: Intent Detection calls Bedrock (Sonnet, ~1–3s)
+        intent = None
+        async for hb_or_result in self._call_with_heartbeat(self.intent_detector.classify(context)):
+            if isinstance(hb_or_result, SSEStageEvent):
+                yield hb_or_result   # forward heartbeat
+            else:
+                intent = hb_or_result
+        trace.intent = intent.model_dump()
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        yield SSEStageEvent(
+            event=SSEEventType.STAGE_UPDATE, stage=StageNames.INTENT, status="done",
+            data=trace.intent, latency_ms=latency_ms,
+            message=f"Intent: {intent.intent.value}",
+        )
+
+        if intent.intent == IntentType.HIGH_STAKES_GENERAL:
+            confirmation_msg = (
+                f"I want to make sure I give you the right information. "
+                f"Are you asking about {intent.topic_summary} to learn in general, "
+                f"or is your child currently experiencing this?"
+            )
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", confirmation_msg)
+            await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
+                urgency_level="n/a", age_group=None, iterations=0, intent_type="confirmation")
+            result = AgentResponse(type="confirmation", parent_message=confirmation_msg,
+                                   confirmation_options=["My child is experiencing this right now", "I'm asking to learn in general"],
+                                   reasoning_trace=trace, session_id=session_id)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        if intent.intent == IntentType.GENERAL:
+            general_result = None
+            async for hb_or_result in self._call_with_heartbeat(self.general_rag_handler.handle(topic_summary=intent.topic_summary, context=context)):
+                if isinstance(hb_or_result, SSEStageEvent):
+                    yield hb_or_result
+                else:
+                    general_result = hb_or_result
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", general_result.text)
+            await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
+                urgency_level="n/a", age_group=None, iterations=0, intent_type="general")
+            result = AgentResponse(type="general", parent_message=general_result.text,
+                                   cited_sources=general_result.cited_sources,
+                                   reasoning_trace=trace, session_id=session_id)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        # ── Stage 1: Query Analysis ───────────────────────────────────────────────
+        yield SSEStageEvent(event=SSEEventType.STAGE_UPDATE, stage=StageNames.AGE_DETECTION,
+                            status="running", message="Analyzing age and symptoms...")
+        t0 = time.monotonic()
+        analysis = None
+        async for hb_or_result in self._call_with_heartbeat(self.stage1.analyze(context, child_profile)):
+            if isinstance(hb_or_result, SSEStageEvent):
+                yield hb_or_result
+            else:
+                analysis = hb_or_result
+        trace.stage1 = analysis.model_dump()
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        age_summary = (f"{analysis.age_group} · {analysis.child_age_days} days"
+                       if analysis.child_age_resolved else "Age not resolved")
+        yield SSEStageEvent(
+            event=SSEEventType.STAGE_UPDATE, stage=StageNames.AGE_DETECTION, status="done",
+            data=trace.stage1, latency_ms=latency_ms,
+            message=f"Child identified: {age_summary}" if analysis.child_age_resolved
+                    else "Age needed — asking parent",
+        )
+
+        if not analysis.child_age_resolved:
+            parent_message_str = "To give you the most appropriate guidance, I need to know your child's age. Could you please tell me how old they are?"
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", parent_message_str)
+            result = AgentResponse(type="clarification", clarification_questions=["How old is your child?"],
+                                   parent_message=parent_message_str, reasoning_trace=trace, session_id=session_id)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        if analysis.needs_clarification:
+            questions = analysis.clarification_questions or ["Could you tell me more about the symptoms?"]
+            parent_message_str = "I have a few questions to better understand your child's situation:\n\n" + "\n".join(f"- {q}" for q in questions)
+            await self.session_store.append_message(session_id, "user", message)
+            await self.session_store.append_message(session_id, "assistant", parent_message_str)
+            result = AgentResponse(type="clarification", clarification_questions=questions,
+                                   parent_message=parent_message_str, reasoning_trace=trace, session_id=session_id)
+            yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
+            yield SSEStageEvent(event=SSEEventType.DONE)
+            return
+
+        child_age_days = analysis.child_age_days
+        age_group = map_age_to_group(child_age_days)
+        pathway = None
+        chunks = []
+        enriched_query = analysis.symptom_summary
+
+        # ── Loop: Stage 2 → 3 → 4 ────────────────────────────────────────────────
+        for iteration in range(self.MAX_ITERATIONS):
+            trace.iterations = iteration + 1
+
+            # Stage 2 — Retrieval
+            yield SSEStageEvent(
+                event=SSEEventType.STAGE_UPDATE, stage=StageNames.RETRIEVAL, status="running",
+                data={"age_group": age_group.value, "query_hint": enriched_query[:60]},
+                message=f"Retrieving clinical guidelines...",
+            )
+            t0 = time.monotonic()
+            chunks = await self.stage2.retrieve(enriched_query, age_group)
+            latency_ms = int((time.monotonic() - t0) * 1000)
+            trace.stage2 = {"age_group": age_group.value, "chunks_retrieved": len(chunks), "iteration": iteration + 1}
+            sources = list({c.get("source_authority", "Unknown") for c in chunks})
+            yield SSEStageEvent(
+                event=SSEEventType.STAGE_UPDATE, stage=StageNames.RETRIEVAL, status="done",
+                data=trace.stage2, latency_ms=latency_ms,
+                message=f"Retrieved {len(chunks)} chunks · {', '.join(sources)}",
+            )
+
+            # Stage 3 — Pathway Reasoning (longest LLM call — heartbeat essential)
+            yield SSEStageEvent(event=SSEEventType.STAGE_UPDATE, stage=StageNames.PATHWAY,
+                                status="running", message="Reasoning care pathway...")
+            t0 = time.monotonic()
+            pathway = None
+            async for hb_or_result in self._call_with_heartbeat(
+                self.stage3.reason(context, chunks, age_group)
+            ):
+                if isinstance(hb_or_result, SSEStageEvent):
+                    yield hb_or_result
+                else:
+                    pathway = hb_or_result
+            latency_ms = int((time.monotonic() - t0) * 1000)
+            trace.stage3 = pathway.model_dump()
+            yield SSEStageEvent(
+                event=SSEEventType.STAGE_UPDATE, stage=StageNames.PATHWAY, status="done",
+                data=trace.stage3, latency_ms=latency_ms,
+                message=f"{pathway.urgency_level.value.upper()} · {pathway.care_setting}",
+            )
+
+            # Stage 4 — Reflection
+            yield SSEStageEvent(event=SSEEventType.STAGE_UPDATE, stage=StageNames.REFLECTION,
+                                status="running", message="Checking completeness...")
+            t0 = time.monotonic()
+            reflection = None
+            async for hb_or_result in self._call_with_heartbeat(
+                self.stage4.reflect(pathway, chunks, age_group)
+            ):
+                if isinstance(hb_or_result, SSEStageEvent):
+                    yield hb_or_result
+                else:
+                    reflection = hb_or_result
+            latency_ms = int((time.monotonic() - t0) * 1000)
+            trace.stage4 = reflection.model_dump()
+            yield SSEStageEvent(
+                event=SSEEventType.STAGE_UPDATE, stage=StageNames.REFLECTION, status="done",
+                data=trace.stage4, latency_ms=latency_ms,
+                message="Complete · No gaps found" if reflection.is_complete
+                        else f"Incomplete: {reflection.missing_info[:60]}",
+            )
+
+            if reflection.is_complete:
+                break
+            context.append({"role": "assistant",
+                             "content": f"Additional info needed: {reflection.missing_info}"})
+            enriched_query = f"{analysis.symptom_summary}. {reflection.missing_info}"
+
+        # ── Stage 5: Output Generation ────────────────────────────────────────────
+        yield SSEStageEvent(event=SSEEventType.STAGE_UPDATE, stage=StageNames.OUTPUT,
+                            status="running", message="Generating response...")
+        t0 = time.monotonic()
+        output = None
+        async for hb_or_result in self._call_with_heartbeat(self.stage5.generate(pathway, chunks, trace)):
+            if isinstance(hb_or_result, SSEStageEvent):
+                yield hb_or_result
+            else:
+                output = hb_or_result
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        total_ms = int((time.monotonic() - start_time) * 1000)
+        yield SSEStageEvent(
+            event=SSEEventType.STAGE_UPDATE, stage=StageNames.OUTPUT, status="done",
+            latency_ms=latency_ms,
+            message=f"Response generated · {total_ms / 1000:.1f}s total",
+        )
+
+        # ── Output Validation ─────────────────────────────────────────────────────
+        validation = self.output_validator.validate(output.text)
+        safe_text = output.text if validation.safe else self._safe_fallback_text(session_id, validation.flagged_pattern)
+
+        # ── Session Persistence (IMPORTANT: must happen before FINAL_RESPONSE) ────
+        # Both user message and assistant response are persisted here.
+        # If this is skipped, chat history will be missing the current turn.
+        await self.session_store.append_message(session_id, "user", message)
+        await self.session_store.append_message(session_id, "assistant", safe_text)
+        await self.analytics_store.log_query(
+            session_id=session_id, user_id=user_id,
+            urgency_level=pathway.urgency_level.value,
+            age_group=age_group.value, iterations=trace.iterations,
+        )
+
+        final_response = AgentResponse(
+            type="recommendation",
+            urgency_level=pathway.urgency_level,
+            care_pathway=pathway,
+            parent_message=safe_text,
+            pre_visit_checklist=output.pre_visit_checklist,
+            warning_signs=output.warning_signs,
+            cited_sources=output.cited_sources,
+            reasoning_trace=trace,
+            session_id=session_id,
+        )
+        yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=final_response.model_dump())
+        yield SSEStageEvent(event=SSEEventType.DONE)
 
     def _safe_fallback_text(self, session_id: str, flagged_pattern: str) -> str:
         """

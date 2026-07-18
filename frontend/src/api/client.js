@@ -86,6 +86,26 @@ export const chatApi = {
 
   getHistory: (sessionId) =>
     api.get(`/api/chat/history/${sessionId}`),
+
+  // Step 1: Register message, receive request_id
+  registerMessage: (sessionId, message, profileId = null) =>
+    api.post('/api/chat/register', {
+      session_id: sessionId,
+      message,
+      profile_id: profileId,
+    }),
+
+  // Step 2: Open SSE stream by request_id
+  // Returns an EventSource object — caller manages lifecycle (open/close).
+  //
+  // Security note: token is in query param because EventSource does not support
+  // custom headers. Token appears in server access logs and browser history.
+  // This is acceptable for this project. For production, consider cookie-based auth.
+  openStream: (requestId, token = null) => {
+    const params = new URLSearchParams({ request_id: requestId })
+    if (token) params.set('token', token)
+    return new EventSource(`${BASE_URL}/api/chat/stream?${params}`)
+  },
 }
 
 // ── Profile endpoints ────────────────────────────────────────────────────────
