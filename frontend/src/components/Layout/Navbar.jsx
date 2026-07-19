@@ -39,9 +39,23 @@ export default function Navbar() {
                   <span className="px-4 py-2 text-label-sm font-label-sm text-on-surface-variant border-b border-black/5 dark:border-white/5 truncate">
                     {user.email}
                   </span>
+                  <Link
+                    to="/profiles"
+                    className="block px-4 py-2 text-label-md font-label-md text-on-surface hover:bg-surface-container transition-colors"
+                  >
+                    Child Profiles
+                  </Link>
+                  {useAuthStore.getState().isAdmin() && (
+                    <Link
+                      to="/analytics"
+                      className="block px-4 py-2 text-label-md font-label-md text-on-surface hover:bg-surface-container transition-colors"
+                    >
+                      System Analytics
+                    </Link>
+                  )}
                   <button 
                     onClick={logout}
-                    className="text-left px-4 py-2 text-label-md font-label-md text-error hover:bg-error-container/20 transition-colors w-full"
+                    className="text-left px-4 py-2 text-label-md font-label-md text-error hover:bg-error-container/20 transition-colors w-full border-t border-black/5 dark:border-white/5 mt-1 pt-2"
                   >
                     Sign out
                   </button>

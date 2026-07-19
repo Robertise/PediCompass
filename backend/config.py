@@ -6,14 +6,15 @@ Required fields have no default — the app will fail loudly on startup
 if they are not set, which is intentional.
 """
 
+from typing import Optional
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
     # ── AWS core ──────────────────────────────────────────────────────────────
     aws_region: str = "ap-southeast-1"
-    aws_access_key_id: str
-    aws_secret_access_key: str
+    aws_access_key_id: Optional[str] = None
+    aws_secret_access_key: Optional[str] = None
 
     # ── Bedrock ───────────────────────────────────────────────────────────────
     # MUST be the inference profile ID, NOT the bare model ID.

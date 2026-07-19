@@ -28,18 +28,13 @@ class DynamoDBClient:
     """
 
     def __init__(self) -> None:
-        self._resource = boto3.resource(
-            "dynamodb",
-            region_name=settings.aws_region,
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-        )
-        self._client = boto3.client(
-            "dynamodb",
-            region_name=settings.aws_region,
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-        )
+        boto_kwargs = {"region_name": settings.aws_region}
+        if settings.aws_access_key_id and settings.aws_secret_access_key:
+            boto_kwargs["aws_access_key_id"] = settings.aws_access_key_id
+            boto_kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+
+        self._resource = boto3.resource("dynamodb", **boto_kwargs)
+        self._client = boto3.client("dynamodb", **boto_kwargs)
         logger.info("DynamoDBClient initialised (region=%s)", settings.aws_region)
 
     def get_table(self, table_name: str) -> Any:

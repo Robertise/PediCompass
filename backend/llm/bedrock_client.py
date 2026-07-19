@@ -35,12 +35,12 @@ class BedrockClient:
     """
 
     def __init__(self) -> None:
-        self._client = boto3.client(
-            "bedrock-runtime",
-            region_name=settings.aws_region,
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-        )
+        boto_kwargs = {"region_name": settings.aws_region}
+        if settings.aws_access_key_id and settings.aws_secret_access_key:
+            boto_kwargs["aws_access_key_id"] = settings.aws_access_key_id
+            boto_kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+
+        self._client = boto3.client("bedrock-runtime", **boto_kwargs)
         self._model_id = settings.bedrock_model_id
         logger.info("BedrockClient initialised with model_id=%s", self._model_id)
 

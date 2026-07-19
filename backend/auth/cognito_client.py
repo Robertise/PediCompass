@@ -10,7 +10,12 @@ from config import settings
 
 class CognitoClient:
     def __init__(self):
-        self.client = boto3.client('cognito-idp', region_name=settings.cognito_region)
+        boto_kwargs = {"region_name": settings.cognito_region}
+        if settings.aws_access_key_id and settings.aws_secret_access_key:
+            boto_kwargs["aws_access_key_id"] = settings.aws_access_key_id
+            boto_kwargs["aws_secret_access_key"] = settings.aws_secret_access_key
+        
+        self.client = boto3.client('cognito-idp', **boto_kwargs)
         self.user_pool_id = settings.cognito_user_pool_id
         self.client_id = settings.cognito_client_id
         self.region = settings.cognito_region

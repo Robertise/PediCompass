@@ -126,6 +126,7 @@ async def login(req: AuthRequest):
     user_info = {
         "email": req.email,
         "user_id": decoded.get("sub"),
+        "groups": groups,
         "isAdmin": "pedicompass-admins" in groups,
     }
     return {

@@ -23,8 +23,14 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
     return {
         "user_id": claims.get('sub'),
         "email": claims.get('email', ''),
+        "groups": groups,
         "isAdmin": is_admin
     }
+
+async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
+    if "pedicompass-admins" not in current_user.get("groups", []):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
 
 async def get_optional_user(credentials: HTTPAuthorizationCredentials = Security(security)) -> Optional[dict]:
     if not credentials:
@@ -42,6 +48,7 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Security
     return {
         "user_id": claims.get('sub'),
         "email": claims.get('email', ''),
+        "groups": groups,
         "isAdmin": is_admin
     }
 
@@ -60,6 +67,7 @@ async def get_optional_user_from_query_token(
         return {
             "user_id": claims.get('sub'),
             "email": claims.get('email', ''),
+            "groups": groups,
             "isAdmin": is_admin
         }
     except Exception:
