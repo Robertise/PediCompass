@@ -26,9 +26,6 @@ document_store = DocumentStore(db_client=_db)
 async def get_summary(days: int = 7, admin: dict = Depends(get_admin_user)):
     """
     Return aggregated query analytics for the past N days.
-
-    Note: currently returns placeholder data — the DynamoDB GSI on
-    date_partition is not yet queried. See feature_gap_analysis.md.
     """
     return await analytics_store.get_analytics_summary(days)
 

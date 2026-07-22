@@ -194,6 +194,7 @@ class PediCompassAgent:
                 age_group=emergency_age_group.value if emergency_age_group else None,
                 iterations=0,
                 intent_type="emergency",
+                symptoms=message[:500],
             )
             parent_message_str = (
                 f"⚠️ **{red_flag.reason}**\n\n"
@@ -284,6 +285,7 @@ class PediCompassAgent:
                 age_group=None,
                 iterations=0,
                 intent_type="general",
+                symptoms=intent.topic_summary,
             )
             return AgentResponse(
                 type="general",
@@ -357,6 +359,8 @@ class PediCompassAgent:
             # Stage 3 — Reason
             pathway = await self.stage3.reason(context, chunks, age_group)
             trace.stage3 = pathway.model_dump()
+            if pathway.medication_safety:
+                trace.openfda_lookup = pathway.medication_safety
 
             # Stage 4 — Reflect
             reflection = await self.stage4.reflect(pathway, chunks, age_group)
@@ -401,6 +405,7 @@ class PediCompassAgent:
             urgency_level=pathway.urgency_level.value,
             age_group=age_group.value,
             iterations=trace.iterations,
+            symptoms=analysis.symptom_summary,
         )
 
         return AgentResponse(
@@ -519,7 +524,7 @@ class PediCompassAgent:
             await self.session_store.append_message(session_id, "assistant", parent_msg)
             await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
                 urgency_level="emergency", age_group=emergency_age_group.value if emergency_age_group else None,
-                iterations=0, intent_type="emergency")
+                iterations=0, intent_type="emergency", symptoms=message[:500])
             result = AgentResponse(type="emergency", urgency_level=UrgencyLevel.EMERGENCY,
                                    parent_message=parent_msg, reasoning_trace=trace, session_id=session_id)
             yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
@@ -600,7 +605,7 @@ class PediCompassAgent:
             await self.session_store.append_message(session_id, "user", message)
             await self.session_store.append_message(session_id, "assistant", general_result.text)
             await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
-                urgency_level="n/a", age_group=None, iterations=0, intent_type="general")
+                urgency_level="n/a", age_group=None, iterations=0, intent_type="general", symptoms=intent.topic_summary)
             result = AgentResponse(type="general", parent_message=general_result.text,
                                    cited_sources=general_result.cited_sources,
                                    reasoning_trace=trace, session_id=session_id)
@@ -691,6 +696,14 @@ class PediCompassAgent:
                     pathway = hb_or_result
             latency_ms = int((time.monotonic() - t0) * 1000)
             trace.stage3 = pathway.model_dump()
+            if pathway.medication_safety:
+                trace.openfda_lookup = pathway.medication_safety
+                yield SSEStageEvent(
+                    event=SSEEventType.STAGE_UPDATE, stage=StageNames.OPENFDA_LOOKUP, status="done",
+                    data=trace.openfda_lookup, latency_ms=0,
+                    message=f"OpenFDA lookup: {pathway.medication_safety.get('drug_name', 'medication')}",
+                )
+
             yield SSEStageEvent(
                 event=SSEEventType.STAGE_UPDATE, stage=StageNames.PATHWAY, status="done",
                 data=trace.stage3, latency_ms=latency_ms,
@@ -755,6 +768,7 @@ class PediCompassAgent:
             session_id=session_id, user_id=user_id,
             urgency_level=pathway.urgency_level.value,
             age_group=age_group.value, iterations=trace.iterations,
+            symptoms=analysis.symptom_summary
         )
 
         final_response = AgentResponse(
@@ -884,11 +898,13 @@ def create_agent() -> PediCompassAgent:
     from db.analytics_store import AnalyticsStore
     from db.dynamodb_client import get_dynamodb_client
     from guardrails.output_validator import OutputValidator
+    from agent.tools.openfda_client import OpenFDAClient
 
     bedrock = BedrockClient()
     qdrant_mgr = get_qdrant_manager()
     reranker = get_reranker()
     db_client = get_dynamodb_client()
+    openfda_client = OpenFDAClient()
 
     retriever = Retriever(qdrant_manager=qdrant_mgr, reranker=reranker)
     session_store = SessionStore(db_client=db_client)
@@ -901,7 +917,7 @@ def create_agent() -> PediCompassAgent:
         general_rag_handler=GeneralRAGHandler(retriever=retriever, bedrock_client=bedrock),
         stage1=Stage1Analyzer(bedrock),
         stage2=Stage2Retriever(retriever),
-        stage3=Stage3Reasoner(bedrock),
+        stage3=Stage3Reasoner(bedrock, openfda_client),
         stage4=Stage4Reflector(bedrock),
         stage5=Stage5OutputGenerator(bedrock),
         session_store=session_store,

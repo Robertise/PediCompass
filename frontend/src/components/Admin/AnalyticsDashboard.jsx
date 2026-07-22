@@ -83,6 +83,38 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-md mb-xl">
+        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
+          <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Intent Types</h3>
+          {Object.entries(summary.intent_distribution || {}).length === 0 ? (
+            <p className="text-body-sm text-on-surface-variant">No data</p>
+          ) : (
+            Object.entries(summary.intent_distribution).map(([intent, count]) => (
+              <div key={intent} className="flex justify-between mb-xs text-body-md font-body-md text-on-surface">
+                <span className="capitalize">{intent.replace('_', ' ')}</span>
+                <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({totalQueries > 0 ? Math.round((count/totalQueries)*100) : 0}%)</span></span>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
+          <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Top Reported Symptoms</h3>
+          {Object.entries(summary.top_symptoms || {}).length === 0 ? (
+            <p className="text-body-sm text-on-surface-variant">No data</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(summary.top_symptoms).map(([symptom, count]) => (
+                <div key={symptom} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-label-md font-label-md">
+                  <span>{symptom}</span>
+                  <span className="bg-primary text-on-primary text-[10px] px-1.5 py-0.5 rounded-full">{count}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <h2 className="text-display-sm font-display-sm font-bold text-on-surface mb-md">Document Registry (KB)</h2>
       <div className="bg-surface dark:bg-surface-container-high rounded-[20px] shadow-md dark:shadow-soft-dark overflow-hidden">
         <table className="w-full border-collapse text-left">

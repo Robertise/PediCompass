@@ -22,11 +22,12 @@ class AnalyticsStore:
         urgency_level: str,
         age_group: Optional[str],
         iterations: int,
-        intent_type: str = "triage"
+        intent_type: str = "triage",
+        symptoms: Optional[str] = None
     ) -> None:
         """
         Log an interaction to the analytics table.
-        Does not store messages/symptoms, only metadata.
+        Stores metadata and symptom summary for analytics.
         """
         now = datetime.now(timezone.utc)
         date_partition = now.strftime('%Y-%m-%d')
@@ -46,6 +47,8 @@ class AnalyticsStore:
             "date_partition": date_partition,
             "ttl": ttl
         }
+        if symptoms:
+            item["symptoms"] = symptoms
         
         await self.db.put_item(self.table_name, item)
 
@@ -79,6 +82,10 @@ class AnalyticsStore:
         urgency_dist = defaultdict(int)
         age_group_dist = defaultdict(int)
         intent_dist = defaultdict(int)
+        symptom_dist = defaultdict(int)
+        
+        import re
+        stop_words = {"and", "the", "a", "an", "has", "is", "with", "of", "in", "to", "for", "on", "my", "child", "he", "she", "it", "they", "been", "having", "some", "very", "but", "not"}
         
         for items in results:
             for item in items:
@@ -89,11 +96,19 @@ class AnalyticsStore:
                     age_group_dist[item["age_group"]] += 1
                 if "intent_type" in item:
                     intent_dist[item["intent_type"]] += 1
+                if "symptoms" in item and item["symptoms"]:
+                    words = re.findall(r'\b[a-z]{3,}\b', item["symptoms"].lower())
+                    for w in words:
+                        if w not in stop_words:
+                            symptom_dist[w] += 1
+                            
+        top_symptoms = dict(sorted(symptom_dist.items(), key=lambda x: x[1], reverse=True)[:10])
                     
         return {
             "days": days,
             "queries_total": queries_total,
             "urgency_distribution": dict(urgency_dist),
             "age_group_distribution": dict(age_group_dist),
-            "intent_distribution": dict(intent_dist)
+            "intent_distribution": dict(intent_dist),
+            "top_symptoms": top_symptoms
         }
