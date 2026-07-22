@@ -6,7 +6,7 @@ Centralising here ensures age parsing logic is identical across all call sites.
 
 Design goals:
 - Pure functions, no LLM dependency, runs in <1ms
-- Handle English and Vietnamese age expressions
+- Handle English age expressions
 - Conservative estimates when exact age is ambiguous ("newborn" → 14 days)
 - Priority: Child Profile DOB > regex parse from free text > None
 """
@@ -47,16 +47,6 @@ _AGE_PATTERNS: list[tuple[str, str, Optional[int]]] = [
     # Keyword-only: "newborn" / "neonatal" / "neonate"
     # No digit group — handled separately with a fixed return value
     (r"\b(newborn|neonate|neonatal)\b", "keyword_newborn", None),
-
-    # ── Vietnamese ────────────────────────────────────────────────────────────
-    # "X ngày tuổi" (X days old)
-    (r"(\d+)\s*ngày\s*tuổi", "days", 1),
-    # "X tuần tuổi" (X weeks old)
-    (r"(\d+)\s*tuần\s*tuổi", "weeks", 7),
-    # "X tháng tuổi" (X months old)
-    (r"(\d+)\s*tháng\s*tuổi", "months", 30),
-    # "X tuổi" (X years old) — must be last to avoid matching substrings above
-    (r"(\d+)\s*tuổi", "years", 365),
 ]
 
 # Conservative estimate for "newborn" keyword with no numeric value.
@@ -72,7 +62,7 @@ def extract_age_days_from_text(text: str) -> Optional[int]:
     Does NOT call any LLM. Uses regex only. Runs in <1ms.
 
     Args:
-        text: Free-text input from a parent (English or Vietnamese).
+        text: Free-text input from a parent.
 
     Returns:
         Age in days as an integer, or None if no recognisable pattern found.

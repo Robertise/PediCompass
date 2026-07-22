@@ -38,23 +38,23 @@ export default function AnalyticsDashboard() {
     <div>
       <div className="flex justify-end mb-md">
         <select 
-          className="bg-surface-container-low border border-outline-variant/40 rounded-lg px-sm py-xs text-body-md font-body-md focus:border-primary outline-none"
+          className="bg-surface dark:bg-surface-container-high shadow-md dark:shadow-soft-dark border-none rounded-[12px] pl-4 pr-8 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer dark:[color-scheme:dark]"
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
         >
-          <option value={7}>Last 7 Days</option>
-          <option value={30}>Last 30 Days</option>
-          <option value={90}>Last 90 Days</option>
+          <option value={7} className="bg-surface dark:bg-surface-container-high text-on-surface">Last 7 Days</option>
+          <option value={30} className="bg-surface dark:bg-surface-container-high text-on-surface">Last 30 Days</option>
+          <option value={90} className="bg-surface dark:bg-surface-container-high text-on-surface">Last 90 Days</option>
         </select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-md mb-xl">
-        <div className="bg-surface border border-outline-variant/30 rounded-[20px] p-md shadow-sm flex flex-col items-center justify-center">
+        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark flex flex-col items-center justify-center">
           <div className="text-[48px] font-display-md font-bold text-primary">{totalQueries}</div>
           <div className="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Total Queries</div>
         </div>
         
-        <div className="bg-surface border border-outline-variant/30 rounded-[20px] p-md shadow-sm">
+        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
           <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Urgency Distribution</h3>
           {Object.entries(summary.urgency_distribution || {}).length === 0 ? (
             <p className="text-body-sm text-on-surface-variant">No data</p>
@@ -68,7 +68,7 @@ export default function AnalyticsDashboard() {
           )}
         </div>
 
-        <div className="bg-surface border border-outline-variant/30 rounded-[20px] p-md shadow-sm">
+        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
           <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Age Demographics</h3>
           {Object.entries(summary.age_group_distribution || {}).length === 0 ? (
             <p className="text-body-sm text-on-surface-variant">No data</p>
@@ -84,10 +84,10 @@ export default function AnalyticsDashboard() {
       </div>
 
       <h2 className="text-display-sm font-display-sm font-bold text-on-surface mb-md">Document Registry (KB)</h2>
-      <div className="bg-surface border border-outline-variant/30 rounded-[20px] shadow-sm overflow-hidden">
+      <div className="bg-surface dark:bg-surface-container-high rounded-[20px] shadow-md dark:shadow-soft-dark overflow-hidden">
         <table className="w-full border-collapse text-left">
           <thead>
-            <tr className="border-b border-outline-variant/30 bg-surface-container-low">
+            <tr className="border-b border-outline-variant/30 dark:border-white/10 bg-surface-container-low dark:bg-black/20">
               <th className="p-4 text-label-md font-label-md text-on-surface-variant">Document Name</th>
               <th className="p-4 text-label-md font-label-md text-on-surface-variant">Authority</th>
               <th className="p-4 text-label-md font-label-md text-on-surface-variant">Chunks</th>
@@ -104,7 +104,7 @@ export default function AnalyticsDashboard() {
               </tr>
             ) : (
               documents.map(doc => (
-                <tr key={doc.doc_id} className="border-b border-outline-variant/20 last:border-0 hover:bg-surface-container-lowest transition-colors">
+                <tr key={doc.doc_id} className="border-b border-outline-variant/20 dark:border-white/5 last:border-0 hover:bg-surface-container-lowest dark:hover:bg-white/5 transition-colors">
                   <td className="p-4 text-body-md font-body-md text-on-surface">{doc.filename}</td>
                   <td className="p-4">
                     <span className="bg-tertiary-container text-on-tertiary-container px-2 py-1 rounded-md text-label-sm font-label-sm">{doc.source_authority}</span>

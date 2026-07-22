@@ -52,15 +52,48 @@ class AnalyticsStore:
     async def get_analytics_summary(self, days: int = 7) -> dict:
         """
         Get analytics summary for the past N days.
-        Requires GSI on date_partition. For simple implementation, scan or multiple queries.
+        Queries the GSI by date_partition for the last 'days' dates in parallel.
         """
-        # For this prototype, if GSI is not fully setup, we return dummy/mock data
-        # In production, query the GSI by date_partition for the last 'days' dates.
+        from boto3.dynamodb.conditions import Key
+        from datetime import timedelta
+        import asyncio
+        from collections import defaultdict
+        
         now = datetime.now(timezone.utc)
+        date_strings = [(now - timedelta(days=i)).strftime('%Y-%m-%d') for i in range(days)]
+        
+        # Query all N dates in parallel
+        tasks = [
+            self.db.query(
+                table_name=self.table_name,
+                key_condition_expression=Key("date_partition").eq(d),
+                index_name="date_partition-index"
+            )
+            for d in date_strings
+        ]
+        
+        results = await asyncio.gather(*tasks)
+        
+        # Aggregate the results
+        queries_total = 0
+        urgency_dist = defaultdict(int)
+        age_group_dist = defaultdict(int)
+        intent_dist = defaultdict(int)
+        
+        for items in results:
+            for item in items:
+                queries_total += 1
+                if "urgency_level" in item:
+                    urgency_dist[item["urgency_level"]] += 1
+                if "age_group" in item:
+                    age_group_dist[item["age_group"]] += 1
+                if "intent_type" in item:
+                    intent_dist[item["intent_type"]] += 1
+                    
         return {
             "days": days,
-            "queries_total": 0,
-            "urgency_distribution": {},
-            "age_group_distribution": {},
-            "intent_distribution": {}
+            "queries_total": queries_total,
+            "urgency_distribution": dict(urgency_dist),
+            "age_group_distribution": dict(age_group_dist),
+            "intent_distribution": dict(intent_dist)
         }
