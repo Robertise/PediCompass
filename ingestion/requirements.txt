@@ -1,4 +1,4 @@
-# PediCompass — Ingestion Pipeline Requirements
+# Pedix — Ingestion Pipeline Requirements
 #
 # INSTALL ORDER (important — torch must be installed first with CPU-only index):
 #

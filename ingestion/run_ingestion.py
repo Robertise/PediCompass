@@ -1,5 +1,5 @@
 """
-run_ingestion.py — CLI entry point for PediCompass ingestion pipeline.
+run_ingestion.py — CLI entry point for Pedix ingestion pipeline.
 
 Usage::
 
@@ -19,7 +19,7 @@ Pipeline stages (in order):
     4. Contextual Retrieval (Bedrock Haiku) → enriched text per chunk
     5. Embedding (common/embedder.py) → 384-dim vectors
     6. Upsert to Qdrant
-    7. Update pedicompass_documents in DynamoDB
+    7. Update pedix_documents in DynamoDB
 
 Exit codes:
     0 — success
@@ -81,7 +81,7 @@ logger = logging.getLogger("run_ingestion")
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 VALID_SOURCES = {"NICE", "WHO", "CDC", "AAP"}
-DYNAMODB_DOCUMENTS_TABLE = "pedicompass_documents"
+DYNAMODB_DOCUMENTS_TABLE = "pedix_documents"
 QDRANT_UPSERT_BATCH_SIZE = 64   # vectors per Qdrant upsert call
 EMBED_BATCH_SIZE = 32           # texts per embedding forward pass
 
@@ -93,7 +93,7 @@ EMBED_BATCH_SIZE = 32           # texts per embedding forward pass
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="run_ingestion",
-        description="Ingest a pediatric guideline PDF into the PediCompass vector database.",
+        description="Ingest a pediatric guideline PDF into the Pedix vector database.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
         Examples:
@@ -322,7 +322,7 @@ def register_document_in_dynamodb(
     """
     Create or update the document registry entry in DynamoDB.
 
-    Table: pedicompass_documents
+    Table: pedix_documents
     PK:    doc_id (UUID string)
     """
     table = dynamodb_resource.Table(table_name)
@@ -439,7 +439,7 @@ def run_pipeline(
     start_time = time.time()
     doc_id = str(uuid.uuid4())
     logger.info("=" * 60)
-    logger.info("PediCompass Ingestion Pipeline")
+    logger.info("Pedix Ingestion Pipeline")
     logger.info("  File   : %s", pdf_path)
     logger.info("  Source : %s", source)
     logger.info("  Doc ID : %s", doc_id)
@@ -591,7 +591,7 @@ def run_pipeline(
 
     # ── Stage 7: Update DynamoDB ──────────────────────────────────────────
     logger.info("[7/7] Updating DynamoDB document registry...")
-    dynamodb_table_prefix = os.environ.get("DYNAMODB_TABLE_PREFIX", "pedicompass_")
+    dynamodb_table_prefix = os.environ.get("DYNAMODB_TABLE_PREFIX", "pedix_")
     table_name = f"{dynamodb_table_prefix}documents"
 
     try:
@@ -658,7 +658,7 @@ def main() -> None:
 
     qdrant_host = args.qdrant_host or os.environ.get("QDRANT_HOST", "localhost")
     qdrant_port = args.qdrant_port or int(os.environ.get("QDRANT_PORT", "6333"))
-    collection_name = args.collection or os.environ.get("QDRANT_COLLECTION", "pedicompass_kb")
+    collection_name = args.collection or os.environ.get("QDRANT_COLLECTION", "pedix_kb")
     aws_region = os.environ.get("AWS_REGION", "ap-southeast-1")
 
     # ── Validate PDF path ──────────────────────────────────────────────────

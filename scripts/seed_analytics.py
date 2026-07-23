@@ -21,18 +21,18 @@ async def seed_data():
     age_groups = ["newborn", "young_infant", "infant", "toddler", "preschool"]
     intents = ["triage", "triage", "general", "greeting", "confirmation"]
     
-    # Pre-defined symptom strings with common words that aren't stop words
+    # Pre-defined clinical symptom strings
     symptom_pool = [
         "high fever and severe cough",
-        "mild rash on the arms and legs",
-        "vomiting and diarrhea since yesterday",
+        "rash on arms and legs",
+        "persistent vomiting and diarrhea",
         "difficulty breathing and wheezing",
-        "ear pain and crying",
-        "high fever and no appetite",
+        "earache and ear pain",
+        "high fever and lethargy",
         "cough and runny nose",
         "vomiting and stomach ache",
         "diarrhea and fever",
-        "rash and itching"
+        "skin rash and itching"
     ]
     
     print("Seeding 20 mock analytics records...")
@@ -40,12 +40,12 @@ async def seed_data():
     now = datetime.now(timezone.utc)
     
     for i in range(20):
-        # Fake a time in the last 7 days
         days_ago = random.randint(0, 6)
         fake_time = now - timedelta(days=days_ago)
         
         date_partition = fake_time.strftime('%Y-%m-%d')
         ttl = int(fake_time.timestamp()) + (90 * 24 * 60 * 60)
+        intent = random.choice(intents)
         
         import uuid
         item = {
@@ -56,13 +56,17 @@ async def seed_data():
             "urgency_level": random.choice(urgency_levels),
             "age_group": random.choice(age_groups),
             "iterations": random.randint(1, 2),
-            "intent_type": random.choice(intents),
+            "intent_type": intent,
             "date_partition": date_partition,
-            "ttl": ttl,
-            "symptoms": random.choice(symptom_pool)
+            "ttl": ttl
         }
+        
+        # Only attach symptoms for triage / emergency queries
+        if intent in ["triage", "emergency"]:
+            item["symptoms"] = random.choice(symptom_pool)
+
         await db.put_item(store.table_name, item)
-        print(f"Inserted record {i+1}/20 - Date: {date_partition}")
+        print(f"Inserted record {i+1}/20 - Intent: {intent} - Date: {date_partition}")
         
     print("Seeding complete.")
     

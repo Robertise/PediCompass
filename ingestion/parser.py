@@ -1,5 +1,5 @@
 """
-parser.py — PDF Parser for PediCompass ingestion pipeline.
+parser.py — PDF Parser for Pedix ingestion pipeline.
 
 Uses PyMuPDF (fitz) to extract text from pediatric guideline PDFs while
 preserving structural information (section headers, tables) that is critical

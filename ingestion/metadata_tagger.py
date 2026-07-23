@@ -1,5 +1,5 @@
 """
-metadata_tagger.py — Heuristic metadata tagger for PediCompass ingestion.
+metadata_tagger.py — Heuristic metadata tagger for Pedix ingestion.
 
 Assigns structured metadata to each chunk based on:
   1. Filename patterns → source_authority

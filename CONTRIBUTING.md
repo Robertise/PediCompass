@@ -1,6 +1,6 @@
 # Contributing
 
-Thank you for helping improve PediCompass. Keep changes focused, reproducible,
+Thank you for helping improve Pedix. Keep changes focused, reproducible,
 and aligned with the existing architecture.
 
 ## Local Setup
