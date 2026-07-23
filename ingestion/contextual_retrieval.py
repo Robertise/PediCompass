@@ -1,5 +1,5 @@
 """
-contextual_retrieval.py — Contextual Retrieval enrichment for PediCompass.
+contextual_retrieval.py — Contextual Retrieval enrichment for Pedix.
 
 Implements the Anthropic Contextual Retrieval technique:
   https://www.anthropic.com/news/contextual-retrieval
@@ -11,7 +11,7 @@ user query doesn't happen to use the exact words that appear in the chunk.
 
 Why Haiku (not Sonnet)?
 - This step runs once at ingest time for every chunk in the corpus.
-- Cost at Claude Haiku pricing is ~$1–2 for the full PediCompass KB.
+- Cost at Claude Haiku pricing is ~$1–2 for the full Pedix KB.
 - Sonnet would cost ~10× more for the same operation with no quality gain
   on a 100-word summarisation task.
 - Model ID is read from BEDROCK_HAIKU_MODEL_ID env var so it can be

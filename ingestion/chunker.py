@@ -1,5 +1,5 @@
 """
-chunker.py — Semantic chunker for PediCompass ingestion pipeline.
+chunker.py — Semantic chunker for Pedix ingestion pipeline.
 
 Splits parsed document sections into chunks of 300–500 tokens with a
 50-token overlap. The primary split strategy is section-boundary-aware:

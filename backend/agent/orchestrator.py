@@ -1,5 +1,5 @@
 """
-PediCompass Agent Orchestrator.
+Pedix Agent Orchestrator.
 
 Coordinates all 5 stages of the agentic RAG pipeline:
 
@@ -52,7 +52,7 @@ from guardrails.output_validator import OutputValidator
 logger = logging.getLogger(__name__)
 
 
-class PediCompassAgent:
+class PedixAgent:
     """
     Top-level orchestrator for the 5-stage agentic RAG pipeline.
     """
@@ -285,7 +285,6 @@ class PediCompassAgent:
                 age_group=None,
                 iterations=0,
                 intent_type="general",
-                symptoms=intent.topic_summary,
             )
             return AgentResponse(
                 type="general",
@@ -307,11 +306,15 @@ class PediCompassAgent:
                 "To give you the most appropriate guidance, I need to know your "
                 "child's age. Could you please tell me how old they are?"
             )
+            age_options = analysis.clarification_options or [
+                "2 months old", "6 months old", "2 years old", "4 years old"
+            ]
             await self.session_store.append_message(session_id, "user", message)
             await self.session_store.append_message(session_id, "assistant", parent_message_str)
             return AgentResponse(
                 type="clarification",
                 clarification_questions=["How old is your child?"],
+                clarification_options=age_options,
                 parent_message=parent_message_str,
                 reasoning_trace=trace,
                 session_id=session_id,
@@ -322,6 +325,10 @@ class PediCompassAgent:
             questions = analysis.clarification_questions or [
                 "Could you tell me more about the symptoms?"
             ]
+            # Fallback symptom choices in English if LLM returns empty clarification options
+            options = analysis.clarification_options if (analysis.clarification_options and len(analysis.clarification_options) > 0) else [
+                "Fever", "Cough & Cold", "Vomiting / Diarrhea", "Skin Rash"
+            ]
             parent_message_str = (
                 "I have a few questions to better understand your child's situation:\n\n"
                 + "\n".join(f"- {q}" for q in questions)
@@ -331,10 +338,13 @@ class PediCompassAgent:
             return AgentResponse(
                 type="clarification",
                 clarification_questions=questions,
+                clarification_options=options,
                 parent_message=parent_message_str,
                 reasoning_trace=trace,
                 session_id=session_id,
             )
+
+
 
         child_age_days: int = analysis.child_age_days  # type: ignore[assignment]
         age_group = map_age_to_group(child_age_days)
@@ -605,7 +615,7 @@ class PediCompassAgent:
             await self.session_store.append_message(session_id, "user", message)
             await self.session_store.append_message(session_id, "assistant", general_result.text)
             await self.analytics_store.log_query(session_id=session_id, user_id=user_id,
-                urgency_level="n/a", age_group=None, iterations=0, intent_type="general", symptoms=intent.topic_summary)
+                urgency_level="n/a", age_group=None, iterations=0, intent_type="general")
             result = AgentResponse(type="general", parent_message=general_result.text,
                                    cited_sources=general_result.cited_sources,
                                    reasoning_trace=trace, session_id=session_id)
@@ -636,9 +646,13 @@ class PediCompassAgent:
 
         if not analysis.child_age_resolved:
             parent_message_str = "To give you the most appropriate guidance, I need to know your child's age. Could you please tell me how old they are?"
+            age_options = analysis.clarification_options or [
+                "2 months old", "6 months old", "2 years old", "4 years old"
+            ]
             await self.session_store.append_message(session_id, "user", message)
             await self.session_store.append_message(session_id, "assistant", parent_message_str)
             result = AgentResponse(type="clarification", clarification_questions=["How old is your child?"],
+                                   clarification_options=age_options,
                                    parent_message=parent_message_str, reasoning_trace=trace, session_id=session_id)
             yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
             yield SSEStageEvent(event=SSEEventType.DONE)
@@ -646,14 +660,21 @@ class PediCompassAgent:
 
         if analysis.needs_clarification:
             questions = analysis.clarification_questions or ["Could you tell me more about the symptoms?"]
+            # Fallback symptom choices in English if LLM returns empty clarification options
+            options = analysis.clarification_options if (analysis.clarification_options and len(analysis.clarification_options) > 0) else [
+                "Fever", "Cough & Cold", "Vomiting / Diarrhea", "Skin Rash"
+            ]
             parent_message_str = "I have a few questions to better understand your child's situation:\n\n" + "\n".join(f"- {q}" for q in questions)
             await self.session_store.append_message(session_id, "user", message)
             await self.session_store.append_message(session_id, "assistant", parent_message_str)
             result = AgentResponse(type="clarification", clarification_questions=questions,
+                                   clarification_options=options,
                                    parent_message=parent_message_str, reasoning_trace=trace, session_id=session_id)
             yield SSEStageEvent(event=SSEEventType.FINAL_RESPONSE, data=result.model_dump())
             yield SSEStageEvent(event=SSEEventType.DONE)
             return
+
+
 
         child_age_days = analysis.child_age_days
         age_group = map_age_to_group(child_age_days)
@@ -885,7 +906,7 @@ class PediCompassAgent:
         )
 
 
-def create_agent() -> PediCompassAgent:
+def create_agent() -> PedixAgent:
     """
     Factory function: wire up all dependencies and return a ready-to-use agent.
     Called once at application startup.
@@ -911,7 +932,7 @@ def create_agent() -> PediCompassAgent:
     analytics_store = AnalyticsStore(db_client=db_client)
     output_validator = OutputValidator()
 
-    return PediCompassAgent(
+    return PedixAgent(
         safety_screen=PediatricEmergencyScreen(bedrock_client=bedrock),
         intent_detector=IntentDetector(bedrock),
         general_rag_handler=GeneralRAGHandler(retriever=retriever, bedrock_client=bedrock),

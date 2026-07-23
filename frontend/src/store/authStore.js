@@ -110,7 +110,7 @@ export const useAuthStore = create(
       isAdmin: () => get().user?.isAdmin === true,
     }),
     {
-      name: 'pedicompass-auth',
+      name: 'pedix-auth',
       // Only persist these fields — don't persist loading/error state
       partialize: (state) => ({
         user: state.user,

@@ -36,7 +36,7 @@ export const useAppStore = create(
       setIsChatActive: (active) => set({ isChatActive: active }),
     }),
     {
-      name: 'pedicompass-app',
+      name: 'pedix-app',
       // Only persist the profile selection — modal states must NOT persist
       // (they should always start closed on every page load).
       partialize: (state) => ({

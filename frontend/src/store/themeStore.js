@@ -8,7 +8,7 @@ export const useThemeStore = create(
       setTheme: (theme) => set({ theme }),
     }),
     {
-      name: 'pedicompass-theme-storage',
+      name: 'pedix-theme-storage',
     }
   )
 )

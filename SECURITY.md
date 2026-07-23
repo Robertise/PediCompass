@@ -24,6 +24,6 @@ Report privately to the project maintainers with:
 
 ## Clinical Safety
 
-PediCompass is software, not a substitute for professional medical judgment.
+Pedix is software, not a substitute for professional medical judgment.
 Changes that affect triage, safety gating, retrieval, clinical reasoning, or
 generated advice should include targeted tests and reviewer attention.

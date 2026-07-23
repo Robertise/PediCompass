@@ -1,6 +1,6 @@
-# PediCompass - Local Development Setup
+# Pedix - Local Development Setup
 
-Welcome to the PediCompass project! This guide will walk you through setting up and running the entire application locally, from vector database ingestion to firing up the frontend and backend servers.
+Welcome to the Pedix project! This guide will walk you through setting up and running the entire application locally, from vector database ingestion to firing up the frontend and backend servers.
 
 ---
 
@@ -183,7 +183,7 @@ aws configure
   "Version": "2012-10-17",
   "Statement": [
     {"Effect": "Allow", "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"], "Resource": "*"},
-    {"Effect": "Allow", "Action": "dynamodb:*", "Resource": "arn:aws:dynamodb:ap-southeast-1:*:table/pedicompass_*"},
+    {"Effect": "Allow", "Action": "dynamodb:*", "Resource": "arn:aws:dynamodb:ap-southeast-1:*:table/pedix_*"},
     {"Effect": "Allow", "Action": "cognito-idp:*", "Resource": "*"}
   ]
 }

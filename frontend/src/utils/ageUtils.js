@@ -1,5 +1,5 @@
 /**
- * Client-side age utilities for PediCompass frontend.
+ * Client-side age utilities for Pedix frontend.
  * Mirrors common/age_utils.py logic for UI display purposes.
  */
 

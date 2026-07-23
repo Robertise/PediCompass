@@ -127,7 +127,7 @@ async def login(req: AuthRequest):
         "email": req.email,
         "user_id": decoded.get("sub"),
         "groups": groups,
-        "isAdmin": "pedicompass-admins" in groups,
+        "isAdmin": "pedix-admins" in groups,
     }
     return {
         "id_token": id_token,
