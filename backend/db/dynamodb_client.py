@@ -43,7 +43,7 @@ class DynamoDBClient:
 
     async def ensure_tables_exist(self) -> None:
         """
-        Create all 4 PediCompass tables if they do not already exist.
+        Create all 4 Pedix tables if they do not already exist.
         Idempotent — safe to call every startup.
         """
         loop = asyncio.get_running_loop()

@@ -8,7 +8,12 @@ def test_extract_age_days_from_text():
     assert extract_age_days_from_text("my 2 week old has a fever") == 14
     assert extract_age_days_from_text("3-month-old") == 90
     assert extract_age_days_from_text("newborn baby") == 14
+    assert extract_age_days_from_text("3 – 12 months") == 225
+    assert extract_age_days_from_text("Under 6 months") == 90
+    assert extract_age_days_from_text("6 months") == 180
+    assert extract_age_days_from_text("2 years") == 730
     assert extract_age_days_from_text("my child is sick") is None
+
 
 def test_map_age_to_group():
     assert map_age_to_group(10) == AgeGroup.NEWBORN

@@ -18,6 +18,7 @@ IMPORTANT: modelId must be the inference profile ID, not the bare model ID.
 import json
 import logging
 import time
+from typing import Any, Dict, Optional, Tuple
 
 import boto3
 import asyncio
@@ -210,3 +211,133 @@ class BedrockClient:
             None,
             lambda: self.invoke_text(system, messages, max_tokens)
         )
+
+    async def ainvoke_with_tools_loop(
+        self,
+        system: str,
+        messages: list[dict],
+        tools: list[dict],
+        tool_executors: dict[str, Any],
+        final_tool_name: str,
+        max_tokens: int,
+        max_turns: int = 3,
+    ) -> tuple[dict, dict[str, Any]]:
+        """
+        Execute a multi-turn tool_use loop with Bedrock until `final_tool_name` is invoked.
+
+        Args:
+            system: System prompt string.
+            messages: Conversation history list of message dicts.
+            tools: List of Anthropic tool definition dicts.
+            tool_executors: Mapping from tool name to async or sync callable.
+            final_tool_name: Name of tool that completes the loop (e.g. "submit_care_pathway").
+            max_tokens: Max tokens per LLM turn.
+            max_turns: Safety cap on turns.
+
+        Returns:
+            Tuple of (final_tool_input_dict, executed_tool_results_dict).
+        """
+        curr_messages = list(messages)
+        executed_results: dict[str, Any] = {}
+        loop = asyncio.get_running_loop()
+
+        for turn in range(max_turns):
+            curr_messages = self._sanitize_messages(curr_messages)
+            
+            # If intermediate tools executed or on final turn, force final tool name.
+            # Otherwise, use {"type": "any"} to guarantee tool execution in every turn.
+            if turn == max_turns - 1 or len(executed_results) > 0:
+                tool_choice = {"type": "tool", "name": final_tool_name}
+            else:
+                tool_choice = {"type": "any"}
+
+            body = {
+                "anthropic_version": _ANTHROPIC_VERSION,
+                "system": system,
+                "messages": curr_messages,
+                "tools": tools,
+                "tool_choice": tool_choice,
+                "max_tokens": max_tokens,
+            }
+
+            def _invoke():
+                max_retries = 3
+                for attempt in range(max_retries + 1):
+                    try:
+                        return self._client.invoke_model(
+                            modelId=self._model_id,
+                            body=json.dumps(body),
+                            contentType="application/json",
+                            accept="application/json",
+                        )
+                    except Exception as exc:
+                        if "ThrottlingException" in str(exc) and attempt < max_retries:
+                            wait_time = 2 ** attempt
+                            logger.warning("Throttled by Bedrock loop. Retrying in %ds... (attempt %d/%d)", wait_time, attempt + 1, max_retries)
+                            time.sleep(wait_time)
+                        else:
+                            raise RuntimeError(f"Bedrock API error: {exc}") from exc
+
+            response = await loop.run_in_executor(None, _invoke)
+            response_body = json.loads(response["body"].read())
+            content_blocks = response_body.get("content", [])
+
+            # Add assistant response to messages context for multi-turn continuity
+            curr_messages.append({"role": "assistant", "content": content_blocks})
+
+            tool_calls = [b for b in content_blocks if b.get("type") == "tool_use"]
+            if not tool_calls:
+                logger.warning("No tool_use block returned in turn %d (stop_reason=%s). Retrying with forced final tool choice.", turn + 1, response_body.get("stop_reason"))
+                body["tool_choice"] = {"type": "tool", "name": final_tool_name}
+                response = await loop.run_in_executor(None, _invoke)
+                response_body = json.loads(response["body"].read())
+                content_blocks = response_body.get("content", [])
+                tool_calls = [b for b in content_blocks if b.get("type") == "tool_use"]
+                if not tool_calls:
+                    raise ValueError(
+                        f"Bedrock did not return any tool_use block in loop turn {turn+1}. "
+                        f"stop_reason={response_body.get('stop_reason')}"
+                    )
+
+
+            # Check if final tool was called
+            for call in tool_calls:
+                tool_name = call.get("name")
+                if tool_name == final_tool_name:
+                    return call.get("input", {}), executed_results
+
+            # Execute intermediate tools
+            tool_results_content = []
+            for call in tool_calls:
+                tool_name = call.get("name")
+                tool_use_id = call.get("id")
+                tool_input = call.get("input", {})
+
+                if tool_name in tool_executors:
+                    logger.info("Executing intermediate tool %r in loop turn %d", tool_name, turn + 1)
+                    executor = tool_executors[tool_name]
+                    import inspect
+                    if inspect.iscoroutinefunction(executor):
+                        res = await executor(**tool_input)
+                    else:
+                        res = await loop.run_in_executor(None, lambda: executor(**tool_input))
+
+                    executed_results[tool_name] = res
+                    res_text = json.dumps(res) if not isinstance(res, str) else res
+                    tool_results_content.append({
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": res_text,
+                    })
+                else:
+                    logger.warning("Unknown tool %r called in loop turn %d", tool_name, turn + 1)
+                    tool_results_content.append({
+                        "type": "tool_result",
+                        "tool_use_id": tool_use_id,
+                        "content": json.dumps({"error": f"Tool {tool_name} not available."}),
+                    })
+
+            curr_messages.append({"role": "user", "content": tool_results_content})
+
+        raise RuntimeError(f"Bedrock tool loop exceeded maximum turns ({max_turns}) without invoking {final_tool_name}.")
+

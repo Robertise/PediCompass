@@ -85,7 +85,17 @@ class AnalyticsStore:
         symptom_dist = defaultdict(int)
         
         import re
-        stop_words = {"and", "the", "a", "an", "has", "is", "with", "of", "in", "to", "for", "on", "my", "child", "he", "she", "it", "they", "been", "having", "some", "very", "but", "not"}
+        stop_words = {
+            "and", "the", "a", "an", "has", "is", "with", "of", "in", "to", "for", "on", "my", "child",
+            "he", "she", "it", "they", "been", "having", "some", "very", "but", "not", "about", "information",
+            "definition", "approximately", "approx", "hours", "hour", "day", "days", "week", "weeks", "month",
+            "months", "year", "years", "old", "age", "mild", "severe", "moderate", "tylenol", "ibuprofen",
+            "paracetamol", "advil", "motrin", "medication", "medicine", "drug", "dose", "dosage", "giving",
+            "give", "given", "take", "taking", "taken", "can", "what", "how", "when", "where", "why", "who",
+            "does", "do", "did", "please", "help", "know", "want", "like", "need", "should", "would", "could",
+            "treatment", "management", "use", "using", "used", "patient", "kid", "kids", "baby", "infant",
+            "toddler", "preschool", "boy", "girl", "son", "daughter", "since", "yesterday", "today"
+        }
         
         for items in results:
             for item in items:

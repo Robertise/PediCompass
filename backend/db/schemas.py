@@ -1,11 +1,11 @@
 """
-DynamoDB table schemas for PediCompass.
+DynamoDB table schemas for Pedix.
 
 Four tables:
-  1. pedicompass_sessions       — Ephemeral, TTL 24h
-  2. pedicompass_profiles       — Persistent, no TTL
-  3. pedicompass_analytics_log  — TTL 90 days, GSI on date_partition
-  4. pedicompass_documents      — Document registry, persistent
+  1. pedix_sessions       — Ephemeral, TTL 24h
+  2. pedix_profiles       — Persistent, no TTL
+  3. pedix_analytics_log  — TTL 90 days, GSI on date_partition
+  4. pedix_documents      — Document registry, persistent
 
 This module defines the boto3 create_table kwargs for each table.
 Used by DynamoDBClient.ensure_tables_exist() on startup.
@@ -13,7 +13,7 @@ Used by DynamoDBClient.ensure_tables_exist() on startup.
 
 from config import settings
 
-_PREFIX = settings.dynamodb_table_prefix  # default: "pedicompass_"
+_PREFIX = settings.dynamodb_table_prefix  # default: "pedix_"
 
 
 def _table(suffix: str) -> str:
