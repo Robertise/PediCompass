@@ -1,1 +1,1 @@
-"""Agent package for PediCompass."""
+"""Agent package for Pedix."""

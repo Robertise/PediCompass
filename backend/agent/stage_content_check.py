@@ -40,7 +40,7 @@ STOP_WORDS: set[str] = {
 }
 
 GREETING_RESPONSE_TEXT = (
-    "Hello! I'm PediCompass, your pediatric health guide. You can ask me about your child's "
+    "Hello! I'm Pedix, your pediatric health guide. You can ask me about your child's "
     "symptoms for age-appropriate care guidance, or explore general children's health topics "
     "like fever management, RSV, vaccination schedules, and more. How can I help you today?"
 )

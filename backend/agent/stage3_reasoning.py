@@ -17,9 +17,31 @@ from guardrails.prompt_constraints import SAFETY_SYSTEM_PROMPT_SNIPPET
 from llm.bedrock_client import BedrockClient
 from llm.prompts.stage3_prompt import STAGE3_SYSTEM_PROMPT
 
+from agent.tools.openfda_client import OpenFDAClient
+
 logger = logging.getLogger(__name__)
 
-# ── Tool definition ───────────────────────────────────────────────────────────
+# ── Tool definitions ───────────────────────────────────────────────────────────
+
+OPENFDA_LOOKUP_TOOL: dict = {
+    "name": "lookup_openfda",
+    "description": (
+        "Look up real-world pediatric adverse event reports for a specific medication "
+        "from the FDA Adverse Event Reporting System (FAERS). Call this tool ONLY when "
+        "the parent has mentioned giving their child a specific medication or asked about "
+        "medication safety. Do NOT call this for general symptom queries."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "drug_name": {
+                "type": "string",
+                "description": "The medication name (brand or generic, e.g. 'Tylenol', 'acetaminophen', 'ibuprofen').",
+            },
+        },
+        "required": ["drug_name"],
+    },
+}
 
 CARE_PATHWAY_TOOL: dict = {
     "name": "submit_care_pathway",
@@ -79,12 +101,18 @@ class Stage3Reasoner:
     """
     Stage 3: Produces a structured CarePathway by reasoning over the
     conversation context and retrieved guideline chunks using ESI v4.
+    Supports agentic OpenFDA tool lookup if medications are mentioned.
     """
 
-    MAX_TOKENS = 500
+    MAX_TOKENS = 600
 
-    def __init__(self, bedrock_client: BedrockClient) -> None:
+    def __init__(
+        self,
+        bedrock_client: BedrockClient,
+        openfda_client: Optional[OpenFDAClient] = None,
+    ) -> None:
         self.llm = bedrock_client
+        self.openfda = openfda_client or OpenFDAClient()
 
     async def reason(
         self,
@@ -101,19 +129,27 @@ class Stage3Reasoner:
             age_group: Resolved age group for prompt context.
 
         Returns:
-            CarePathway with urgency level, care setting, actions, and reasoning.
+            CarePathway with urgency level, care setting, actions, reasoning, and optional medication_safety.
         """
         system = self._build_system(chunks, age_group)
         messages = list(context)  # copy to avoid mutation
 
-        tool_input = await self.llm.ainvoke_with_tools(
+        tools = [OPENFDA_LOOKUP_TOOL, CARE_PATHWAY_TOOL]
+        executors = {
+            "lookup_openfda": self.openfda.lookup_pediatric_adverse_events,
+        }
+
+        tool_input, executed_results = await self.llm.ainvoke_with_tools_loop(
             system=system,
             messages=messages,
-            tools=[CARE_PATHWAY_TOOL],
+            tools=tools,
+            tool_executors=executors,
+            final_tool_name="submit_care_pathway",
             max_tokens=self.MAX_TOKENS,
         )
 
-        return self._parse_tool_input(tool_input)
+        medication_safety = executed_results.get("lookup_openfda")
+        return self._parse_tool_input(tool_input, medication_safety=medication_safety)
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
@@ -139,11 +175,15 @@ class Stage3Reasoner:
             lines.append(f"[{i}] SOURCE: {source} (ID: {chunk_id})\n{text}")
         return "\n\n---\n\n".join(lines)
 
-    def _parse_tool_input(self, tool_input: dict) -> CarePathway:
+    def _parse_tool_input(
+        self, tool_input: dict, medication_safety: Optional[dict] = None
+    ) -> CarePathway:
         return CarePathway(
             urgency_level=UrgencyLevel(tool_input["urgency_level"]),
             care_setting=tool_input["care_setting"],
             immediate_actions=tool_input.get("immediate_actions", []),
             clinical_reasoning=tool_input.get("clinical_reasoning", ""),
             supporting_guidelines=tool_input.get("supporting_guidelines", []),
+            medication_safety=medication_safety,
         )
+

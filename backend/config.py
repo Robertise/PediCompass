@@ -1,5 +1,5 @@
 """
-Central configuration for PediCompass backend.
+Central configuration for Pedix backend.
 
 All settings are loaded from environment variables (or .env file).
 Required fields have no default — the app will fail loudly on startup
@@ -35,12 +35,15 @@ class Settings(BaseSettings):
     cognito_region: str = "ap-southeast-1"
 
     # ── DynamoDB ──────────────────────────────────────────────────────────────
-    dynamodb_table_prefix: str = "pedicompass_"
+    dynamodb_table_prefix: str = "pedix_"
 
     # ── Qdrant ────────────────────────────────────────────────────────────────
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    qdrant_collection: str = "pedicompass_kb"
+    qdrant_collection: str = "pedix_kb"
+
+    # ── External Tools ────────────────────────────────────────────────────────
+    openfda_api_key: Optional[str] = None
 
     # ── App ───────────────────────────────────────────────────────────────────
     frontend_url: str = "http://localhost:5173"

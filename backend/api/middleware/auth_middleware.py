@@ -18,7 +18,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
         raise HTTPException(status_code=401, detail="Invalid token")
         
     groups = claims.get("cognito:groups", [])
-    is_admin = "pedicompass-admins" in groups
+    is_admin = "pedix-admins" in groups
 
     return {
         "user_id": claims.get('sub'),
@@ -28,7 +28,7 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(
     }
 
 async def get_admin_user(current_user: dict = Depends(get_current_user)) -> dict:
-    if "pedicompass-admins" not in current_user.get("groups", []):
+    if "pedix-admins" not in current_user.get("groups", []):
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user
 
@@ -43,7 +43,7 @@ async def get_optional_user(credentials: HTTPAuthorizationCredentials = Security
         return None
         
     groups = claims.get("cognito:groups", [])
-    is_admin = "pedicompass-admins" in groups
+    is_admin = "pedix-admins" in groups
 
     return {
         "user_id": claims.get('sub'),
@@ -63,7 +63,7 @@ async def get_optional_user_from_query_token(
         if not claims:
             return None
         groups = claims.get("cognito:groups", [])
-        is_admin = "pedicompass-admins" in groups
+        is_admin = "pedix-admins" in groups
         return {
             "user_id": claims.get('sub'),
             "email": claims.get('email', ''),

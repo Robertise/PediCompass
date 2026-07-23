@@ -44,7 +44,8 @@ class IntentClassification(BaseModel):
 
     intent: IntentType
     topic_summary: str = Field(..., description="One-sentence summary of what user is asking")
-    high_stakes_reason: str = Field(default="", description="Why flagged high-stakes. Empty if not.")
+    high_stakes_reason: Optional[str] = Field(default="", description="Why flagged high-stakes. Empty if not.")
+
 
 
 # ── Stage 1 ───────────────────────────────────────────────────────────────────
@@ -61,6 +62,11 @@ class QueryAnalysis(BaseModel):
         default_factory=list,
         description="Questions to ask the parent (max 3)",
     )
+    clarification_options: list[str] = Field(
+        default_factory=list,
+        description="Quick-tap answer options for the clarification questions (max 4)",
+    )
+
 
 
 # ── Stage 3 ───────────────────────────────────────────────────────────────────
@@ -77,6 +83,9 @@ class CarePathway(BaseModel):
     clinical_reasoning: str = Field(..., description="Clinical reasoning narrative")
     supporting_guidelines: list[str] = Field(
         ..., description="Source chunk IDs or guideline references used"
+    )
+    medication_safety: Optional[dict[str, Any]] = Field(
+        default=None, description="OpenFDA adverse event lookup data if drug was queried"
     )
 
 
@@ -107,6 +116,7 @@ class ReasoningTrace(BaseModel):
     stage1: Optional[dict[str, Any]] = None
     stage2: Optional[dict[str, Any]] = None
     stage3: Optional[dict[str, Any]] = None
+    openfda_lookup: Optional[dict[str, Any]] = None
     stage4: Optional[dict[str, Any]] = None
     iterations: int = 0
 
@@ -118,6 +128,7 @@ class AgentResponse(BaseModel):
     urgency_level: Optional[UrgencyLevel] = None
     care_pathway: Optional[CarePathway] = None
     clarification_questions: Optional[list[str]] = None
+    clarification_options: Optional[list[str]] = None
     parent_message: str = Field(
         ..., description="Parent-facing prose response from Stage 5"
     )
@@ -167,14 +178,15 @@ class Session(BaseModel):
 # Changing any value here requires a matching change in MessageBubble.jsx STAGE_ORDER.
 
 class StageNames:
-    SAFETY_SCREEN = "stage0"
-    CONTENT_CHECK = "content_check"
-    INTENT        = "intent"
-    AGE_DETECTION = "stage1"
-    RETRIEVAL     = "stage2"
-    PATHWAY       = "stage3"
-    REFLECTION    = "stage4"
-    OUTPUT        = "stage5"
+    SAFETY_SCREEN  = "stage0"
+    CONTENT_CHECK  = "content_check"
+    INTENT         = "intent"
+    AGE_DETECTION  = "stage1"
+    RETRIEVAL      = "stage2"
+    PATHWAY        = "stage3"
+    OPENFDA_LOOKUP = "openfda_lookup"
+    REFLECTION     = "stage4"
+    OUTPUT         = "stage5"
 
 
 # ── SSE Event Models ──────────────────────────────────────────────────────────

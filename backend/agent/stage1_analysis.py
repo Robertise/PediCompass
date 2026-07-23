@@ -12,7 +12,7 @@ import logging
 from typing import Optional
 
 from agent.models import ChildProfile, QueryAnalysis, IntentClassification, IntentType
-from common.age_utils import AgeGroup, map_age_to_group
+from common.age_utils import AgeGroup, map_age_to_group, resolve_age_days, age_days_to_display
 from guardrails.prompt_constraints import SAFETY_SYSTEM_PROMPT_SNIPPET
 from llm.bedrock_client import BedrockClient
 from llm.prompts.stage1_prompt import STAGE1_SYSTEM_PROMPT, INTENT_SYSTEM_PROMPT
@@ -37,10 +37,10 @@ INTENT_CLASSIFICATION_TOOL: dict = {
             },
             "high_stakes_reason": {
                 "type": "string",
-                "description": "Why flagged high-stakes. Empty string if not high_stakes_general.",
+                "description": "Reason why topic is high-stakes, if applicable.",
             },
         },
-        "required": ["intent", "topic_summary", "high_stakes_reason"],
+        "required": ["intent", "topic_summary"],
     },
 }
 
@@ -55,7 +55,7 @@ QUERY_ANALYSIS_TOOL: dict = {
         "properties": {
             "child_age_resolved": {
                 "type": "boolean",
-                "description": "True if the child's age can be determined from the conversation.",
+                "description": "True if the child's age can be determined from conversation or attached profile.",
             },
             "child_age_days": {
                 "type": "integer",
@@ -78,15 +78,27 @@ QUERY_ANALYSIS_TOOL: dict = {
                 "maxItems": 3,
                 "description": "Questions to ask the parent. Empty list if no clarification needed.",
             },
+            "clarification_options": {
+                "type": "array",
+                "items": {"type": "string"},
+                "maxItems": 4,
+                "description": (
+                    "Short 2-4 word quick-tap response chips for the parent to answer the clarification "
+                    "or age question with one click (e.g. ['Under 38.5°C', '38.5°C – 39.5°C', 'Over 39.5°C'] "
+                    "or ['Started today', '1-2 days ago', 'More than 3 days']). Empty list if none."
+                ),
+            },
         },
         "required": [
             "child_age_resolved",
             "symptom_summary",
             "needs_clarification",
             "clarification_questions",
+            "clarification_options",
         ],
     },
 }
+
 
 
 class IntentDetector:
@@ -96,10 +108,7 @@ class IntentDetector:
         self.llm = bedrock_client
 
     async def classify(self, context: list[dict]) -> IntentClassification:
-        # Convert context dicts to Bedrock format
-        messages = []
-        for msg in context:
-            messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+        messages = self._build_messages(context)
             
         tool_input = await self.llm.ainvoke_with_tools(
             system=INTENT_SYSTEM_PROMPT,
@@ -107,20 +116,33 @@ class IntentDetector:
             tools=[INTENT_CLASSIFICATION_TOOL],
             max_tokens=self.MAX_TOKENS,
         )
+
+        intent_str = tool_input.get("intent", "general").lower()
+        try:
+            intent = IntentType(intent_str)
+        except ValueError:
+            intent = IntentType.GENERAL
+
         return IntentClassification(
-            intent=IntentType(tool_input["intent"]),
+            intent=intent,
             topic_summary=tool_input.get("topic_summary", ""),
-            high_stakes_reason=tool_input.get("high_stakes_reason", ""),
+            high_stakes_reason=tool_input.get("high_stakes_reason") or "",
         )
 
 
-class Stage1Analyzer:
-    """
-    Stage 1: Uses Bedrock tool_use to extract structured query analysis
-    from the conversation context.
-    """
+    def _build_messages(self, context: list[dict]) -> list[dict]:
+        messages = []
+        for msg in context:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+            messages.append({"role": role, "content": content})
+        return messages
 
-    MAX_TOKENS = 300
+
+class Stage1Analyzer:
+    """Stage 1: Structured Query Analysis using Bedrock tool_use."""
+
+    MAX_TOKENS = 300  # Structured tool call output only
 
     def __init__(self, bedrock_client: BedrockClient) -> None:
         self.llm = bedrock_client
@@ -130,9 +152,7 @@ class Stage1Analyzer:
         context: list[dict],
         child_profile: Optional[ChildProfile] = None,
     ) -> QueryAnalysis:
-        """
-        Analyse the conversation to extract age, symptoms, and whether
-        clarification is needed.
+        """Run Stage 1 query analysis on the conversation context.
 
         Args:
             context: List of {"role": ..., "content": ...} message dicts.
@@ -158,11 +178,18 @@ class Stage1Analyzer:
     def _build_system(self, child_profile: Optional[ChildProfile]) -> str:
         profile_info = ""
         if child_profile:
+            dob_str = child_profile.dob or 'not provided'
+            age_info = ""
+            if child_profile.dob:
+                resolved_days = resolve_age_days("", child_profile.dob)
+                if resolved_days is not None:
+                    age_info = f" (calculated age: {resolved_days} days / {age_days_to_display(resolved_days)})"
             profile_info = (
                 f"\nATTACHED CHILD PROFILE:\n"
                 f"  Nickname: {child_profile.nickname}\n"
-                f"  Date of birth: {child_profile.dob or 'not provided'}\n"
+                f"  Date of birth: {dob_str}{age_info}\n"
                 f"  Known conditions: {', '.join(child_profile.medical_conditions) or 'none'}\n"
+                f"  Note: Since a child profile is attached with date of birth, child_age_resolved MUST be set to true.\n"
             )
         return STAGE1_SYSTEM_PROMPT + profile_info + "\n\n" + SAFETY_SYSTEM_PROMPT_SNIPPET
 
@@ -204,6 +231,13 @@ class Stage1Analyzer:
         child_age_resolved: bool = _to_bool(tool_input.get("child_age_resolved"), False)
         needs_clarification: bool = _to_bool(tool_input.get("needs_clarification"), False)
 
+        # ── Deterministic Child Profile DOB Override ───────────────────────────
+        if child_profile and child_profile.dob:
+            profile_days = resolve_age_days("", child_profile.dob)
+            if profile_days is not None:
+                child_age_days = profile_days
+                child_age_resolved = True
+
         # ── age_group ─────────────────────────────────────────────────────────
         age_group: Optional[str] = None
         if child_age_days is not None:
@@ -212,11 +246,22 @@ class Stage1Analyzer:
             except Exception:
                 age_group = None
 
-        # ── clarification_questions ───────────────────────────────────────────
+        # ── clarification_questions & clarification_options ───────────────────
         raw_questions = tool_input.get("clarification_questions")
         clarification_questions: list = (
             raw_questions if isinstance(raw_questions, list) else []
         )
+        raw_options = tool_input.get("clarification_options")
+        clarification_options: list = (
+            [str(opt) for opt in raw_options if opt] if isinstance(raw_options, list) else []
+        )
+
+        # If age is resolved (e.g. from profile or prompt), filter out age questions
+        if child_age_resolved:
+            clarification_questions = [
+                q for q in clarification_questions
+                if "how old" not in q.lower() and "age" not in q.lower()
+            ]
 
         return QueryAnalysis(
             child_age_resolved=child_age_resolved,
@@ -225,4 +270,6 @@ class Stage1Analyzer:
             symptom_summary=tool_input.get("symptom_summary", ""),
             needs_clarification=needs_clarification,
             clarification_questions=clarification_questions,
+            clarification_options=clarification_options,
         )
+

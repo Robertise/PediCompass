@@ -1,5 +1,5 @@
 """
-PediCompass FastAPI application entry point.
+Pedix FastAPI application entry point.
 
 Startup sequence:
   1. sys.path patched so that `common/` (sibling of `backend/`) is importable.
@@ -30,10 +30,10 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s — %(message)s",
 )
-logger = logging.getLogger("pedicompass")
+logger = logging.getLogger("pedix")
 
 app = FastAPI(
-    title="PediCompass API",
+    title="Pedix API",
     description="Agentic RAG system for paediatric triage (under-5s)",
     version="1.0.0",
     docs_url="/api/docs",
@@ -55,7 +55,7 @@ app.include_router(analytics.router, prefix="/api/analytics", tags=["analytics"]
 @app.on_event("startup")
 async def startup_event() -> None:
     """Auto-create DynamoDB tables and Qdrant collection if they don't exist."""
-    logger.info("PediCompass starting up…")
+    logger.info("Pedix starting up…")
 
     # Ensure DynamoDB tables exist
     from db.dynamodb_client import get_dynamodb_client
@@ -73,4 +73,4 @@ async def startup_event() -> None:
 @app.get("/api/health", tags=["health"])
 async def health_check() -> dict:
     """Liveness probe endpoint."""
-    return {"status": "ok", "service": "pedicompass-backend"}
+    return {"status": "ok", "service": "pedix-backend"}
