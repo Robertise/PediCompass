@@ -1,6 +1,6 @@
-# PediCompass AWS Setup Guide (Least Privilege Architecture)
+# Pedix AWS Setup Guide (Least Privilege Architecture)
 
-This document outlines the required AWS configurations to deploy PediCompass securely, focusing on Cognito Authentication, IAM Roles, and API Gateway Authorizers.
+This document outlines the required AWS configurations to deploy Pedix securely, focusing on Cognito Authentication, IAM Roles, and API Gateway Authorizers.
 
 ## 1. Cognito User Pool Setup
 
@@ -9,14 +9,14 @@ The authentication flow relies entirely on Cognito User Pools. **Identity Pools 
 1. Create a **Cognito User Pool**.
 2. Enable `USER_PASSWORD_AUTH` in the App Client settings.
 3. Create two User Groups exactly as named:
-   * `pedicompass-users` (Default group for regular users)
-   * `pedicompass-admins` (Admin group)
+   * `pedix-users` (Default group for regular users)
+   * `pedix-admins` (Admin group)
 
-> **Important:** Never configure an automatic way to join `pedicompass-admins`. Admins must be added manually by the AWS Root Account via the AWS Console or AWS CLI.
+> **Important:** Never configure an automatic way to join `pedix-admins`. Admins must be added manually by the AWS Root Account via the AWS Console or AWS CLI.
 
 ## 2. Post Confirmation Lambda Trigger
 
-To automate assigning new users to the `pedicompass-users` group, we use a Lambda trigger. 
+To automate assigning new users to the `pedix-users` group, we use a Lambda trigger. 
 This Lambda fires *after* a user successfully verifies their email address.
 
 ### Lambda Code (Python)
@@ -29,13 +29,13 @@ def handler(event, context):
     client.admin_add_user_to_group(
         UserPoolId=event['userPoolId'],
         Username=event['userName'],
-        GroupName='pedicompass-users'
+        GroupName='pedix-users'
     )
     # CRITICAL: Must return the event object to continue the Cognito flow
     return event
 ```
 
-### IAM Role for Lambda (`PediCompassLambdaRole`)
+### IAM Role for Lambda (`PedixLambdaRole`)
 
 Attach this execution role to the Lambda function. It strictly allows adding users to groups and basic CloudWatch logging.
 
@@ -65,7 +65,7 @@ Attach this execution role to the Lambda function. It strictly allows adding use
 
 **Trigger Configuration:** Go to your Cognito User Pool -> Triggers -> Select **Post Confirmation** -> Choose your Lambda function.
 
-## 3. IAM Role for FastAPI Backend (`PediCompassEC2Role`)
+## 3. IAM Role for FastAPI Backend (`PedixEC2Role`)
 
 The FastAPI application will run on an EC2 instance. Rather than hardcoding `.env` credentials, the EC2 instance will assume an IAM Role via an Instance Profile.
 
@@ -89,7 +89,7 @@ Attach this role to your EC2 instance.
         "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan"
       ],
       "Resource": [
-        "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/pedicompass_*"
+        "arn:aws:dynamodb:REGION:ACCOUNT_ID:table/pedix_*"
       ]
     },
     {
@@ -114,7 +114,7 @@ Attach this role to your EC2 instance.
 Use a **Cognito User Pool Authorizer** at the API Gateway layer to block unauthenticated requests *before* they hit EC2.
 
 - **Authorization type:** Cognito User Pools
-- **Cognito User Pool:** Select your PediCompass User Pool
+- **Cognito User Pool:** Select your Pedix User Pool
 - **Token source:** `Authorization` header
 - **Apply to:** All API routes (`/api/*`), EXCEPT for:
   - `/api/health`
@@ -123,11 +123,11 @@ Use a **Cognito User Pool Authorizer** at the API Gateway layer to block unauthe
   - `/api/auth/verify`
   - `/api/auth/resend-code`
 
-> **Note on Admin Access:** Do NOT use API Gateway to enforce the `pedicompass-admins` group check. That requires a custom Lambda Authorizer which is overkill. The API Gateway will simply validate that the JWT signature and expiry are correct. The actual role-based access control (RBAC) is enforced safely within FastAPI using the `get_admin_user` dependency on routes like `/api/analytics`.
+> **Note on Admin Access:** Do NOT use API Gateway to enforce the `pedix-admins` group check. That requires a custom Lambda Authorizer which is overkill. The API Gateway will simply validate that the JWT signature and expiry are correct. The actual role-based access control (RBAC) is enforced safely within FastAPI using the `get_admin_user` dependency on routes like `/api/analytics`.
 
 ## 5. Resource Tagging
 
 Ensure all AWS resources (EC2, Cognito, DynamoDB, Lambda, IAM Roles) are tagged for cost tracking:
 
-*   **Project**: `PediCompass`
+*   **Project**: `Pedix`
 *   **Environment**: `dev` (or `prod`)

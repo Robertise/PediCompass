@@ -1,5 +1,5 @@
 """
-Shared embedding module for PediCompass.
+Shared embedding module for Pedix.
 
 Used by BOTH backend (query embedding) and ingestion pipeline (document embedding).
 Having a single module with fixed config prevents embedding space mismatch —

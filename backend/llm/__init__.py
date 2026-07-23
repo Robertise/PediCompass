@@ -1,1 +1,1 @@
-"""LLM package for PediCompass."""
+"""LLM package for Pedix."""

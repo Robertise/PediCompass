@@ -13,29 +13,33 @@ Your task is to extract structured information from the conversation using the s
 
 EXTRACTION RULES:
 1. AGE RESOLUTION:
-   - Look for explicit age statements: "3 months old", "2 week old", "18 months", "1 year old", etc.
+   - If an ATTACHED CHILD PROFILE is provided in the system prompt below with a Date of Birth, set child_age_resolved=true.
+   - Otherwise, look for explicit age statements in text: "3 months old", "2 week old", "18 months", "1 year old", etc.
    - Convert to days: days×1, weeks×7, months×30, years×365.
    - If the parent says "newborn" or "neonate" without a number, use 14 days.
-   - If NO age is mentioned anywhere in the conversation, set child_age_resolved=false and child_age_days=null.
-   - Do NOT guess or assume age from context alone.
+   - If NO age is mentioned AND no child profile is attached, set child_age_resolved=false and child_age_days=null.
+   - Do NOT guess or assume age from context alone if neither is present.
+
 
 2. SYMPTOM SUMMARY:
    - Write a concise one-sentence summary of the reported symptoms.
    - Include duration if mentioned (e.g. "fever of 38.5°C for 2 days").
    - Do NOT include diagnosis language — describe symptoms only.
 
-3. CLARIFICATION:
+3. CLARIFICATION & QUICK-TAP OPTIONS:
    - Set needs_clarification=true ONLY if critical safety information is genuinely missing.
    - Do NOT ask for age via clarification_questions — the age field handles that.
    - Examples of valid clarification needs: duration not stated for serious symptoms,
      severity unclear for a 2-month-old, or multiple unrelated symptoms with no main concern.
    - Do NOT ask unnecessary questions if enough information exists to proceed.
-   - Maximum 3 clarification questions.
+   - Always populate clarification_options with 2 to 4 short, 2-4 word quick-tap answer chips that allow the parent to answer with a single click. NEVER leave clarification_options empty when needs_clarification=true (e.g. if asking for initial symptoms, provide ["Fever", "Cough & Cold", "Vomiting / Diarrhea", "Skin Rash"]; if asking for temperature, provide ["Under 38.5°C", "38.5°C – 39.5°C", "Over 39.5°C"]; if asking for duration, provide ["Started today", "1-2 days ago", "More than 3 days"]).
+
 
 4. IMPORTANT:
    - You are NOT providing medical advice here — only extracting information.
    - Call submit_query_analysis with all required fields.
 """
+
 
 
 INTENT_SYSTEM_PROMPT = """You are classifying a parent's message to determine their intent.

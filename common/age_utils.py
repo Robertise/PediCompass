@@ -1,5 +1,5 @@
 """
-Age utility functions for PediCompass.
+Age utility functions for Pedix.
 
 Used by Stage 0 (safety screen) and Stage 1 (query analysis).
 Centralising here ensures age parsing logic is identical across all call sites.
@@ -61,6 +61,12 @@ def extract_age_days_from_text(text: str) -> Optional[int]:
 
     Does NOT call any LLM. Uses regex only. Runs in <1ms.
 
+    Handles:
+      - Explicit ages: "6 months old", "2 weeks old", "3mo"
+      - Range expressions: "3 - 12 months", "1-3 years" (midpoint used)
+      - Under/Less than: "under 6 months" (midpoint used)
+      - Short units: "6 months", "2 years"
+
     Args:
         text: Free-text input from a parent.
 
@@ -69,6 +75,38 @@ def extract_age_days_from_text(text: str) -> Optional[int]:
     """
     text_lower = text.lower()
 
+    # 1. Range patterns: "3 - 12 months", "6-12 months", "1-3 years"
+    range_match = re.search(r"(\d+)\s*[-–—]\s*(\d+)\s*(days?|weeks?|months?|years?)", text_lower)
+    if range_match:
+        val1 = int(range_match.group(1))
+        val2 = int(range_match.group(2))
+        unit = range_match.group(3)
+        avg = (val1 + val2) / 2.0
+        if "day" in unit:
+            return int(avg)
+        elif "week" in unit:
+            return int(avg * 7)
+        elif "month" in unit:
+            return int(avg * 30)
+        elif "year" in unit:
+            return int(avg * 365)
+
+    # 2. "Under / less than" patterns: "under 6 months", "less than 1 year"
+    under_match = re.search(r"(?:under|less than|<)\s*(\d+)\s*(days?|weeks?|months?|years?)", text_lower)
+    if under_match:
+        val = int(under_match.group(1))
+        unit = under_match.group(2)
+        half_val = max(1, val / 2.0)
+        if "day" in unit:
+            return int(half_val)
+        elif "week" in unit:
+            return int(half_val * 7)
+        elif "month" in unit:
+            return int(half_val * 30)
+        elif "year" in unit:
+            return int(half_val * 365)
+
+    # 3. Explicit patterns with 'old' / 'mo' / 'wk'
     for pattern, unit, multiplier in _AGE_PATTERNS:
         match = re.search(pattern, text_lower, re.IGNORECASE)
         if not match:
@@ -80,7 +118,22 @@ def extract_age_days_from_text(text: str) -> Optional[int]:
         value = int(match.group(1))
         return value * multiplier  # type: ignore[operator]
 
+    # 4. Fallback plain unit patterns: "6 months", "2 years" (without 'old')
+    plain_match = re.search(r"\b(\d+)\s*(days?|weeks?|months?|years?)\b", text_lower)
+    if plain_match:
+        val = int(plain_match.group(1))
+        unit = plain_match.group(2)
+        if "day" in unit:
+            return val
+        elif "week" in unit:
+            return val * 7
+        elif "month" in unit:
+            return val * 30
+        elif "year" in unit:
+            return val * 365
+
     return None
+
 
 
 def map_age_to_group(age_days: int) -> AgeGroup:

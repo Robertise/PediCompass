@@ -1,1 +1,1 @@
-"""Prompts sub-package for PediCompass LLM calls."""
+"""Prompts sub-package for Pedix LLM calls."""

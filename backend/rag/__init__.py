@@ -1,1 +1,1 @@
-"""RAG package for PediCompass."""
+"""RAG package for Pedix."""

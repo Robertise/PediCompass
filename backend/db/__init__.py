@@ -1,1 +1,1 @@
-"""Database package for PediCompass."""
+"""Database package for Pedix."""
