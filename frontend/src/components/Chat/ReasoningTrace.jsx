@@ -32,6 +32,11 @@ const STAGE_META = {
     icon: 'psychology',
     description: 'Care pathway and urgency assessment via ESI v4',
   },
+  openfda_lookup: {
+    label: 'Medication Safety',
+    icon: 'medication',
+    description: 'OpenFDA FAERS pediatric adverse event lookup',
+  },
   stage4: {
     label: 'Reflection',
     icon: 'published_with_changes',

@@ -191,7 +191,7 @@ export default function AuthModal() {
 
   const subtitles = {
     login:    'Sign in to sync your profiles and history.',
-    register: 'Join PediCompass for personalised guidance.',
+    register: 'Join Pedix for personalised guidance.',
     verify:   verifySuccess
       ? 'Your account is ready. Signing you in…'
       : `We sent a 6-digit code to ${maskEmail(email)}`,

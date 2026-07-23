@@ -17,7 +17,10 @@ export default function ProfileSelector() {
     async function loadProfiles() {
       if (!user) {
         setProfiles([])
-        setSelectedProfileId(null)
+        if (selectedProfileId !== null) {
+          setSelectedProfileId(null)
+          triggerChatReset()
+        }
         return
       }
       try {
@@ -58,8 +61,13 @@ export default function ProfileSelector() {
   const handleSelect = (id) => {
     // Use the sentinel so we can distinguish "guest chosen" from "uninitialised"
     const targetId = id === null ? GUEST_PROFILE_ID : id
-    
-    if (targetId === selectedProfileId) {
+
+    // Treat null (uninitialised) and GUEST_PROFILE_ID ("guest") as equivalent when checking if target changed
+    const currentNormalized = (!selectedProfileId || selectedProfileId === GUEST_PROFILE_ID) ? GUEST_PROFILE_ID : selectedProfileId
+    const targetNormalized = (!targetId || targetId === GUEST_PROFILE_ID) ? GUEST_PROFILE_ID : targetId
+
+    if (targetNormalized === currentNormalized) {
+      setSelectedProfileId(targetId)
       setIsOpen(false)
       return
     }
@@ -76,6 +84,7 @@ export default function ProfileSelector() {
     triggerChatReset()
     setIsOpen(false)
   }
+
 
   const handleCreateNew = () => {
     setIsOpen(false)

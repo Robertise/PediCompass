@@ -278,8 +278,8 @@ export default function ChatWindow({ messages, setMessages, selectedMessageIndex
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
               className="absolute bottom-full mb-7 flex flex-col items-center justify-center text-on-surface-variant w-full max-w-[38rem] text-center gap-md"
             >
-              <img src="/logo_light.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] dark:hidden block" />
-              <img src="/logo_dark.png" alt="PediCompass Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] hidden dark:block" />
+              <img src="/logo_light.png" alt="Pedix Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] dark:hidden block" />
+              <img src="/logo_dark.png" alt="Pedix Logo" className="w-[50px] h-[50px] object-contain opacity-40 grayscale-[20%] hidden dark:block" />
               <h2 className="text-headline-md font-headline-md text-on-surface">How can I help you today?</h2>
               <ConversationStarter onSelect={handleQuickReply} />
             </motion.div>

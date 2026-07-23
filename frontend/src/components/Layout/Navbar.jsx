@@ -12,10 +12,10 @@ export default function Navbar() {
     <header className="bg-background sticky top-0 z-50 flex justify-between items-center px-6 py-4 w-full border-b border-black/5 dark:border-white/5 relative">
       <div className="flex items-center gap-sm relative z-10">
         <Link to="/" onClick={() => triggerChatReset()} className="flex items-center gap-sm transition-transform active:scale-95">
-          <img src="/logo_light.png" alt="PediCompass Logo" className="w-9 h-9 object-contain dark:hidden block" />
-          <img src="/logo_dark.png" alt="PediCompass Logo" className="w-9 h-9 object-contain hidden dark:block" />
+          <img src="/logo_light.png" alt="Pedix Logo" className="w-9 h-9 object-contain dark:hidden block" />
+          <img src="/logo_dark.png" alt="Pedix Logo" className="w-9 h-9 object-contain hidden dark:block" />
           <div className="flex flex-col">
-            <span className="text-headline-md font-manrope-md font-bold text-primary dark:text-primary-fixed-dim leading-none">PediCompass</span>
+            <span className="text-headline-md font-manrope-md font-bold text-primary dark:text-primary-fixed-dim leading-none">Pedix</span>
             <span className="text-label-sm font-label-sm text-on-surface-variant hidden sm:block">Pediatric Care Pathway Navigator</span>
           </div>
         </Link>

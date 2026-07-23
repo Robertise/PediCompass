@@ -8,7 +8,7 @@ const MARKDOWN_STYLES = "space-y-3 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:pl-1 [
 
 // STAGE_ORDER strings must match StageNames constants in backend/agent/models.py exactly.
 // If backend stage name changes, update here too.
-const STAGE_ORDER = ['stage0', 'content_check', 'intent', 'stage1', 'stage2', 'stage3', 'stage4', 'stage5']
+const STAGE_ORDER = ['stage0', 'content_check', 'intent', 'stage1', 'stage2', 'stage3', 'openfda_lookup', 'stage4', 'stage5']
 const STAGE_META_INLINE = {
   stage0:        { label: 'Safety screen',         icon: 'health_and_safety' },
   content_check: { label: 'Content check',         icon: 'filter_alt' },
@@ -16,6 +16,7 @@ const STAGE_META_INLINE = {
   stage1:        { label: 'Query analysis',        icon: 'analytics' },
   stage2:        { label: 'Retrieving guidelines', icon: 'database' },
   stage3:        { label: 'Reasoning pathway',     icon: 'psychology' },
+  openfda_lookup:{ label: 'Medication safety',     icon: 'medication' },
   stage4:        { label: 'Reflection',            icon: 'published_with_changes' },
   stage5:        { label: 'Generating response',   icon: 'edit_note' },
 }
@@ -215,13 +216,11 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
             key={i}
             onClick={() => !buttonsDisabled && onConfirmReply?.(option, TOKEN_MAP[i])}
             disabled={buttonsDisabled}
-            className={`w-full text-left border rounded-xl px-md py-sm text-body-md
-                       font-body-md transition-colors
-                       ${
-                         buttonsDisabled
-                           ? 'bg-surface-container/50 border-outline/10 text-on-surface-variant opacity-40 cursor-not-allowed'
-                           : 'bg-surface-container hover:bg-surface-container-high border-outline/20 text-on-surface cursor-pointer'
-                       }`}
+            className={`w-full text-left rounded-xl px-3 py-1.5 text-body-md font-body-md shadow-sm ${
+              buttonsDisabled
+                ? 'bg-surface-container/50 text-on-surface-variant/40 opacity-50 cursor-not-allowed'
+                : 'bg-surface-container text-on-surface cursor-pointer'
+            }`}
           >
             {option}
           </button>
@@ -277,6 +276,7 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
 
   // ── Clarification request ──────────────────────────────────────────────────
   if (response.type === 'clarification') {
+    const buttonsDisabled = !isLastMessage || loading
     return (
       <div className="flex flex-col gap-sm">
         <p className="text-body-md font-body-md text-on-surface">
@@ -295,9 +295,35 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
             ))}
           </div>
         )}
+
+        {/* Quick-tap response options */}
+        {response.clarification_options?.length > 0 && (
+          <div className="flex flex-col gap-sm mt-xs">
+            <span className="text-label-sm font-label-sm text-on-surface-variant">Select an option:</span>
+            <div className="flex flex-wrap gap-sm">
+              {response.clarification_options.map((option, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => !buttonsDisabled && onQuickReply?.(option)}
+                  disabled={buttonsDisabled}
+                  className={`rounded-md px-3 py-1.5 text-body-sm font-body-sm shadow-sm ${
+                    buttonsDisabled
+                      ? 'bg-surface-container/50 text-on-surface-variant/40 opacity-50 cursor-not-allowed'
+                      : 'bg-surface-container text-on-surface cursor-pointer'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     )
   }
+
+
+
 
   // ── Full recommendation ────────────────────────────────────────────────────
   if (response.type === 'recommendation') {
@@ -333,6 +359,41 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
           {care_pathway?.clinical_reasoning && (
             <div className={`text-body-sm text-on-surface-variant ${MARKDOWN_STYLES}`}>
               <ReactMarkdown>{care_pathway.clinical_reasoning}</ReactMarkdown>
+            </div>
+          )}
+
+          {/* OpenFDA Medication Safety Card */}
+          {care_pathway?.medication_safety && (
+            <div className="flex flex-col gap-xs bg-amber-500/10 p-sm rounded-xl border border-amber-500/20">
+              <div className="flex items-center gap-xs text-amber-600 dark:text-amber-400 font-label-md font-bold">
+                <span className="material-symbols-outlined text-[20px]">medication</span>
+                <span>OpenFDA Pediatric Safety — {care_pathway.medication_safety.drug_name}</span>
+              </div>
+              {care_pathway.medication_safety.error ? (
+                <p className="text-body-sm text-on-surface-variant italic">
+                  {care_pathway.medication_safety.error}
+                </p>
+              ) : care_pathway.medication_safety.top_reactions?.length > 0 ? (
+                <div className="flex flex-col gap-xs mt-xs">
+                  <p className="text-body-sm text-on-surface-variant">
+                    Top reported pediatric adverse events ({care_pathway.medication_safety.total_pediatric_reports} total reports):
+                  </p>
+                  <div className="flex flex-wrap gap-xs">
+                    {care_pathway.medication_safety.top_reactions.map((rx, idx) => (
+                      <span key={idx} className="bg-surface-container px-2 py-0.5 rounded-md text-xs text-on-surface">
+                        {rx.reaction} ({rx.count})
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-body-sm text-on-surface-variant">
+                  No adverse reaction clusters found for age 0–5 in FAERS database.
+                </p>
+              )}
+              <p className="text-[11px] text-on-surface-variant/60 mt-xs">
+                {care_pathway.medication_safety.data_disclaimer}
+              </p>
             </div>
           )}
 
