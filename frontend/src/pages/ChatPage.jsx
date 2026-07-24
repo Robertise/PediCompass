@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import ChatWindow from '../components/Chat/ChatWindow'
 import ReasoningTrace from '../components/Chat/ReasoningTrace'
+import { useAppStore } from '../store/appStore'
 
 const DEFAULT_TRACE_WIDTH = 360
 
@@ -10,11 +11,9 @@ export default function ChatPage() {
   const [selectedMessageIndex, setSelectedMessageIndex] = useState(null)
   const [isTraceOpen, setIsTraceOpen] = useState(true)
   const [traceWidth, setTraceWidth] = useState(DEFAULT_TRACE_WIDTH)
+  const { setActiveTrace, setIsStreaming } = useAppStore()
 
   // Auto-select the latest agent message that has a trace (reasoning_trace or is streaming).
-  // Condition includes type==='streaming' so sidebar updates immediately when placeholder is added
-  // (streaming placeholder doesn't have reasoning_trace yet, but should still be selected).
-  // Uses reduce() instead of findLastIndex() for broader browser compatibility (ES2023).
   useEffect(() => {
     const lastAgentIdx = messages.reduce(
       (acc, m, i) =>
@@ -29,8 +28,13 @@ export default function ChatPage() {
 
   const selectedMsg = selectedMessageIndex !== null ? messages[selectedMessageIndex] : null
   const activeTrace = selectedMsg?.content?.reasoning_trace ?? null
-  // isStreaming: true while the selected message is still a streaming placeholder
   const isStreaming = selectedMsg?.content?.type === 'streaming'
+
+  // Sync trace state to global store for mobile drawer consumption
+  useEffect(() => {
+    setActiveTrace(activeTrace)
+    setIsStreaming(isStreaming)
+  }, [activeTrace, isStreaming, setActiveTrace, setIsStreaming])
 
   return (
     <>

@@ -58,7 +58,7 @@ const DEFAULT_WIDTH = 360
  *   width        — controlled width in px
  *   onWidthChange — callback(newWidth) from drag-to-resize
  */
-export default function ReasoningTrace({ trace, isStreaming, isOpen, onToggle, width, onWidthChange }) {
+export default function ReasoningTrace({ trace, isStreaming, isOpen, onToggle, width, onWidthChange, isMobile = false }) {
   // ── Drag-to-resize ───────────────────────────────────────────────────────────
   const dragStartX = useRef(null)
   const dragStartWidth = useRef(null)
@@ -71,8 +71,8 @@ export default function ReasoningTrace({ trace, isStreaming, isOpen, onToggle, w
     const onMouseMove = (moveEvent) => {
       // Dragging the left handle leftward increases width (panel is on the right)
       const delta = dragStartX.current - moveEvent.clientX
-      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, dragStartWidth.current + delta))
-      onWidthChange(newWidth)
+      const newWidth = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, (dragStartWidth.current || DEFAULT_WIDTH) + delta))
+      onWidthChange?.(newWidth)
     }
 
     const onMouseUp = () => {
@@ -84,8 +84,8 @@ export default function ReasoningTrace({ trace, isStreaming, isOpen, onToggle, w
     document.addEventListener('mouseup', onMouseUp)
   }, [width, onWidthChange])
 
-  // ── Collapsed state — show only a slim icon strip ────────────────────────────
-  if (!isOpen) {
+  // ── Collapsed state (Desktop only) ───────────────────────────────────────────
+  if (!isOpen && !isMobile) {
     return (
       <aside
         className="w-12 bg-surface-container-low dark:bg-surface-container h-full border-l border-black/5 dark:border-white/5 flex flex-col items-center py-md gap-md shadow-sm shrink-0"
@@ -110,21 +110,25 @@ export default function ReasoningTrace({ trace, isStreaming, isOpen, onToggle, w
     )
   }
 
-  // ── Expanded state ───────────────────────────────────────────────────────────
+  // ── Expanded state (Desktop or Mobile) ───────────────────────────────────────
   return (
     <aside
-      className="bg-surface-container-low dark:bg-surface-container h-full border-l border-black/5 dark:border-white/5 flex flex-col shadow-sm shrink-0 relative"
-      style={{ width }}
+      className={`bg-surface-container-low dark:bg-surface-container h-full flex flex-col shadow-sm shrink-0 relative ${
+        isMobile ? 'w-full border-none' : 'border-l border-black/5 dark:border-white/5'
+      }`}
+      style={isMobile ? undefined : { width }}
     >
-      {/* Drag-to-resize handle — left edge */}
-      <div
-        onMouseDown={handleDragMouseDown}
-        className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 transition-colors z-20 group"
-        title="Drag to resize"
-      >
-        {/* Visual drag pill */}
-        <div className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-black/10 dark:bg-white/10 group-hover:bg-primary/50 rounded-full transition-colors" />
-      </div>
+      {/* Drag-to-resize handle — left edge (Desktop only) */}
+      {!isMobile && (
+        <div
+          onMouseDown={handleDragMouseDown}
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 transition-colors z-20 group"
+          title="Drag to resize"
+        >
+          {/* Visual drag pill */}
+          <div className="absolute left-[-2px] top-1/2 -translate-y-1/2 w-1.5 h-10 bg-black/10 dark:bg-white/10 group-hover:bg-primary/50 rounded-full transition-colors" />
+        </div>
+      )}
 
       {/* Header */}
       <div className="pl-4 pr-2 py-3 border-b border-black/5 dark:border-white/5 bg-surface-container/50 flex items-center justify-between gap-2 shrink-0">

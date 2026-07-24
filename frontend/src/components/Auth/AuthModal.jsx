@@ -200,25 +200,25 @@ export default function AuthModal() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4">
-      <div className="bg-surface dark:bg-surface-container-high rounded-[24px] shadow-soft-lg dark:shadow-soft-dark w-full max-w-md overflow-hidden flex flex-col relative">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-3 sm:p-4">
+      <div className="bg-surface dark:bg-surface-container-high rounded-[20px] sm:rounded-[24px] shadow-soft-lg dark:shadow-soft-dark w-[95vw] max-w-md overflow-hidden flex flex-col relative">
 
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface hover:bg-surface-container p-2 rounded-full transition-colors flex items-center justify-center"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-on-surface-variant hover:text-on-surface hover:bg-surface-container p-1.5 sm:p-2 rounded-full transition-colors flex items-center justify-center"
         >
-          <span className="material-symbols-outlined text-[20px]">close</span>
+          <span className="material-symbols-outlined text-[18px] sm:text-[20px]">close</span>
         </button>
 
-        <div className="p-md sm:p-lg flex flex-col gap-md">
+        <div className="p-4 sm:p-lg flex flex-col gap-sm sm:gap-md">
 
           {/* Header */}
           <div className="text-center">
-            <h2 className="text-headline-md font-headline-md font-bold text-on-surface mb-xs">
+            <h2 className="text-lg sm:text-headline-md font-headline-md font-bold text-on-surface mb-xs">
               {titles[mode]}
             </h2>
-            <p className="text-body-sm font-body-sm text-on-surface-variant">
+            <p className="text-xs sm:text-body-sm font-body-sm text-on-surface-variant">
               {subtitles[mode]}
             </p>
           </div>
@@ -232,27 +232,27 @@ export default function AuthModal() {
           {/* ── LOGIN form ───────────────────────────────────────────────── */}
           {mode === 'login' && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-sm" noValidate>
-              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Email</label>
+              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+                <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                  className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0"
+                  className="bg-transparent border-none outline-none p-0 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0"
                   required
                 />
               </div>
 
-              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all relative">
-                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Password</label>
+              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all relative">
+                <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Password</label>
                 <div className="flex items-center">
                   <input
                     type={showLoginPw ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
-                    className="bg-transparent border-none outline-none p-0 pr-8 text-body-md font-body-md text-on-surface w-full focus:ring-0"
+                    className="bg-transparent border-none outline-none p-0 pr-8 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0"
                     required
                   />
                   <button
@@ -272,7 +272,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={isLoading || !canSubmitLogin}
-                className="mt-xs bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-3.5 px-6 text-label-md font-label-md font-bold transition-colors disabled:opacity-50 shadow-sm"
+                className="mt-xs bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-2.5 sm:py-3.5 px-6 text-xs sm:text-label-md font-label-md font-bold transition-colors disabled:opacity-50 shadow-sm"
               >
                 {isLoading ? 'Signing in…' : 'Sign In'}
               </button>
@@ -282,24 +282,24 @@ export default function AuthModal() {
           {/* ── REGISTER form ─────────────────────────────────────────────── */}
           {mode === 'register' && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-sm" noValidate>
-              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Email</label>
+              <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+                <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Email</label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                  className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0"
+                  className="bg-transparent border-none outline-none p-0 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0"
                   required
                 />
               </div>
 
-              <div className={`flex flex-col rounded-xl px-4 py-2 focus-within:ring-2 transition-all relative ${
+              <div className={`flex flex-col rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 transition-all relative ${
                   passwordTouched && passwordValid
                     ? 'bg-emerald-500/10 focus-within:ring-emerald-500/50'
                     : 'bg-surface-container dark:bg-black/20 focus-within:ring-primary/30'
               }`}>
-                <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Password</label>
+                <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Password</label>
                 <div className="flex items-center">
                   <input
                     type={showRegisterPw ? 'text' : 'password'}
@@ -307,7 +307,7 @@ export default function AuthModal() {
                     onChange={(e) => setPassword(e.target.value)}
                     onFocus={() => setPasswordTouched(true)}
                     autoComplete="new-password"
-                    className="bg-transparent border-none outline-none p-0 pr-8 text-body-md font-body-md text-on-surface w-full focus:ring-0"
+                    className="bg-transparent border-none outline-none p-0 pr-8 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0"
                   />
                   <button
                     type="button"
@@ -316,7 +316,7 @@ export default function AuthModal() {
                     tabIndex={-1}
                     aria-label={showRegisterPw ? 'Hide password' : 'Show password'}
                   >
-                    <span className="material-symbols-outlined text-[18px]">
+                    <span className="material-symbols-outlined text-[16px] sm:text-[18px]">
                       {showRegisterPw ? 'visibility_off' : 'visibility'}
                     </span>
                   </button>
@@ -327,7 +327,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={isLoading || !canSubmitRegister}
-                className="mt-xs bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-3.5 px-6 text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="mt-xs bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-2.5 sm:py-3.5 px-6 text-xs sm:text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {isLoading ? 'Creating account…' : 'Create Account'}
               </button>
@@ -338,8 +338,8 @@ export default function AuthModal() {
           {mode === 'verify' && !verifySuccess && (
             <form onSubmit={handleSubmit} className="flex flex-col gap-sm" noValidate>
               <div className="flex flex-col gap-xs">
-                <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-                  <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5 text-center">
+                <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+                  <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5 text-center">
                     Verification Code
                   </label>
                   <input
@@ -350,10 +350,10 @@ export default function AuthModal() {
                     onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                     placeholder="123456"
                     autoComplete="one-time-code"
-                    className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0 tracking-[0.3em] text-center text-headline-sm placeholder:text-outline-variant/60"
+                    className="bg-transparent border-none outline-none p-0 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0 tracking-[0.3em] text-center text-headline-sm placeholder:text-outline-variant/60"
                   />
                 </div>
-                <p className="text-label-sm font-label-sm text-on-surface-variant text-center mt-2">
+                <p className="text-xs sm:text-label-sm font-label-sm text-on-surface-variant text-center mt-1">
                   Check your spam folder if you don't see it.
                 </p>
               </div>
@@ -361,7 +361,7 @@ export default function AuthModal() {
               <button
                 type="submit"
                 disabled={isLoading || !canSubmitVerify}
-                className="bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-3.5 px-6 text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                className="bg-primary hover:bg-primary-fixed-variant text-on-primary rounded-full py-2.5 sm:py-3.5 px-6 text-xs sm:text-label-md font-label-md font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
               >
                 {isLoading ? 'Verifying…' : 'Verify Email'}
               </button>
@@ -372,7 +372,7 @@ export default function AuthModal() {
                   type="button"
                   onClick={handleResend}
                   disabled={resendCooldown > 0 || isLoading}
-                  className="text-primary hover:underline text-label-sm font-label-sm disabled:text-on-surface-variant/50 disabled:no-underline disabled:cursor-not-allowed transition-colors"
+                  className="text-primary hover:underline text-xs sm:text-label-sm font-label-sm disabled:text-on-surface-variant/50 disabled:no-underline disabled:cursor-not-allowed transition-colors"
                 >
                   {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
                 </button>
@@ -383,8 +383,8 @@ export default function AuthModal() {
           {/* Success state inside verify */}
           {mode === 'verify' && verifySuccess && (
             <div className="flex flex-col items-center gap-sm py-sm">
-              <span className="material-symbols-outlined text-emerald-500 text-[48px]">check_circle</span>
-              <p className="text-body-md font-body-md text-on-surface text-center">
+              <span className="material-symbols-outlined text-emerald-500 text-[40px] sm:text-[48px]">check_circle</span>
+              <p className="text-xs sm:text-body-md font-body-md text-on-surface text-center">
                 Redirecting to sign in…
               </p>
             </div>
@@ -392,7 +392,7 @@ export default function AuthModal() {
 
           {/* ── Bottom link — toggle between login / register ─────────────── */}
           {mode !== 'verify' && (
-            <p className="text-center text-body-sm font-body-sm text-on-surface-variant">
+            <p className="text-center text-xs sm:text-body-sm font-body-sm text-on-surface-variant">
               {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
               <button
                 type="button"

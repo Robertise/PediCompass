@@ -93,64 +93,64 @@ export default function ProfileModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-4">
-      <div className="bg-surface dark:bg-surface-container-high rounded-[24px] shadow-soft-lg dark:shadow-soft-dark w-full max-w-lg overflow-hidden flex flex-col relative max-h-[90vh]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-inverse-surface/40 backdrop-blur-sm p-3 sm:p-4">
+      <div className="bg-surface dark:bg-surface-container-high rounded-[20px] sm:rounded-[24px] shadow-soft-lg dark:shadow-soft-dark w-[95vw] max-w-lg overflow-hidden flex flex-col relative max-h-[90vh]">
         <button 
           onClick={handleClose}
-          className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface hover:bg-surface-container p-2 rounded-full transition-colors flex items-center justify-center z-10"
+          className="absolute top-3 right-3 sm:top-4 sm:right-4 text-on-surface-variant hover:text-on-surface hover:bg-surface-container p-1.5 sm:p-2 rounded-full transition-colors flex items-center justify-center z-10"
         >
-          <span className="material-symbols-outlined text-[20px]">close</span>
+          <span className="material-symbols-outlined text-[18px] sm:text-[20px]">close</span>
         </button>
         
-        <div className="p-md sm:p-lg flex flex-col gap-md overflow-y-auto">
+        <div className="p-4 sm:p-lg flex flex-col gap-sm sm:gap-md overflow-y-auto">
           <div className="text-center">
-            <h2 className="text-headline-md font-headline-md font-bold text-on-surface mb-xs">
+            <h2 className="text-lg sm:text-headline-md font-headline-md font-bold text-on-surface mb-xs">
               {editingProfile ? 'Edit Profile' : 'New Profile'}
             </h2>
-            <p className="text-body-sm font-body-sm text-on-surface-variant">
+            <p className="text-xs sm:text-body-sm font-body-sm text-on-surface-variant">
               Provide basic information to get tailored care pathways.
             </p>
           </div>
 
           {error && (
-            <div className="bg-error-container/20 border border-error/20 text-error p-sm rounded-lg text-body-sm font-body-sm text-center">
+            <div className="bg-error-container/20 border border-error/20 text-error p-sm rounded-lg text-xs sm:text-body-sm text-center">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
-            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-              <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Child's Name / Nickname</label>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-sm">
+            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+              <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Child's Name / Nickname</label>
               <input 
                 type="text" 
                 name="nickname"
                 value={formData.nickname}
                 onChange={handleChange}
-                className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0"
+                className="bg-transparent border-none outline-none p-0 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0"
                 required 
               />
             </div>
             
-            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-              <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Date of Birth</label>
+            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+              <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Date of Birth</label>
               <input 
                 type="date" 
                 name="dob"
                 value={formData.dob}
                 onChange={handleChange}
-                className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0 dark:[color-scheme:dark]"
+                className="bg-transparent border-none outline-none p-0 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0 dark:[color-scheme:dark]"
                 required 
                 max={new Date().toISOString().split('T')[0]}
               />
             </div>
 
-            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-              <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Gender</label>
+            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+              <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Gender</label>
               <select 
                 name="gender" 
                 value={formData.gender}
                 onChange={handleChange}
-                className="bg-transparent border-none outline-none p-0 pr-6 bg-[position:right_0_center] text-body-md font-body-md text-on-surface w-full focus:ring-0 cursor-pointer dark:[color-scheme:dark]"
+                className="bg-transparent border-none outline-none p-0 pr-6 bg-[position:right_0_center] text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0 cursor-pointer dark:[color-scheme:dark]"
               >
                 <option value="Unknown" className="bg-surface dark:bg-surface-container-high text-on-surface">Prefer not to say</option>
                 <option value="Male" className="bg-surface dark:bg-surface-container-high text-on-surface">Male</option>
@@ -159,8 +159,8 @@ export default function ProfileModal() {
               </select>
             </div>
 
-            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-              <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Weight (kg) - Optional</label>
+            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+              <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Weight (kg) - Optional</label>
               <input 
                 type="number" 
                 name="weight_kg"
@@ -168,19 +168,19 @@ export default function ProfileModal() {
                 min="2"
                 value={formData.weight_kg}
                 onChange={handleChange}
-                className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0"
+                className="bg-transparent border-none outline-none p-0 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0"
               />
             </div>
 
-            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
-              <label className="text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Medical Conditions (comma separated) - Optional</label>
+            <div className="flex flex-col bg-surface-container dark:bg-black/20 rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 focus-within:ring-2 focus-within:ring-primary/30 transition-all">
+              <label className="text-[10px] sm:text-[11px] font-label-sm text-on-surface-variant font-bold mb-0.5">Medical Conditions (comma separated) - Optional</label>
               <input 
                 type="text" 
                 name="medical_conditions"
                 placeholder="e.g. Asthma, Eczema"
                 value={formData.medical_conditions}
                 onChange={handleChange}
-                className="bg-transparent border-none outline-none p-0 text-body-md font-body-md text-on-surface w-full focus:ring-0 placeholder:text-outline-variant/60"
+                className="bg-transparent border-none outline-none p-0 text-xs sm:text-body-md font-body-md text-on-surface w-full focus:ring-0"
               />
             </div>
 

@@ -121,27 +121,27 @@ export default function ProfileSelector() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-sm bg-surface dark:bg-surface-container-high px-sm py-xs rounded-full hover:bg-surface-container dark:hover:bg-surface-container transition-colors max-w-[200px] sm:max-w-xs shadow-[0_0_10px_1px_rgba(0,0,0,0.1)] dark:shadow-soft-dark"
+        className="flex items-center gap-xs sm:gap-sm bg-surface dark:bg-surface-container-high px-2 sm:px-sm py-1 sm:py-xs rounded-full hover:bg-surface-container dark:hover:bg-surface-container transition-colors max-w-[155px] xs:max-w-[180px] sm:max-w-xs shadow-[0_0_10px_1px_rgba(0,0,0,0.1)] dark:shadow-soft-dark"
       >
-        <div className="w-8 h-8 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
-          <span className="material-symbols-outlined text-primary text-[20px]">child_care</span>
+        <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
+          <span className="material-symbols-outlined text-primary text-[16px] sm:text-[20px]">child_care</span>
         </div>
-        <span className="text-label-md font-label-md text-on-surface truncate">{displayText}</span>
-        <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+        <span className="text-xs sm:text-label-md font-label-md text-on-surface truncate max-w-[85px] sm:max-w-none">{displayText}</span>
+        <span className="material-symbols-outlined text-on-surface-variant text-[14px] sm:text-[20px] shrink-0">
           {isOpen ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
         </span>
       </button>
 
       {isOpen && (
-        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-64 bg-surface dark:bg-surface-container-high border border-black/5 dark:border-white/5 rounded-xl shadow-soft dark:shadow-soft-dark overflow-hidden z-50 flex flex-col">
+        <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 w-56 sm:w-64 bg-surface dark:bg-surface-container-high border border-black/5 dark:border-white/5 rounded-xl shadow-soft dark:shadow-soft-dark overflow-hidden z-50 flex flex-col">
           <div className="max-h-60 overflow-y-auto py-1">
             {/* Guest Mode option */}
             <button
               onClick={() => handleSelect(null)}
-              className={`w-full text-left px-3 py-3 text-label-md font-label-md hover:bg-surface-container transition-colors flex items-center gap-sm ${isGuest ? 'bg-primary-container/10 text-primary' : 'text-on-surface'}`}
+              className={`w-full text-left px-3 py-2.5 sm:py-3 text-xs sm:text-sm font-medium hover:bg-surface-container transition-colors flex items-center gap-2 ${isGuest ? 'bg-primary-container/10 text-primary font-bold' : 'text-on-surface'}`}
             >
-              <div className="w-6 h-6 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
-                <span className="material-symbols-outlined text-[20px]">person</span>
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[16px] sm:text-[20px]">person</span>
               </div>
               <span>Guest Mode</span>
             </button>
@@ -153,10 +153,10 @@ export default function ProfileSelector() {
                 <button
                   key={p.profile_id}
                   onClick={() => handleSelect(p.profile_id)}
-                  className={`w-full text-left px-3 py-3 text-label-md font-label-md transition-colors flex items-center gap-sm ${selectedProfileId === p.profile_id ? 'bg-primary-container/30 text-primary font-bold' : 'text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container'}`}
+                  className={`w-full text-left px-3 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-colors flex items-center gap-2 ${selectedProfileId === p.profile_id ? 'bg-primary-container/30 text-primary font-bold' : 'text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container'}`}
                 >
-                  <div className="w-6 h-6 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
-                    <span className="material-symbols-outlined text-primary text-[20px]">child_care</span>
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary-container/20 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-primary text-[16px] sm:text-[20px]">child_care</span>
                   </div>
                   <span className="truncate">{p.nickname} - {ageStr}</span>
                 </button>
@@ -164,17 +164,17 @@ export default function ProfileSelector() {
             })}
           </div>
 
-          <div className="border-t border-black/5 dark:border-white/5 bg-surface-container/30 p-2 flex flex-col gap-1">
+          <div className="border-t border-black/5 dark:border-white/5 bg-surface-container/30 p-1.5 sm:p-2 flex flex-col gap-1">
             <button
               onClick={handleManage}
-              className="w-full text-left px-2 py-3 text-label-md font-label-md text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container rounded-lg transition-colors flex items-center gap-sm"
+              className="w-full text-left px-2 py-2 sm:py-2.5 text-xs sm:text-sm text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low dark:hover:bg-surface-container rounded-lg transition-colors flex items-center gap-2 font-medium"
             >
-              <span className="material-symbols-outlined text-[20px]">manage_accounts</span> Manage Profiles
+              <span className="material-symbols-outlined text-[18px]">manage_accounts</span> Manage Profiles
             </button>
             <button
               onClick={handleCreateNew}
-              className="w-full text-left px-2 py-2 pb-3 text-label-md font-label-md text-primary hover:bg-primary-container/20 rounded-lg transition-colors flex items-center gap-xs"
-            > Create New Profile
+              className="w-full text-left px-2 py-2 text-xs sm:text-sm text-primary font-bold hover:bg-primary-container/20 rounded-lg transition-colors flex items-center gap-1"
+            > + Create New Profile
             </button>
           </div>
         </div>

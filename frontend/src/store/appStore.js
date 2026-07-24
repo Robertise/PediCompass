@@ -40,6 +40,12 @@ export const useAppStore = create(
         set((state) => ({
           dismissedStaleReminders: { ...state.dismissedStaleReminders, [profileId]: true },
         })),
+
+      activeTrace: null,
+      setActiveTrace: (trace) => set({ activeTrace: trace }),
+
+      isStreaming: false,
+      setIsStreaming: (streaming) => set({ isStreaming: streaming }),
     }),
     {
       name: 'pedix-app',

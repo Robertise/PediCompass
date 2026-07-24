@@ -22,7 +22,7 @@ const STARTERS = [
 //   displayLabel — what gets shown in user bubble (always clean, no token)
 export default function ConversationStarter({ onSelect }) {
   return (
-    <div className="flex flex-col sm:flex-row gap-md w-full mt-xs">
+    <div className="flex flex-col sm:flex-row gap-sm sm:gap-md w-full mt-xs px-2 sm:px-0">
       {STARTERS.map((starter, i) => (
         <button
           key={i}
@@ -33,14 +33,14 @@ export default function ConversationStarter({ onSelect }) {
             // Pass both payload (to send) and clean message (to display)
             onSelect(payload, starter.message)
           }}
-          className="flex-1 flex flex-col items-start gap-xs bg-surface-container hover:bg-surface-container-high rounded-2xl px-md py-sm text-left transition-all hover:shadow-sm hover:-translate-y-[1px] active:translate-y-0"
+          className="flex-1 flex flex-col items-start gap-xs bg-surface-container dark:bg-surface-container-high hover:bg-surface-container-high rounded-xl sm:rounded-2xl p-3 sm:px-md sm:py-sm text-left transition-all hover:shadow-sm active:scale-[0.99]"
         >
-          <div className="flex items-center gap-sm">
-            <span className="text-label-md font-label-md text-on-surface">
+          <div className="flex items-center gap-xs">
+            <span className="text-label-sm sm:text-label-md font-label-md text-on-surface font-bold">
               {starter.label}
             </span>
           </div>
-          <span className="text-body-sm font-body-sm text-on-surface-variant">
+          <span className="text-body-xs sm:text-body-sm text-on-surface-variant text-xs sm:text-sm">
             {starter.description}
           </span>
         </button>

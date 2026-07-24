@@ -69,8 +69,21 @@
     --color-routine: #34d399;
   }
 
+  html {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
   body {
     @apply text-on-surface font-body-md antialiased transition-colors duration-200;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    overscroll-behavior: none;
     /* CSS-only layered background for Light Theme */
     background: radial-gradient(circle at 50% 120%, rgba(14, 165, 233, 0.05) 0%, rgba(14, 165, 233, 0) 50%),
                 linear-gradient(180deg, var(--color-background) 0%, #f9fafb 100%);

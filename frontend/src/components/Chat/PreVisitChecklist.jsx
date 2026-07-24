@@ -81,7 +81,7 @@ export default function PreVisitChecklist({ items }) {
                 checked={isChecked}
                 onChange={() => toggle(idx)}
               />
-              <span className={`text-body-md font-body-md transition-colors ${isChecked ? 'text-on-surface-variant line-through' : 'text-on-surface'}`}>
+              <span className={`text-xs sm:text-body-md font-body-md transition-colors ${isChecked ? 'text-on-surface-variant line-through' : 'text-on-surface'}`}>
                 {item}
               </span>
             </label>

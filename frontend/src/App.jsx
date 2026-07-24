@@ -33,10 +33,40 @@ function MainLayout({ children }) {
     root.classList.add(theme)
   }, [theme])
 
+  // Mobile Visual Viewport Handling: Dynamically adjust app height to fit above mobile virtual keyboard
+  useEffect(() => {
+    const updateViewportHeight = () => {
+      const vvHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight
+      document.documentElement.style.setProperty('--vv-height', `${vvHeight}px`)
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0)
+      }
+    }
+
+    updateViewportHeight()
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', updateViewportHeight)
+      window.visualViewport.addEventListener('scroll', updateViewportHeight)
+    }
+    window.addEventListener('resize', updateViewportHeight)
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', updateViewportHeight)
+        window.visualViewport.removeEventListener('scroll', updateViewportHeight)
+      }
+      window.removeEventListener('resize', updateViewportHeight)
+    }
+  }, [])
+
   return (
-    <div className="bg-background text-on-surface font-body-md h-screen overflow-hidden flex flex-col transition-colors duration-200">
+    <div 
+      style={{ height: 'var(--vv-height, 100vh)', overscrollBehavior: 'none' }}
+      className="fixed inset-x-0 top-0 bg-background text-on-surface font-body-md overflow-hidden flex flex-col transition-colors duration-200"
+    >
       <Navbar />
-      <div className="flex flex-1 overflow-hidden w-full">
+      <div className="flex flex-1 overflow-hidden min-h-0 w-full">
         {children}
       </div>
       <AuthModal />

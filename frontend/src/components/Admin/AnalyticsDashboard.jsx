@@ -36,9 +36,9 @@ export default function AnalyticsDashboard() {
 
   return (
     <div>
-      <div className="flex justify-end mb-md">
+      <div className="flex justify-end mb-sm sm:mb-md">
         <select 
-          className="bg-surface dark:bg-surface-container-high shadow-md dark:shadow-soft-dark border-none rounded-[12px] pl-4 pr-8 py-2.5 text-body-md font-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer dark:[color-scheme:dark]"
+          className="bg-surface dark:bg-surface-container-high shadow-md dark:shadow-soft-dark border-none rounded-[12px] px-3 py-1.5 sm:pl-4 sm:pr-8 sm:py-2.5 text-xs sm:text-body-md font-body-md text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all cursor-pointer dark:[color-scheme:dark]"
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
         >
@@ -48,19 +48,19 @@ export default function AnalyticsDashboard() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-md mb-xl">
-        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark flex flex-col items-center justify-center">
-          <div className="text-[48px] font-display-md font-bold text-primary">{totalQueries}</div>
-          <div className="text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Total Queries</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-sm sm:gap-md mb-md sm:mb-xl">
+        <div className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] p-3 sm:p-md shadow-md dark:shadow-soft-dark flex flex-col items-center justify-center">
+          <div className="text-3xl sm:text-[48px] font-display-md font-bold text-primary">{totalQueries}</div>
+          <div className="text-[10px] sm:text-label-md font-label-md text-on-surface-variant uppercase tracking-wider">Total Queries</div>
         </div>
         
-        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
-          <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Urgency Distribution</h3>
+        <div className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] p-3 sm:p-md shadow-md dark:shadow-soft-dark">
+          <h3 className="text-sm sm:text-headline-sm font-bold text-on-surface mb-xs sm:mb-sm">Urgency Distribution</h3>
           {Object.entries(summary.urgency_distribution || {}).length === 0 ? (
-            <p className="text-body-sm text-on-surface-variant">No data</p>
+            <p className="text-xs sm:text-body-sm text-on-surface-variant">No data</p>
           ) : (
             Object.entries(summary.urgency_distribution).map(([level, count]) => (
-              <div key={level} className="flex justify-between mb-xs text-body-md font-body-md text-on-surface">
+              <div key={level} className="flex justify-between mb-xs text-xs sm:text-body-md text-on-surface">
                 <span className="capitalize">{level.replace('_', ' ')}</span>
                 <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({totalQueries > 0 ? Math.round((count/totalQueries)*100) : 0}%)</span></span>
               </div>
@@ -68,13 +68,13 @@ export default function AnalyticsDashboard() {
           )}
         </div>
 
-        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
-          <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Age Demographics</h3>
+        <div className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] p-3 sm:p-md shadow-md dark:shadow-soft-dark">
+          <h3 className="text-sm sm:text-headline-sm font-bold text-on-surface mb-xs sm:mb-sm">Age Demographics</h3>
           {Object.entries(summary.age_group_distribution || {}).length === 0 ? (
-            <p className="text-body-sm text-on-surface-variant">No data</p>
+            <p className="text-xs sm:text-body-sm text-on-surface-variant">No data</p>
           ) : (
             Object.entries(summary.age_group_distribution).map(([age, count]) => (
-              <div key={age} className="flex justify-between mb-xs text-body-md font-body-md text-on-surface">
+              <div key={age} className="flex justify-between mb-xs text-xs sm:text-body-md text-on-surface">
                 <span className="capitalize">{age.replace('_', ' ')}</span>
                 <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({totalQueries > 0 ? Math.round((count/totalQueries)*100) : 0}%)</span></span>
               </div>
@@ -83,14 +83,14 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-md mb-xl">
-        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
-          <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Intent Types</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-sm sm:gap-md mb-md sm:mb-xl">
+        <div className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] p-3 sm:p-md shadow-md dark:shadow-soft-dark">
+          <h3 className="text-sm sm:text-headline-sm font-bold text-on-surface mb-xs sm:mb-sm">Intent Types</h3>
           {Object.entries(summary.intent_distribution || {}).length === 0 ? (
-            <p className="text-body-sm text-on-surface-variant">No data</p>
+            <p className="text-xs sm:text-body-sm text-on-surface-variant">No data</p>
           ) : (
             Object.entries(summary.intent_distribution).map(([intent, count]) => (
-              <div key={intent} className="flex justify-between mb-xs text-body-md font-body-md text-on-surface">
+              <div key={intent} className="flex justify-between mb-xs text-xs sm:text-body-md text-on-surface">
                 <span className="capitalize">{intent.replace('_', ' ')}</span>
                 <span className="font-bold">{count} <span className="text-on-surface-variant font-normal">({totalQueries > 0 ? Math.round((count/totalQueries)*100) : 0}%)</span></span>
               </div>
@@ -98,14 +98,14 @@ export default function AnalyticsDashboard() {
           )}
         </div>
 
-        <div className="bg-surface dark:bg-surface-container-high rounded-[20px] p-md shadow-md dark:shadow-soft-dark">
-          <h3 className="text-headline-sm font-headline-sm text-on-surface mb-sm">Top Reported Symptoms</h3>
+        <div className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] p-3 sm:p-md shadow-md dark:shadow-soft-dark">
+          <h3 className="text-sm sm:text-headline-sm font-bold text-on-surface mb-xs sm:mb-sm">Top Reported Symptoms</h3>
           {Object.entries(summary.top_symptoms || {}).length === 0 ? (
-            <p className="text-body-sm text-on-surface-variant">No data</p>
+            <p className="text-xs sm:text-body-sm text-on-surface-variant">No data</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
               {Object.entries(summary.top_symptoms).map(([symptom, count]) => (
-                <div key={symptom} className="flex items-center gap-1 bg-primary/10 text-primary px-3 py-1 rounded-full text-label-md font-label-md">
+                <div key={symptom} className="flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full text-xs sm:text-label-md font-medium">
                   <span>{symptom}</span>
                   <span className="bg-primary text-on-primary text-[10px] px-1.5 py-0.5 rounded-full">{count}</span>
                 </div>
@@ -115,36 +115,36 @@ export default function AnalyticsDashboard() {
         </div>
       </div>
 
-      <h2 className="text-display-sm font-display-sm font-bold text-on-surface mb-md">Document Registry (KB)</h2>
-      <div className="bg-surface dark:bg-surface-container-high rounded-[20px] shadow-md dark:shadow-soft-dark overflow-hidden">
+      <h2 className="text-base sm:text-display-sm font-bold text-on-surface mb-xs sm:mb-md">Document Registry (KB)</h2>
+      <div className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] shadow-md dark:shadow-soft-dark overflow-x-auto">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="border-b border-outline-variant/30 dark:border-white/10 bg-surface-container-low dark:bg-black/20">
-              <th className="p-4 text-label-md font-label-md text-on-surface-variant">Document Name</th>
-              <th className="p-4 text-label-md font-label-md text-on-surface-variant">Authority</th>
-              <th className="p-4 text-label-md font-label-md text-on-surface-variant">Chunks</th>
-              <th className="p-4 text-label-md font-label-md text-on-surface-variant">Date Indexed</th>
-              <th className="p-4 text-label-md font-label-md text-on-surface-variant">Status</th>
+              <th className="p-2.5 sm:p-4 text-xs sm:text-label-md font-bold text-on-surface-variant">Document Name</th>
+              <th className="p-2.5 sm:p-4 text-xs sm:text-label-md font-bold text-on-surface-variant">Authority</th>
+              <th className="p-2.5 sm:p-4 text-xs sm:text-label-md font-bold text-on-surface-variant">Chunks</th>
+              <th className="p-2.5 sm:p-4 text-xs sm:text-label-md font-bold text-on-surface-variant">Date Indexed</th>
+              <th className="p-2.5 sm:p-4 text-xs sm:text-label-md font-bold text-on-surface-variant">Status</th>
             </tr>
           </thead>
           <tbody>
             {documents.length === 0 ? (
               <tr>
-                <td colSpan="5" className="p-md text-center text-on-surface-variant font-body-md">
+                <td colSpan="5" className="p-md text-center text-on-surface-variant text-xs sm:text-body-md">
                   No documents found in registry.
                 </td>
               </tr>
             ) : (
               documents.map(doc => (
                 <tr key={doc.doc_id} className="border-b border-outline-variant/20 dark:border-white/5 last:border-0 hover:bg-surface-container-lowest dark:hover:bg-white/5 transition-colors">
-                  <td className="p-4 text-body-md font-body-md text-on-surface">{doc.filename}</td>
-                  <td className="p-4">
-                    <span className="bg-tertiary-container text-on-tertiary-container px-2 py-1 rounded-md text-label-sm font-label-sm">{doc.source_authority}</span>
+                  <td className="p-2.5 sm:p-4 text-xs sm:text-body-md text-on-surface">{doc.filename}</td>
+                  <td className="p-2.5 sm:p-4">
+                    <span className="bg-tertiary-container text-on-tertiary-container px-2 py-0.5 rounded-md text-[10px] sm:text-label-sm font-medium">{doc.source_authority}</span>
                   </td>
-                  <td className="p-4 text-body-md font-body-md text-on-surface">{doc.chunk_count}</td>
-                  <td className="p-4 text-body-md font-body-md text-on-surface">{new Date(doc.upload_date).toLocaleDateString()}</td>
-                  <td className="p-4">
-                    <span className={`text-label-sm font-label-sm px-2 py-1 rounded-md ${
+                  <td className="p-2.5 sm:p-4 text-xs sm:text-body-md text-on-surface">{doc.chunk_count}</td>
+                  <td className="p-2.5 sm:p-4 text-xs sm:text-body-md text-on-surface">{new Date(doc.upload_date).toLocaleDateString()}</td>
+                  <td className="p-2.5 sm:p-4">
+                    <span className={`text-[10px] sm:text-label-sm font-medium px-2 py-0.5 rounded-md ${
                       doc.status === 'complete' 
                         ? 'bg-primary-container/30 text-primary' 
                         : 'bg-error-container/30 text-error'

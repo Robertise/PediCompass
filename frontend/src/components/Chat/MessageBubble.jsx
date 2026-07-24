@@ -4,7 +4,7 @@ import UrgencyBadge from './UrgencyBadge'
 import CitedSources from './CitedSources'
 import PreVisitChecklist from './PreVisitChecklist'
 
-const MARKDOWN_STYLES = "space-y-3 [&>ul]:list-disc [&>ul]:ml-6 [&>ul>li]:pl-1 [&>ul>li]:mt-1 [&>ol]:list-decimal [&>ol]:ml-6 [&>ol>li]:pl-1 [&>ol>li]:mt-1 [&>p]:leading-relaxed"
+const MARKDOWN_STYLES = "space-y-3 [&>ul]:list-disc [&>ul]:ml-5 [&>ul>li]:pl-1 [&>ul>li]:mt-1 [&>ol]:list-decimal [&>ol]:ml-5 [&>ol>li]:pl-1 [&>ol>li]:mt-1 [&>p]:leading-relaxed text-xs sm:text-sm md:text-body-md font-normal"
 
 // STAGE_ORDER strings must match StageNames constants in backend/agent/models.py exactly.
 // If backend stage name changes, update here too.
@@ -103,7 +103,7 @@ export default function MessageBubble({ role, content, onQuickReply, onConfirmRe
   if (role === 'user') {
     return (
       <div className="flex justify-end max-w-[52rem] mx-auto w-full">
-        <div className="bg-surface-container text-on-surface px-md py-sm rounded-2xl rounded-tr-[4px] text-body-md font-body-md whitespace-pre-wrap max-w-[85%] md:max-w-[75%] shadow-sm">
+        <div className="bg-surface-container text-on-surface px-3 py-2 sm:px-md sm:py-sm rounded-2xl rounded-tr-[4px] text-xs sm:text-body-sm md:text-body-md font-medium whitespace-pre-wrap max-w-[88%] md:max-w-[75%] shadow-sm">
           {content}
         </div>
       </div>
@@ -123,14 +123,14 @@ export default function MessageBubble({ role, content, onQuickReply, onConfirmRe
           onClick={onSelectTrace}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="mb-2 text-[13px] leading-relaxed transition-colors duration-300 text-left cursor-pointer flex items-center"
+          className="mb-1.5 text-[11px] sm:text-[13px] leading-relaxed transition-colors duration-300 text-left cursor-pointer flex items-center"
           style={{
             color: isHovered ? 'var(--color-on-surface-variant)' : '#9ca3af',
           }}
         >
           <span>{generateTraceSummary(content)}</span>
           <span 
-            className="font-mono text-[11px] leading-none mt-[1px] inline-block overflow-hidden transition-all duration-300 ease-out"
+            className="font-mono text-[10px] sm:text-[11px] leading-none mt-[1px] inline-block overflow-hidden transition-all duration-300 ease-out"
             style={{
               opacity: isHovered ? 1 : 0,
               maxWidth: isHovered ? '12px' : '0px',
@@ -173,7 +173,7 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
   // ── Greeting response ──────────────────────────────────────────────────────
   if (response.type === 'greeting') {
     return (
-      <div className={`text-body-md font-body-md text-on-surface ${MARKDOWN_STYLES}`}>
+      <div className={`text-xs sm:text-sm md:text-body-md text-on-surface ${MARKDOWN_STYLES}`}>
         <ReactMarkdown>{response.parent_message}</ReactMarkdown>
       </div>
     )
@@ -182,18 +182,18 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
   // ── General response ───────────────────────────────────────────────────────
   if (response.type === 'general') {
     return (
-      <div className="flex flex-col gap-md">
+      <div className="flex flex-col gap-sm sm:gap-md">
         <div className="flex items-center gap-xs text-on-surface-variant">
-          <span className="material-symbols-outlined text-[16px]">menu_book</span>
-          <span className="text-label-sm font-label-sm uppercase tracking-wider">General Knowledge</span>
+          <span className="material-symbols-outlined text-[15px]">menu_book</span>
+          <span className="text-[10px] sm:text-label-sm font-label-sm uppercase tracking-wider">General Knowledge</span>
         </div>
-        <div className={`text-body-md font-body-md text-on-surface ${MARKDOWN_STYLES}`}>
+        <div className={`text-xs sm:text-sm md:text-body-md text-on-surface ${MARKDOWN_STYLES}`}>
           <ReactMarkdown>{response.parent_message}</ReactMarkdown>
         </div>
         {response.cited_sources?.length > 0 && (
           <CitedSources sources={response.cited_sources} />
         )}
-        <div className="text-label-sm font-label-sm text-on-surface-variant text-center mt-1">
+        <div className="text-[10px] sm:text-label-sm text-on-surface-variant text-center mt-1">
           General health information only. Not a substitute for professional medical advice.
         </div>
       </div>
@@ -202,13 +202,11 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
 
   // ── Confirmation response ──────────────────────────────────────────────────
   if (response.type === 'confirmation') {
-    // Token map: index 0 = TRIAGE, index 1 = GENERAL (matches orchestrator order)
     const TOKEN_MAP = ['__CONFIRM_TRIAGE__', '__CONFIRM_GENERAL__']
-    // Buttons are disabled once a reply has been sent (not last message) or while loading
     const buttonsDisabled = !isLastMessage || loading
     return (
       <div className="flex flex-col gap-sm">
-        <p className="text-body-md font-body-md text-on-surface">
+        <p className="text-xs sm:text-sm md:text-body-md text-on-surface">
           {response.parent_message}
         </p>
         {response.confirmation_options?.map((option, i) => (
@@ -216,7 +214,7 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
             key={i}
             onClick={() => !buttonsDisabled && onConfirmReply?.(option, TOKEN_MAP[i])}
             disabled={buttonsDisabled}
-            className={`w-full text-left rounded-xl px-3 py-1.5 text-body-md font-body-md shadow-sm ${
+            className={`w-full text-left rounded-xl px-3 py-2 text-xs sm:text-sm md:text-body-md shadow-sm ${
               buttonsDisabled
                 ? 'bg-surface-container/50 text-on-surface-variant/40 opacity-50 cursor-not-allowed'
                 : 'bg-surface-container text-on-surface cursor-pointer'
@@ -232,9 +230,9 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
   // ── Error response ─────────────────────────────────────────────────────────
   if (response.type === 'error') {
     return (
-      <div className="bg-error-container/15 text-on-surface px-md py-sm rounded-xl border border-error/20 text-body-md font-body-md">
+      <div className="bg-error-container/15 text-on-surface px-3 py-2 sm:px-md sm:py-sm rounded-xl border border-error/20 text-xs sm:text-sm md:text-body-md">
         <p className="text-error font-semibold mb-1 flex items-center gap-1">
-          <span className="material-symbols-outlined text-[18px]">error_outline</span>
+          <span className="material-symbols-outlined text-[16px] sm:text-[18px]">error_outline</span>
           Something went wrong
         </p>
         <p className="text-on-surface-variant">{response.reason || 'An unexpected error occurred.'}</p>
@@ -279,7 +277,7 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
     const buttonsDisabled = !isLastMessage || loading
     return (
       <div className="flex flex-col gap-sm">
-        <p className="text-body-md font-body-md text-on-surface">
+        <p className="text-xs sm:text-sm md:text-body-md text-on-surface">
           To better understand the situation, I need a bit more information:
         </p>
         {response.clarification_questions?.length > 0 && (
@@ -287,9 +285,9 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
             {response.clarification_questions.map((q, i) => (
               <div
                 key={i}
-                className="bg-surface-container shadow-sm px-sm py-sm rounded-xl text-body-md font-body-md text-on-surface flex items-start gap-2"
+                className="bg-surface-container shadow-sm p-2.5 sm:p-sm rounded-xl text-xs sm:text-sm md:text-body-md text-on-surface flex items-start gap-2"
               >
-                <span className="material-symbols-outlined text-primary text-[18px] shrink-0 mt-[2px]">help_outline</span>
+                <span className="material-symbols-outlined text-primary text-[16px] sm:text-[18px] shrink-0 mt-[2px]">help_outline</span>
                 <span>{q}</span>
               </div>
             ))}
@@ -298,15 +296,15 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
 
         {/* Quick-tap response options */}
         {response.clarification_options?.length > 0 && (
-          <div className="flex flex-col gap-sm mt-xs">
-            <span className="text-label-sm font-label-sm text-on-surface-variant">Select an option:</span>
-            <div className="flex flex-wrap gap-sm">
+          <div className="flex flex-col gap-xs sm:gap-sm mt-xs">
+            <span className="text-[11px] sm:text-label-sm font-label-sm text-on-surface-variant">Select an option:</span>
+            <div className="flex flex-wrap gap-1.5 sm:gap-sm">
               {response.clarification_options.map((option, idx) => (
                 <button
                   key={idx}
                   onClick={() => !buttonsDisabled && onQuickReply?.(option)}
                   disabled={buttonsDisabled}
-                  className={`rounded-md px-3 py-1.5 text-body-sm font-body-sm shadow-sm ${
+                  className={`rounded-lg px-2.5 py-1 sm:px-3 sm:py-1.5 text-xs sm:text-body-sm shadow-sm transition-transform active:scale-95 ${
                     buttonsDisabled
                       ? 'bg-surface-container/50 text-on-surface-variant/40 opacity-50 cursor-not-allowed'
                       : 'bg-surface-container text-on-surface cursor-pointer'
@@ -322,34 +320,31 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
     )
   }
 
-
-
-
   // ── Full recommendation ────────────────────────────────────────────────────
   if (response.type === 'recommendation') {
     const { urgency_level, care_pathway, pre_visit_checklist, warning_signs, cited_sources } = response
 
     return (
-      <div className="flex flex-col gap-md">
-        <div className="bg-transparent p-1 overflow-hidden flex flex-col gap-md">
+      <div className="flex flex-col gap-sm sm:gap-md">
+        <div className="bg-transparent p-0.5 overflow-hidden flex flex-col gap-sm sm:gap-md">
           {/* Urgency Badge */}
           {urgency_level && <UrgencyBadge level={urgency_level} />}
 
           {/* Care Pathway cards */}
           {care_pathway && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
-              <div className="flex gap-sm p-sm bg-surface-container-low rounded-xl">
-                <span className="material-symbols-outlined text-primary text-[28px]">local_hospital</span>
+              <div className="flex gap-sm p-2.5 sm:p-sm bg-surface-container-low rounded-xl">
+                <span className="material-symbols-outlined text-primary text-[24px] sm:text-[28px]">local_hospital</span>
                 <div className="flex flex-col">
-                  <span className="text-label-sm font-label-sm text-on-surface-variant mb-[2px]">Recommended Care Setting</span>
-                  <span className="text-label-md font-label-md text-on-surface">{care_pathway.care_setting}</span>
+                  <span className="text-[10px] sm:text-label-sm text-on-surface-variant mb-[1px]">Recommended Care Setting</span>
+                  <span className="text-xs sm:text-label-md font-bold text-on-surface">{care_pathway.care_setting}</span>
                 </div>
               </div>
-              <div className="flex gap-sm p-sm bg-surface-container-low rounded-xl">
-                <span className="material-symbols-outlined text-tertiary text-[28px]">schedule</span>
+              <div className="flex gap-sm p-2.5 sm:p-sm bg-surface-container-low rounded-xl">
+                <span className="material-symbols-outlined text-tertiary text-[24px] sm:text-[28px]">schedule</span>
                 <div className="flex flex-col">
-                  <span className="text-label-sm font-label-sm text-on-surface-variant mb-[2px]">Timeframe</span>
-                  <span className="text-label-md font-label-md text-on-surface">As guided by setting</span>
+                  <span className="text-[10px] sm:text-label-sm text-on-surface-variant mb-[1px]">Timeframe</span>
+                  <span className="text-xs sm:text-label-md font-bold text-on-surface">As guided by setting</span>
                 </div>
               </div>
             </div>
@@ -357,41 +352,41 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
 
           {/* Clinical reasoning prose */}
           {care_pathway?.clinical_reasoning && (
-            <div className={`text-body-sm text-on-surface-variant ${MARKDOWN_STYLES}`}>
+            <div className={`text-xs sm:text-body-sm text-on-surface-variant ${MARKDOWN_STYLES}`}>
               <ReactMarkdown>{care_pathway.clinical_reasoning}</ReactMarkdown>
             </div>
           )}
 
           {/* OpenFDA Medication Safety Card */}
           {care_pathway?.medication_safety && (
-            <div className="flex flex-col gap-xs bg-amber-500/10 p-sm rounded-xl border border-amber-500/20">
-              <div className="flex items-center gap-xs text-amber-600 dark:text-amber-400 font-label-md font-bold">
-                <span className="material-symbols-outlined text-[20px]">medication</span>
+            <div className="flex flex-col gap-xs bg-amber-500/10 p-2.5 sm:p-sm rounded-xl border border-amber-500/20">
+              <div className="flex items-center gap-xs text-amber-600 dark:text-amber-400 text-xs sm:text-label-md font-bold">
+                <span className="material-symbols-outlined text-[18px] sm:text-[20px]">medication</span>
                 <span>OpenFDA Pediatric Safety — {care_pathway.medication_safety.drug_name}</span>
               </div>
               {care_pathway.medication_safety.error ? (
-                <p className="text-body-sm text-on-surface-variant italic">
+                <p className="text-xs sm:text-body-sm text-on-surface-variant italic">
                   {care_pathway.medication_safety.error}
                 </p>
               ) : care_pathway.medication_safety.top_reactions?.length > 0 ? (
                 <div className="flex flex-col gap-xs mt-xs">
-                  <p className="text-body-sm text-on-surface-variant">
+                  <p className="text-xs sm:text-body-sm text-on-surface-variant">
                     Top reported pediatric adverse events ({care_pathway.medication_safety.total_pediatric_reports} total reports):
                   </p>
                   <div className="flex flex-wrap gap-xs">
                     {care_pathway.medication_safety.top_reactions.map((rx, idx) => (
-                      <span key={idx} className="bg-surface-container px-2 py-0.5 rounded-md text-xs text-on-surface">
+                      <span key={idx} className="bg-surface-container px-2 py-0.5 rounded-md text-[10px] sm:text-xs text-on-surface">
                         {rx.reaction} ({rx.count})
                       </span>
                     ))}
                   </div>
                 </div>
               ) : (
-                <p className="text-body-sm text-on-surface-variant">
+                <p className="text-xs sm:text-body-sm text-on-surface-variant">
                   No adverse reaction clusters found for age 0–5 in FAERS database.
                 </p>
               )}
-              <p className="text-[11px] text-on-surface-variant/60 mt-xs">
+              <p className="text-[10px] sm:text-[11px] text-on-surface-variant/60 mt-xs">
                 {care_pathway.medication_safety.data_disclaimer}
               </p>
             </div>
@@ -400,14 +395,14 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
           <div className="w-full h-px bg-black/10 dark:bg-white/15 my-xs" />
 
           {/* Actions & Warnings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-sm sm:gap-md">
             {care_pathway?.immediate_actions?.length > 0 && (
-              <div className="flex flex-col gap-sm bg-[#0ea5e9]/10 p-sm rounded-xl border-none">
-                <span className="text-label-md font-label-md text-on-surface">What You Can Do Now:</span>
-                <ul className="space-y-sm">
+              <div className="flex flex-col gap-2 p-2.5 sm:p-sm bg-[#0ea5e9]/10 rounded-xl border-none">
+                <span className="text-xs sm:text-label-md font-bold text-on-surface">What You Can Do Now:</span>
+                <ul className="space-y-1.5 sm:space-y-sm">
                   {care_pathway.immediate_actions.map((action, i) => (
-                    <li key={i} className="flex items-start gap-sm text-body-sm font-body-sm text-on-surface-variant">
-                      <span className="material-symbols-outlined text-primary text-[20px] shrink-0">check_circle</span>
+                    <li key={i} className="flex items-start gap-2 text-xs sm:text-body-sm text-on-surface-variant">
+                      <span className="material-symbols-outlined text-primary text-[16px] sm:text-[20px] shrink-0 mt-[1px]">check_circle</span>
                       <span>{action}</span>
                     </li>
                   ))}
@@ -416,11 +411,11 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
             )}
 
             {warning_signs?.length > 0 && (
-              <div className="flex flex-col gap-sm bg-[#ef4444]/10 p-sm rounded-xl border-none">
-                <span className="text-label-md font-label-md text-error">Warning Signs — Seek Care Immediately:</span>
-                <ul className="space-y-[4px]">
+              <div className="flex flex-col gap-2 p-2.5 sm:p-sm bg-[#ef4444]/10 rounded-xl border-none">
+                <span className="text-xs sm:text-label-md font-bold text-error">Warning Signs — Seek Care Immediately:</span>
+                <ul className="space-y-1 sm:space-y-[4px]">
                   {warning_signs.map((sign, i) => (
-                    <li key={i} className="flex items-center gap-xs text-body-sm font-body-sm text-on-surface-variant">
+                    <li key={i} className="flex items-center gap-1.5 text-xs sm:text-body-sm text-on-surface-variant">
                       <span className="w-1.5 h-1.5 rounded-full bg-error shrink-0"></span> {sign}
                     </li>
                   ))}
@@ -432,7 +427,7 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
           <PreVisitChecklist items={pre_visit_checklist} />
           <CitedSources sources={cited_sources} />
 
-          <div className="bg-transparent p-sm text-label-sm font-label-sm text-on-surface-variant text-center mt-2">
+          <div className="bg-transparent p-xs text-[10px] sm:text-label-sm text-on-surface-variant text-center mt-1">
             This is not a medical diagnosis. Trust your instincts and seek medical help if concerned.
           </div>
         </div>
@@ -442,7 +437,7 @@ function AgentResponseCard({ response, onQuickReply, onConfirmReply, isLastMessa
 
   // Fallback for plain text
   return (
-    <div className="text-body-md font-body-md text-on-surface whitespace-pre-wrap">
+    <div className="text-xs sm:text-sm md:text-body-md text-on-surface whitespace-pre-wrap">
       {typeof response === 'string' ? response : JSON.stringify(response)}
     </div>
   )
