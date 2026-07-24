@@ -1,0 +1,867 @@
+{
+  "timestamp": "2026-07-23T14:57:59.664658+00:00",
+  "total_cases": 25,
+  "elapsed_time_seconds": 151.35,
+  "mode": "full",
+  "top_k": 3,
+  "metrics": {
+    "retrieval": {
+      "hit_at_1_pct": 80.0,
+      "hit_at_k_pct": 96.0,
+      "mean_rerank_score": 0.0481,
+      "age_filter_compliance_pct": 100.0
+    },
+    "urgency": {
+      "exact_match_pct": 52.0,
+      "adjacent_match_pct": 92.0,
+      "critical_misses_count": 0
+    }
+  },
+  "details": [
+    {
+      "id": "tc_001",
+      "query": "My 10-day-old baby has a fever of 38.5°C and seems extremely lethargic and pale.",
+      "age_group": "newborn",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "fever",
+        "neonate",
+        "newborn",
+        "lethargy",
+        "emergency",
+        "38"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0026,
+        "valid_age_filter": true,
+        "latency_ms": 6370,
+        "retrieved_chunk_ids": [
+          "152c48b9-56e0-5cb3-9a1c-c0660b7ad0ae",
+          "65c6f8f2-9fc9-5367-9b78-a73cec58af3a",
+          "bf22f8a2-69e8-5794-8033-5a538737bb8e"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 1660
+      }
+    },
+    {
+      "id": "tc_002",
+      "query": "My 21-day-old infant has blue lips and is struggling to breathe with chest wall indrawing.",
+      "age_group": "newborn",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "cyanosis",
+        "respiratory",
+        "breathing",
+        "distress",
+        "indrawing",
+        "blue"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0475,
+        "valid_age_filter": true,
+        "latency_ms": 496,
+        "retrieved_chunk_ids": [
+          "152c48b9-56e0-5cb3-9a1c-c0660b7ad0ae",
+          "40737d93-2a62-56e6-b6e4-949e851aa323",
+          "34710f80-6e41-5851-903d-62fce38126b0"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 0
+      }
+    },
+    {
+      "id": "tc_003",
+      "query": "Notice my 14-day-old baby's soft spot on the top of the head is bulging and firm.",
+      "age_group": "newborn",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "fontanelle",
+        "bulging",
+        "meningitis",
+        "intracranial",
+        "neonate"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0001,
+        "valid_age_filter": true,
+        "latency_ms": 504,
+        "retrieved_chunk_ids": [
+          "9b8325bd-982b-50b9-8f6d-220692b72f9a",
+          "93510ed4-6ac5-5c24-95a0-983238df765e",
+          "9c279ed7-e851-530f-ab62-595bd18598e6"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6216
+      }
+    },
+    {
+      "id": "tc_004",
+      "query": "My 20-day-old newborn refuses to feed since this morning and body temp is low at 35.8°C.",
+      "age_group": "newborn",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "feeding",
+        "hypothermia",
+        "septic",
+        "neonate",
+        "temperature",
+        "poor"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0585,
+        "valid_age_filter": true,
+        "latency_ms": 512,
+        "retrieved_chunk_ids": [
+          "152c48b9-56e0-5cb3-9a1c-c0660b7ad0ae",
+          "fb2f9f94-2739-5921-ad2d-799a4c85715c",
+          "63bed81c-99e1-595a-b2e8-d724511d8af3"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 7493
+      }
+    },
+    {
+      "id": "tc_005",
+      "query": "My 25-day-old baby has a small amount of dried blood/discharge around umbilical stump, no fever, active.",
+      "age_group": "newborn",
+      "expected_urgency": "urgent",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "umbilical",
+        "stump",
+        "omphalitis",
+        "discharge",
+        "care"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.11,
+        "valid_age_filter": true,
+        "latency_ms": 486,
+        "retrieved_chunk_ids": [
+          "892a6a20-2df3-550a-be3c-f73dc73d45f9",
+          "32c2b53f-385e-5ad8-be49-3eb1b055087b",
+          "c187c64f-e74a-5f0a-8501-907b2b2b964d"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 8012
+      }
+    },
+    {
+      "id": "tc_006",
+      "query": "My 45-day-old infant has a fever measuring 38.2°C, fussy but drinking milk.",
+      "age_group": "young_infant",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "fever",
+        "infant",
+        "young",
+        "38",
+        "temperature",
+        "evaluation"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0062,
+        "valid_age_filter": true,
+        "latency_ms": 496,
+        "retrieved_chunk_ids": [
+          "d640c832-0149-56b3-ac41-20b5f358b70a",
+          "f57d5dc5-6521-5342-af65-1107c6e52f06",
+          "570bb4b1-cdef-57cf-9db2-e45500a85b50"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 1564
+      }
+    },
+    {
+      "id": "tc_007",
+      "query": "My 8-week-old baby vomits forcefully across the room after every feeding and seems hungry right after.",
+      "age_group": "young_infant",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "vomiting",
+        "projectile",
+        "pyloric",
+        "stenosis",
+        "dehydration"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": false,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0104,
+        "valid_age_filter": true,
+        "latency_ms": 537,
+        "retrieved_chunk_ids": [
+          "2c3076ee-c841-5166-901c-bf5ba77ea964",
+          "79898e2b-d019-5b5f-8d22-597d625adaee",
+          "0061468c-c8e6-5d32-9f82-45dda1992b19"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6755
+      }
+    },
+    {
+      "id": "tc_008",
+      "query": "My 7-week-old baby has severe coughing fits followed by a whooping sound and turning red.",
+      "age_group": "young_infant",
+      "expected_urgency": "urgent",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "cough",
+        "whooping",
+        "pertussis",
+        "paroxysm",
+        "infant"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.1132,
+        "valid_age_filter": true,
+        "latency_ms": 492,
+        "retrieved_chunk_ids": [
+          "5989a955-335a-579c-b625-cfba85dfa30f",
+          "f1f2d479-19f4-5bf3-8fdc-5f96560172a8",
+          "e508361b-1346-592b-9fde-3b4838d42b3b"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6998
+      }
+    },
+    {
+      "id": "tc_009",
+      "query": "My 75-day-old baby has a clear runny nose and mild stuffiness, sleeping well and feeding normally.",
+      "age_group": "young_infant",
+      "expected_urgency": "self_care",
+      "predicted_urgency": "routine",
+      "expected_keywords": [
+        "congestion",
+        "nasal",
+        "saline",
+        "suction",
+        "runny",
+        "nose"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": false,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0103,
+        "valid_age_filter": true,
+        "latency_ms": 508,
+        "retrieved_chunk_ids": [
+          "2c3076ee-c841-5166-901c-bf5ba77ea964",
+          "79898e2b-d019-5b5f-8d22-597d625adaee",
+          "277fd4b2-8b6a-5933-9740-61301d4692c2"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6926
+      }
+    },
+    {
+      "id": "tc_010",
+      "query": "Baby got 2-month vaccines 6 hours ago, has mild fever 37.8°C and slight fussiness.",
+      "age_group": "young_infant",
+      "expected_urgency": "self_care",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "vaccine",
+        "immunization",
+        "fever",
+        "post-vaccine",
+        "reaction",
+        "calm"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0007,
+        "valid_age_filter": true,
+        "latency_ms": 497,
+        "retrieved_chunk_ids": [
+          "570bb4b1-cdef-57cf-9db2-e45500a85b50",
+          "5989a955-335a-579c-b625-cfba85dfa30f",
+          "f57d5dc5-6521-5342-af65-1107c6e52f06"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": false,
+        "critical_miss": false,
+        "latency_ms": 6683
+      }
+    },
+    {
+      "id": "tc_011",
+      "query": "My 6-month-old has a 38.8°C fever, rapid breathing with ribs sticking out, and whistling chest sound.",
+      "age_group": "infant",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "bronchiolitis",
+        "wheezing",
+        "retractions",
+        "respiratory",
+        "distress",
+        "rsv"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0105,
+        "valid_age_filter": true,
+        "latency_ms": 506,
+        "retrieved_chunk_ids": [
+          "12af64a6-1938-53a4-8a44-26799ef3af23",
+          "87b79b75-748c-55ca-88fd-4924e42521c4",
+          "748d6084-5488-5b4f-b68c-e9f2617a9ce6"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6297
+      }
+    },
+    {
+      "id": "tc_012",
+      "query": "My 9-month-old has 8 watery diarrhea stools today, dry mouth, no wet diaper for 7 hours.",
+      "age_group": "infant",
+      "expected_urgency": "urgent",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "diarrhea",
+        "dehydration",
+        "fluid",
+        "ors",
+        "diaper",
+        "oral"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0789,
+        "valid_age_filter": true,
+        "latency_ms": 529,
+        "retrieved_chunk_ids": [
+          "9d415830-8856-551f-ba2c-ec64816e50f5",
+          "2251f9b4-0d4a-56c2-b772-74137c966c6e",
+          "2aef7713-d4d9-57b0-a4c3-6efeabc0d114"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 1480
+      }
+    },
+    {
+      "id": "tc_013",
+      "query": "My 7-month-old infant pulls at her right ear constantly, crying, and fever of 38.3°C.",
+      "age_group": "infant",
+      "expected_urgency": "soon",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "ear",
+        "otitis",
+        "media",
+        "fever",
+        "tugging",
+        "pain"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0007,
+        "valid_age_filter": true,
+        "latency_ms": 484,
+        "retrieved_chunk_ids": [
+          "e9b632f7-3d4b-5087-ba3f-dd773ed9ef26",
+          "748d6084-5488-5b4f-b68c-e9f2617a9ce6",
+          "f32a2637-b617-5db7-892f-ffe7b4d8840a"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6849
+      }
+    },
+    {
+      "id": "tc_014",
+      "query": "My 10-month-old has small purple spots on skin that don't turn white when I press a glass against them.",
+      "age_group": "infant",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "rash",
+        "petechiae",
+        "purpura",
+        "non-blanching",
+        "meningococcal"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0249,
+        "valid_age_filter": true,
+        "latency_ms": 513,
+        "retrieved_chunk_ids": [
+          "65c6f8f2-9fc9-5367-9b78-a73cec58af3a",
+          "e38b3b43-26e1-5134-9b73-8145fb5b3813",
+          "d8a62236-353c-53e2-a1c0-67bf6ba60c7e"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 0
+      }
+    },
+    {
+      "id": "tc_015",
+      "query": "My 11-month-old has red irritated skin in the diaper area, no fever, happy and playing.",
+      "age_group": "infant",
+      "expected_urgency": "self_care",
+      "predicted_urgency": "routine",
+      "expected_keywords": [
+        "diaper",
+        "rash",
+        "dermatitis",
+        "barrier",
+        "cream",
+        "zinc"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0013,
+        "valid_age_filter": true,
+        "latency_ms": 565,
+        "retrieved_chunk_ids": [
+          "65c6f8f2-9fc9-5367-9b78-a73cec58af3a",
+          "38464038-3c1f-5569-84d3-f2532f68f925",
+          "d83ce860-e604-526a-b0af-9f665edce61f"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 5189
+      }
+    },
+    {
+      "id": "tc_016",
+      "query": "My 2-year-old woke up with a harsh seal-like barking cough and squeaky noise when breathing in.",
+      "age_group": "toddler",
+      "expected_urgency": "urgent",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "croup",
+        "stridor",
+        "cough",
+        "barking",
+        "dexamethasone",
+        "airway"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0381,
+        "valid_age_filter": true,
+        "latency_ms": 502,
+        "retrieved_chunk_ids": [
+          "12af64a6-1938-53a4-8a44-26799ef3af23",
+          "320cab9e-f668-5fa0-99a3-1995df8c0a35",
+          "e508361b-1346-592b-9fde-3b4838d42b3b"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 4436
+      }
+    },
+    {
+      "id": "tc_017",
+      "query": "My 18-month-old had a 1-minute shaking episode during sudden fever jump, now awake but groggy.",
+      "age_group": "toddler",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "seizure",
+        "febrile",
+        "convulsion",
+        "fever",
+        "shaking",
+        "postictal"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0002,
+        "valid_age_filter": true,
+        "latency_ms": 491,
+        "retrieved_chunk_ids": [
+          "3a8fe7ca-0d20-5a3f-b669-23ac380e126c",
+          "748d6084-5488-5b4f-b68c-e9f2617a9ce6",
+          "1b2d1b3a-46c4-5f51-9818-1d244917e5a6"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6334
+      }
+    },
+    {
+      "id": "tc_018",
+      "query": "My 30-month-old has small red spots on palms, soles, and painful mouth sores, low fever 37.9°C.",
+      "age_group": "toddler",
+      "expected_urgency": "soon",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "hand-foot-mouth",
+        "hfmd",
+        "coxsackie",
+        "blisters",
+        "mouth",
+        "sores"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": false,
+        "hit_at_k": false,
+        "avg_rerank_score": 0.0036,
+        "valid_age_filter": true,
+        "latency_ms": 507,
+        "retrieved_chunk_ids": [
+          "65c6f8f2-9fc9-5367-9b78-a73cec58af3a",
+          "748d6084-5488-5b4f-b68c-e9f2617a9ce6",
+          "d83ce860-e604-526a-b0af-9f665edce61f"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 5895
+      }
+    },
+    {
+      "id": "tc_019",
+      "query": "My 3-year-old toddler hasn't passed stool in 2 days and complains of mild belly discomfort when trying.",
+      "age_group": "toddler",
+      "expected_urgency": "routine",
+      "predicted_urgency": "routine",
+      "expected_keywords": [
+        "constipation",
+        "stool",
+        "fiber",
+        "fluid",
+        "bowel",
+        "laxative"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0036,
+        "valid_age_filter": true,
+        "latency_ms": 531,
+        "retrieved_chunk_ids": [
+          "0e1c8c03-d7c0-5350-92ab-5abeb3ae18da",
+          "2c3076ee-c841-5166-901c-bf5ba77ea964",
+          "115a0df5-8271-5145-895d-91f3855a6adc"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6017
+      }
+    },
+    {
+      "id": "tc_020",
+      "query": "My 2-year-old swallowed a small penny 20 minutes ago. He is breathing fine, no choking, smiling.",
+      "age_group": "toddler",
+      "expected_urgency": "urgent",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "foreign",
+        "body",
+        "swallowed",
+        "coin",
+        "esophagus",
+        "ingestion"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": false,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0001,
+        "valid_age_filter": true,
+        "latency_ms": 508,
+        "retrieved_chunk_ids": [
+          "87b79b75-748c-55ca-88fd-4924e42521c4",
+          "3a8fe7ca-0d20-5a3f-b669-23ac380e126c",
+          "ba0fb041-25a9-5f4d-97d0-149242d39784"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 5131
+      }
+    },
+    {
+      "id": "tc_021",
+      "query": "My 4-year-old has severe sore throat, fever 38.7°C, swollen neck glands, and no cough.",
+      "age_group": "preschool",
+      "expected_urgency": "soon",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "sore",
+        "throat",
+        "strep",
+        "pharyngitis",
+        "tonsillitis",
+        "fever"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0037,
+        "valid_age_filter": true,
+        "latency_ms": 567,
+        "retrieved_chunk_ids": [
+          "748d6084-5488-5b4f-b68c-e9f2617a9ce6",
+          "aba7433f-9804-5bfe-b35a-aed84413ef57",
+          "65c6f8f2-9fc9-5367-9b78-a73cec58af3a"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 5838
+      }
+    },
+    {
+      "id": "tc_022",
+      "query": "My 4-year-old diagnosed with asthma is wheezing heavily, breathing 45 times a minute, albuterol not helping.",
+      "age_group": "preschool",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "emergency",
+      "expected_keywords": [
+        "asthma",
+        "wheezing",
+        "exacerbation",
+        "inhaler",
+        "albuterol",
+        "distress"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.6763,
+        "valid_age_filter": true,
+        "latency_ms": 510,
+        "retrieved_chunk_ids": [
+          "12af64a6-1938-53a4-8a44-26799ef3af23",
+          "563a3db5-861c-5ffb-b78f-01b542c6fdd1",
+          "e508361b-1346-592b-9fde-3b4838d42b3b"
+        ]
+      },
+      "urgency": {
+        "exact_match": true,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 9284
+      }
+    },
+    {
+      "id": "tc_023",
+      "query": "My 42-month-old child has honey-colored crusted sores under her nose for 2 days.",
+      "age_group": "preschool",
+      "expected_urgency": "routine",
+      "predicted_urgency": "soon",
+      "expected_keywords": [
+        "impetigo",
+        "crust",
+        "bacterial",
+        "topical",
+        "antibiotic",
+        "sores"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0002,
+        "valid_age_filter": true,
+        "latency_ms": 518,
+        "retrieved_chunk_ids": [
+          "c7f22f4a-429f-5b4f-9d66-56f55beaddbc",
+          "748d6084-5488-5b4f-b68c-e9f2617a9ce6",
+          "65c6f8f2-9fc9-5367-9b78-a73cec58af3a"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6328
+      }
+    },
+    {
+      "id": "tc_024",
+      "query": "Child bumped forehead on coffee table 1 hour ago. Cried for 2 mins, no vomiting, no loss of consciousness, playing normally.",
+      "age_group": "preschool",
+      "expected_urgency": "self_care",
+      "predicted_urgency": "soon",
+      "expected_keywords": [
+        "head",
+        "injury",
+        "concussion",
+        "bump",
+        "observation",
+        "cold"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": false,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0001,
+        "valid_age_filter": true,
+        "latency_ms": 498,
+        "retrieved_chunk_ids": [
+          "ba0fb041-25a9-5f4d-97d0-149242d39784",
+          "320cab9e-f668-5fa0-99a3-1995df8c0a35",
+          "705ea0fe-c1bc-5139-9375-a4c04b0367fb"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": false,
+        "critical_miss": false,
+        "latency_ms": 4480
+      }
+    },
+    {
+      "id": "tc_025",
+      "query": "My 5-year-old has severe sharp pain in the lower right belly, walking bent over, vomited twice.",
+      "age_group": "preschool",
+      "expected_urgency": "emergency",
+      "predicted_urgency": "urgent",
+      "expected_keywords": [
+        "appendicitis",
+        "abdominal",
+        "pain",
+        "right",
+        "lower",
+        "quadrant"
+      ],
+      "retrieval": {
+        "chunks_count": 3,
+        "hit_at_1": true,
+        "hit_at_k": true,
+        "avg_rerank_score": 0.0003,
+        "valid_age_filter": true,
+        "latency_ms": 522,
+        "retrieved_chunk_ids": [
+          "0e1c8c03-d7c0-5350-92ab-5abeb3ae18da",
+          "789d8d06-d02b-5c3a-b370-655e17e168e3",
+          "602195fd-c3c2-58dd-9e82-eaba29936c99"
+        ]
+      },
+      "urgency": {
+        "exact_match": false,
+        "adjacent_match": true,
+        "critical_miss": false,
+        "latency_ms": 6779
+      }
+    }
+  ]
+}

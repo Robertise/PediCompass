@@ -1,0 +1,227 @@
+[
+  {
+    "id": "tc_001",
+    "description": "10-day-old newborn with high fever and lethargy",
+    "query": "My 10-day-old baby has a fever of 38.5°C and seems extremely lethargic and pale.",
+    "age_group": "newborn",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["fever", "neonate", "newborn", "lethargy", "emergency", "38"],
+    "notes": "NICE CG160 / ESI Level 2: Neonatal fever <28 days is a medical emergency requiring septic workup."
+  },
+  {
+    "id": "tc_002",
+    "description": "3-week-old neonate with cyanosis and respiratory distress",
+    "query": "My 21-day-old infant has blue lips and is struggling to breathe with chest wall indrawing.",
+    "age_group": "newborn",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["cyanosis", "respiratory", "breathing", "distress", "indrawing", "blue"],
+    "notes": "ESI Level 1/2: Airway/breathing compromise with cyanosis."
+  },
+  {
+    "id": "tc_003",
+    "description": "2-week-old newborn with bulging fontanelle",
+    "query": "Notice my 14-day-old baby's soft spot on the top of the head is bulging and firm.",
+    "age_group": "newborn",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["fontanelle", "bulging", "meningitis", "intracranial", "neonate"],
+    "notes": "Red flag sign for meningitis or raised ICP in neonates."
+  },
+  {
+    "id": "tc_004",
+    "description": "20-day-old infant with poor feeding and hypothermia",
+    "query": "My 20-day-old newborn refuses to feed since this morning and body temp is low at 35.8°C.",
+    "age_group": "newborn",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["feeding", "hypothermia", "septic", "neonate", "temperature", "poor"],
+    "notes": "Hypothermia in neonate is a hallmark sign of neonatal sepsis."
+  },
+  {
+    "id": "tc_005",
+    "description": "4-week-old newborn with mild umbilical redness without fever",
+    "query": "My 25-day-old baby has a small amount of dried blood/discharge around umbilical stump, no fever, active.",
+    "age_group": "newborn",
+    "expected_urgency": "urgent",
+    "expected_keywords": ["umbilical", "stump", "omphalitis", "discharge", "care"],
+    "notes": "Umbilical stump evaluation needed to rule out spreading omphalitis."
+  },
+  {
+    "id": "tc_006",
+    "description": "6-week-old young infant with fever of 38.2°C",
+    "query": "My 45-day-old infant has a fever measuring 38.2°C, fussy but drinking milk.",
+    "age_group": "young_infant",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["fever", "infant", "young", "38", "temperature", "evaluation"],
+    "notes": "NICE CG160: Fever in infants <90 days is high risk requiring urgent medical assessment."
+  },
+  {
+    "id": "tc_007",
+    "description": "2-month-old infant with projectile vomiting after every feed",
+    "query": "My 8-week-old baby vomits forcefully across the room after every feeding and seems hungry right after.",
+    "age_group": "young_infant",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["vomiting", "projectile", "pyloric", "stenosis", "dehydration"],
+    "notes": "Classic presentation of hypertrophic pyloric stenosis requiring urgent pediatric evaluation."
+  },
+  {
+    "id": "tc_008",
+    "description": "50-day-old young infant with persistent cough and paroxysms",
+    "query": "My 7-week-old baby has severe coughing fits followed by a whooping sound and turning red.",
+    "age_group": "young_infant",
+    "expected_urgency": "urgent",
+    "expected_keywords": ["cough", "whooping", "pertussis", "paroxysm", "infant"],
+    "notes": "Suspected pertussis (whooping cough) in young infant requiring evaluation and swab."
+  },
+  {
+    "id": "tc_009",
+    "description": "2.5-month-old young infant with mild nasal congestion and no fever",
+    "query": "My 75-day-old baby has a clear runny nose and mild stuffiness, sleeping well and feeding normally.",
+    "age_group": "young_infant",
+    "expected_urgency": "self_care",
+    "expected_keywords": ["congestion", "nasal", "saline", "suction", "runny", "nose"],
+    "notes": "Simple viral upper respiratory tract infection symptoms suitable for supportive home monitoring."
+  },
+  {
+    "id": "tc_010",
+    "description": "2-month-old infant after routine immunizations with low-grade fever",
+    "query": "Baby got 2-month vaccines 6 hours ago, has mild fever 37.8°C and slight fussiness.",
+    "age_group": "young_infant",
+    "expected_urgency": "self_care",
+    "expected_keywords": ["vaccine", "immunization", "fever", "post-vaccine", "reaction", "calm"],
+    "notes": "Expected mild post-vaccination reaction."
+  },
+  {
+    "id": "tc_011",
+    "description": "6-month-old infant with fever, wheezing, and intercostal retractions",
+    "query": "My 6-month-old has a 38.8°C fever, rapid breathing with ribs sticking out, and whistling chest sound.",
+    "age_group": "infant",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["bronchiolitis", "wheezing", "retractions", "respiratory", "distress", "rsv"],
+    "notes": "Moderate-to-severe bronchiolitis / respiratory distress requiring immediate clinical care."
+  },
+  {
+    "id": "tc_012",
+    "description": "9-month-old infant with acute diarrhea and moderate dehydration signs",
+    "query": "My 9-month-old has 8 watery diarrhea stools today, dry mouth, no wet diaper for 7 hours.",
+    "age_group": "infant",
+    "expected_urgency": "urgent",
+    "expected_keywords": ["diarrhea", "dehydration", "fluid", "ors", "diaper", "oral"],
+    "notes": "Gastroenteritis with clinical signs of moderate dehydration."
+  },
+  {
+    "id": "tc_013",
+    "description": "7-month-old infant with acute otitis media symptoms",
+    "query": "My 7-month-old infant pulls at her right ear constantly, crying, and fever of 38.3°C.",
+    "age_group": "infant",
+    "expected_urgency": "soon",
+    "expected_keywords": ["ear", "otitis", "media", "fever", "tugging", "pain"],
+    "notes": "Acute otitis media (middle ear infection) symptom presentation."
+  },
+  {
+    "id": "tc_014",
+    "description": "10-month-old infant with non-blanching petechial rash",
+    "query": "My 10-month-old has small purple spots on skin that don't turn white when I press a glass against them.",
+    "age_group": "infant",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["rash", "petechiae", "purpura", "non-blanching", "meningococcal"],
+    "notes": "Non-blanching petechial rash is a high-risk red flag for meningococcal disease."
+  },
+  {
+    "id": "tc_015",
+    "description": "11-month-old infant with mild diaper rash",
+    "query": "My 11-month-old has red irritated skin in the diaper area, no fever, happy and playing.",
+    "age_group": "infant",
+    "expected_urgency": "self_care",
+    "expected_keywords": ["diaper", "rash", "dermatitis", "barrier", "cream", "zinc"],
+    "notes": "Irritant diaper dermatitis managed with barrier creams and frequent diaper changes."
+  },
+  {
+    "id": "tc_016",
+    "description": "2-year-old toddler with barking cough and stridor at rest",
+    "query": "My 2-year-old woke up with a harsh seal-like barking cough and squeaky noise when breathing in.",
+    "age_group": "toddler",
+    "expected_urgency": "urgent",
+    "expected_keywords": ["croup", "stridor", "cough", "barking", "dexamethasone", "airway"],
+    "notes": "Croup with inspiratory stridor requiring medical assessment."
+  },
+  {
+    "id": "tc_017",
+    "description": "18-month-old toddler with febrile seizure history (first episode)",
+    "query": "My 18-month-old had a 1-minute shaking episode during sudden fever jump, now awake but groggy.",
+    "age_group": "toddler",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["seizure", "febrile", "convulsion", "fever", "shaking", "postictal"],
+    "notes": "First febrile seizure warrants emergency evaluation to exclude intracranial infection."
+  },
+  {
+    "id": "tc_018",
+    "description": "2.5-year-old toddler with hand-foot-mouth disease blisters",
+    "query": "My 30-month-old has small red spots on palms, soles, and painful mouth sores, low fever 37.9°C.",
+    "age_group": "toddler",
+    "expected_urgency": "soon",
+    "expected_keywords": ["hand-foot-mouth", "hfmd", "coxsackie", "blisters", "mouth", "sores"],
+    "notes": "Hand, foot, and mouth disease (HFMD) management and hydration guidance."
+  },
+  {
+    "id": "tc_019",
+    "description": "3-year-old toddler with mild constipation for 2 days",
+    "query": "My 3-year-old toddler hasn't passed stool in 2 days and complains of mild belly discomfort when trying.",
+    "age_group": "toddler",
+    "expected_urgency": "routine",
+    "expected_keywords": ["constipation", "stool", "fiber", "fluid", "bowel", "laxative"],
+    "notes": "Functional childhood constipation suitable for dietary adjustment and routine care."
+  },
+  {
+    "id": "tc_020",
+    "description": "2-year-old toddler swallowed small coin, no choking symptoms",
+    "query": "My 2-year-old swallowed a small penny 20 minutes ago. He is breathing fine, no choking, smiling.",
+    "age_group": "toddler",
+    "expected_urgency": "urgent",
+    "expected_keywords": ["foreign", "body", "swallowed", "coin", "esophagus", "ingestion"],
+    "notes": "Foreign body ingestion needs clinical evaluation and possible X-ray."
+  },
+  {
+    "id": "tc_021",
+    "description": "4-year-old preschooler with suspected streptococcal pharyngitis",
+    "query": "My 4-year-old has severe sore throat, fever 38.7°C, swollen neck glands, and no cough.",
+    "age_group": "preschool",
+    "expected_urgency": "soon",
+    "expected_keywords": ["sore", "throat", "strep", "pharyngitis", "tonsillitis", "fever"],
+    "notes": "Suspected Group A Strep pharyngitis needing rapid throat swab and evaluation."
+  },
+  {
+    "id": "tc_022",
+    "description": "4.5-year-old preschooler with acute asthma exacerbation",
+    "query": "My 4-year-old diagnosed with asthma is wheezing heavily, breathing 45 times a minute, albuterol not helping.",
+    "age_group": "preschool",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["asthma", "wheezing", "exacerbation", "inhaler", "albuterol", "distress"],
+    "notes": "Acute asthma exacerbation unresponsive to home rescue inhaler."
+  },
+  {
+    "id": "tc_023",
+    "description": "3.5-year-old preschooler with localized impetigo crusts",
+    "query": "My 42-month-old child has honey-colored crusted sores under her nose for 2 days.",
+    "age_group": "preschool",
+    "expected_urgency": "routine",
+    "expected_keywords": ["impetigo", "crust", "bacterial", "topical", "antibiotic", "sores"],
+    "notes": "Impetigo presentation requiring outpatient antibiotic ointment prescription."
+  },
+  {
+    "id": "tc_024",
+    "description": "4-year-old preschooler with mild head bump, active and alert",
+    "query": "Child bumped forehead on coffee table 1 hour ago. Cried for 2 mins, no vomiting, no loss of consciousness, playing normally.",
+    "age_group": "preschool",
+    "expected_urgency": "self_care",
+    "expected_keywords": ["head", "injury", "concussion", "bump", "observation", "cold"],
+    "notes": "Minor head trauma with low risk PECARN criteria suitable for home observation."
+  },
+  {
+    "id": "tc_025",
+    "description": "5-year-old preschooler with acute right lower quadrant abdominal pain",
+    "query": "My 5-year-old has severe sharp pain in the lower right belly, walking bent over, vomited twice.",
+    "age_group": "preschool",
+    "expected_urgency": "emergency",
+    "expected_keywords": ["appendicitis", "abdominal", "pain", "right", "lower", "quadrant"],
+    "notes": "High suspicion for acute appendicitis requiring immediate emergency evaluation."
+  }
+]
