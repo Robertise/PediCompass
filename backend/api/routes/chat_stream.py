@@ -65,6 +65,28 @@ async def register_message(
     within 60 seconds, otherwise the registration expires.
     """
     user_id = user["user_id"] if user else None
+    is_admin = user.get("isAdmin") is True if user else False
+
+    # Check if session exists in DB and verify ownership
+    from db.session_store import SessionStore
+    from db.dynamodb_client import get_dynamodb_client
+    session_store = SessionStore(db_client=get_dynamodb_client())
+    existing_session = await session_store.get_session(req.session_id)
+
+    if existing_session and existing_session.user_id and existing_session.user_id != "anonymous":
+        if not user:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: Cannot register messages for a session owned by another user",
+            )
+        if user_id != existing_session.user_id and not is_admin:
+            from fastapi import HTTPException
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: Cannot register messages for a session owned by another user",
+            )
+
     request_id = await pending_requests.register(
         session_id=req.session_id,
         message=req.message,
@@ -72,6 +94,7 @@ async def register_message(
         user_id=user_id,
     )
     return RegisterResponse(request_id=request_id)
+
 
 
 async def _sse_generator(agent, pending_req, child_profile):

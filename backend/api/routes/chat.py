@@ -64,6 +64,21 @@ async def send_message(
     """Send a parent message through the full agentic pipeline."""
     user_id = user["user_id"] if user else None
 
+    # Verify session ownership if session already exists
+    existing_session = await session_store.get_session(req.session_id)
+    if existing_session and existing_session.user_id and existing_session.user_id != "anonymous":
+        if not user:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: Cannot send messages to a session owned by another user",
+            )
+        is_admin = user.get("isAdmin") is True
+        if user.get("user_id") != existing_session.user_id and not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: Cannot send messages to a session owned by another user",
+            )
+
     # Retrieve profile if caller supplied a profile_id and is authenticated
     profile = None
     if user_id and req.profile_id:
@@ -109,9 +124,24 @@ async def get_history(
     session_id: str,
     user: Optional[dict] = Depends(get_optional_user),
 ):
-    """Retrieve conversation history for a session."""
+    """Retrieve conversation history for a session with ownership verification."""
     session = await session_store.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    # TODO: add authorization check — session.user_id == user["user_id"]
+
+    # Enforce session ownership authorization check for non-anonymous sessions
+    if session.user_id and session.user_id != "anonymous":
+        if not user:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: You do not own this chat session",
+            )
+        is_admin = user.get("isAdmin") is True
+        if user.get("user_id") != session.user_id and not is_admin:
+            raise HTTPException(
+                status_code=403,
+                detail="Access denied: You do not own this chat session",
+            )
+
     return {"messages": [m.model_dump() for m in session.messages]}
+
