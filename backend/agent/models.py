@@ -151,6 +151,7 @@ class ChildProfile(BaseModel):
     gender: Optional[str] = None
     weight_kg: Optional[float] = None
     medical_conditions: list[str] = Field(default_factory=list)
+    last_updated: Optional[str] = Field(None, description="ISO timestamp of when the profile was last updated")
 
 
 # ── Session ───────────────────────────────────────────────────────────────────

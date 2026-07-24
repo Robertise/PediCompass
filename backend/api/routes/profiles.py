@@ -34,6 +34,7 @@ class ProfileCreate(BaseModel):
     gender: str = "Unknown"
     weight_kg: float = 0.0
     medical_conditions: List[str] = []
+    last_updated: Optional[str] = None
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -60,6 +61,7 @@ async def create_profile(
         gender=body.gender,
         weight_kg=body.weight_kg if body.weight_kg > 0 else None,
         medical_conditions=body.medical_conditions,
+        last_updated=body.last_updated,
     )
     saved = await profile_store.create_profile(user_id, profile)
     return {"profile_id": saved.profile_id, "message": "Profile created"}
@@ -86,6 +88,7 @@ async def update_profile(
         gender=body.gender,
         weight_kg=body.weight_kg if body.weight_kg > 0 else None,
         medical_conditions=body.medical_conditions,
+        last_updated=body.last_updated,
     )
     await profile_store.update_profile(user_id, updated)
     return {"message": "Profile updated"}

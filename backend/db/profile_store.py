@@ -41,7 +41,7 @@ class ProfileStore:
         Returns:
             The persisted ChildProfile.
         """
-        now = datetime.now(timezone.utc).isoformat()
+        now = profile.last_updated or datetime.now(timezone.utc).isoformat()
         item = {
             "user_id": user_id,
             "profile_id": profile.profile_id,
@@ -125,4 +125,5 @@ class ProfileStore:
             gender=item.get("gender"),
             weight_kg=weight_kg,
             medical_conditions=item.get("medical_conditions", []),
+            last_updated=item.get("last_updated"),
         )

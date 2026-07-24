@@ -34,6 +34,12 @@ export const useAppStore = create(
 
       isChatActive: false,
       setIsChatActive: (active) => set({ isChatActive: active }),
+
+      dismissedStaleReminders: {},
+      dismissStaleReminder: (profileId) =>
+        set((state) => ({
+          dismissedStaleReminders: { ...state.dismissedStaleReminders, [profileId]: true },
+        })),
     }),
     {
       name: 'pedix-app',

@@ -152,7 +152,7 @@ export default function ProfilesPage() {
                     </div>
                   )}
 
-                  <div className="flex gap-sm mt-md">
+                  <div className="flex gap-sm">
                     <button 
                       className="flex-1 bg-surface-variant/50 hover:bg-surface-container-high text-on-surface rounded-full py-3.5 text-label-md font-label-md transition-colors" 
                       onClick={() => handleEdit(p)}

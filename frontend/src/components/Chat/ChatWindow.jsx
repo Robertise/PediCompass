@@ -2,13 +2,21 @@ import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import MessageBubble from './MessageBubble'
 import ConversationStarter from './ConversationStarter'
-import { chatApi } from '../../api/client'
+import StaleProfileBanner from '../Profiles/StaleProfileBanner'
+import { chatApi, profileApi } from '../../api/client'
 import { useAuthStore } from '../../store/authStore'
 import { useAppStore, GUEST_PROFILE_ID } from '../../store/appStore'
 
 export default function ChatWindow({ messages, setMessages, selectedMessageIndex, onSelectMessage }) {
   const { user } = useAuthStore()
-  const { selectedProfileId, setIsChatActive } = useAppStore()
+  const {
+    selectedProfileId,
+    setIsChatActive,
+    setShowProfileModal,
+    setEditingProfile,
+    dismissedStaleReminders,
+    dismissStaleReminder,
+  } = useAppStore()
   // Map sentinel "guest" → null so the backend receives a real profile_id or null
   const apiProfileId = (!selectedProfileId || selectedProfileId === GUEST_PROFILE_ID)
     ? null
@@ -16,9 +24,53 @@ export default function ChatWindow({ messages, setMessages, selectedMessageIndex
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState(null)
+  const [activeProfile, setActiveProfile] = useState(null)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
   const activeSourceRef = useRef(null)
+
+  useEffect(() => {
+    async function checkProfileStaleness() {
+      if (!user || !selectedProfileId || selectedProfileId === GUEST_PROFILE_ID) {
+        setActiveProfile(null)
+        return
+      }
+      try {
+        const res = await profileApi.list()
+        const found = res.data.find(p => p.profile_id === selectedProfileId)
+        setActiveProfile(found || null)
+      } catch {
+        setActiveProfile(null)
+      }
+    }
+    checkProfileStaleness()
+    window.addEventListener('profilesUpdated', checkProfileStaleness)
+    return () => window.removeEventListener('profilesUpdated', checkProfileStaleness)
+  }, [user, selectedProfileId])
+
+  let daysStale = 0
+  let isStale = false
+  if (activeProfile && activeProfile.last_updated) {
+    const lastUpdatedDate = new Date(activeProfile.last_updated)
+    const now = new Date()
+    daysStale = Math.floor((now - lastUpdatedDate) / (1000 * 60 * 60 * 24))
+    isStale = daysStale >= 30
+  }
+
+  const showStaleBanner = isStale && !dismissedStaleReminders[selectedProfileId]
+
+  const handleUpdateWeightNow = () => {
+    if (activeProfile) {
+      setEditingProfile(activeProfile)
+      setShowProfileModal(true)
+    }
+  }
+
+  const handleDismissStaleBanner = () => {
+    if (selectedProfileId) {
+      dismissStaleReminder(selectedProfileId)
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -219,6 +271,17 @@ export default function ChatWindow({ messages, setMessages, selectedMessageIndex
 
   return (
     <main className="flex-1 flex flex-col h-full bg-transparent relative">
+      {showStaleBanner && (
+        <div className="px-4 md:px-8 pt-md shrink-0">
+          <StaleProfileBanner
+            profile={activeProfile}
+            daysStale={daysStale}
+            onUpdateWeight={handleUpdateWeightNow}
+            onDismiss={handleDismissStaleBanner}
+          />
+        </div>
+      )}
+
       {messages.length > 0 && (
         <div className="flex-1 relative overflow-y-auto py-md lg:py-lg px-4 md:px-8 space-y-lg">
           {messages.map((msg, idx) => (
