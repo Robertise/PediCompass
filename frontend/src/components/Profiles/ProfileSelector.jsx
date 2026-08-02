@@ -173,8 +173,12 @@ export default function ProfileSelector() {
             </button>
             <button
               onClick={handleCreateNew}
-              className="w-full text-left px-2 py-2 text-xs sm:text-sm text-primary font-bold hover:bg-primary-container/20 rounded-lg transition-colors flex items-center gap-1"
-            > + Create New Profile
+              className="w-full text-left px-1 py-2 text-xs sm:text-sm text-primary font-bold hover:bg-primary-container/20 rounded-lg transition-colors flex items-center gap-1"
+            >            
+              <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-surface-variant flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[16px] sm:text-[20px]">add</span>
+              </div>
+              <span>Create New Profile</span>
             </button>
           </div>
         </div>

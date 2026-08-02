@@ -82,10 +82,7 @@ export default function ProfilesPage() {
             <span className="material-symbols-outlined animate-spin text-primary text-[40px]">progress_activity</span>
           </div>
         ) : profiles.length === 0 ? (
-          <div className="text-center p-md sm:p-xl bg-surface dark:bg-surface-container-high rounded-[20px] sm:rounded-[24px] shadow-md dark:shadow-soft-dark flex flex-col items-center gap-sm sm:gap-md">
-            <div className="w-10 h-10 rounded-full bg-primary-container/20 flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary text-[48px] sm:text-[64px]">child_care</span>
-            </div>
+          <div className="text-center p-md sm:p-xl flex flex-col items-center gap-sm sm:gap-md">
             <div>
               <h3 className="text-base sm:text-headline-md font-bold text-on-surface mb-xs">No Profiles Yet</h3>
               <p className="text-xs sm:text-body-md text-on-surface-variant max-w-md mx-auto">
@@ -93,7 +90,7 @@ export default function ProfilesPage() {
               </p>
             </div>
             <button 
-              className="bg-primary hover:bg-primary-fixed-variant text-on-primary px-5 py-2 sm:px-8 sm:py-3 rounded-full text-xs sm:text-label-lg font-bold transition-colors shadow-sm" 
+              className="bg-primary hover:bg-primary-fixed-variant text-on-primary px-5 py-2 sm:px-8 sm:py-3 rounded-full text-sm sm:text-label-lg font-bold transition-colors shadow-sm" 
               onClick={handleCreate}
             >
               Create Your First Profile
@@ -107,7 +104,7 @@ export default function ProfilesPage() {
               const stale = isProfileStale(p.last_updated)
 
               return (
-                <div key={p.profile_id} className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] p-3 sm:p-md shadow-md dark:shadow-soft-dark flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+                <div key={p.profile_id} className="bg-surface dark:bg-surface-container-high rounded-[16px] sm:rounded-[20px] p-3 sm:p-md border border-black/5 dark:border-white/5 flex flex-col">
                   <div className="flex justify-between items-start mb-sm sm:mb-md">
                     <div className="flex items-center gap-sm">
                       <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-tertiary-container flex items-center justify-center shrink-0">
