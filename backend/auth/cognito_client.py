@@ -99,13 +99,17 @@ class CognitoClient:
                 "access_token": auth_result.get('AccessToken'),
                 "refresh_token": auth_result.get('RefreshToken')
             }
-        except self.client.exceptions.UserNotConfirmedException:
-            return {"success": False, "error": "EMAIL_NOT_CONFIRMED"}
-        except self.client.exceptions.NotAuthorizedException:
-            return {"success": False, "error": "INVALID_CREDENTIALS"}
-        except self.client.exceptions.UserNotFoundException:
-            return {"success": False, "error": "USER_NOT_FOUND"}
+        except self.client.exceptions.UserNotConfirmedException as e:
+            logger.warning("Cognito sign_in UserNotConfirmedException for %s: %s", email, e)
+            return {"success": False, "error": "EMAIL_NOT_CONFIRMED", "detail": str(e)}
+        except self.client.exceptions.NotAuthorizedException as e:
+            logger.warning("Cognito sign_in NotAuthorizedException for %s: %s", email, e)
+            return {"success": False, "error": "INVALID_CREDENTIALS", "detail": str(e)}
+        except self.client.exceptions.UserNotFoundException as e:
+            logger.warning("Cognito sign_in UserNotFoundException for %s: %s", email, e)
+            return {"success": False, "error": "USER_NOT_FOUND", "detail": str(e)}
         except Exception as e:
+            logger.error("Cognito sign_in Exception for %s: %s", email, e, exc_info=True)
             return {"success": False, "error": "UNKNOWN", "detail": str(e)}
 
     def refresh_token(self, refresh_token: str) -> dict:

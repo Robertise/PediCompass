@@ -113,11 +113,12 @@ async def login(req: AuthRequest):
     result = cognito_client.sign_in(req.email, req.password)
     if not result.get("success"):
         error_key = result.get("error", "UNKNOWN")
+        detail_raw = result.get("detail", "")
         msg = _LOGIN_ERRORS.get(error_key, _LOGIN_ERRORS["UNKNOWN"])
-        logger.warning("Login failed for %s: %s", req.email, error_key)
+        logger.warning("Login failed for %s: %s (detail: %s)", req.email, error_key, detail_raw)
         # Use 403 for unverified email so frontend can distinguish from wrong password
         status = 403 if error_key == "EMAIL_NOT_CONFIRMED" else 401
-        raise HTTPException(status_code=status, detail={"message": msg, "error_code": error_key})
+        raise HTTPException(status_code=status, detail={"message": msg, "error_code": error_key, "aws_detail": detail_raw})
 
     id_token = result.get("id_token")
     decoded = jose_jwt.get_unverified_claims(id_token) if id_token else {}

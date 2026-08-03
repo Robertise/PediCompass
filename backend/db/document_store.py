@@ -22,6 +22,10 @@ class DocumentStore:
         await self.db.put_item(self.table_name, item)
 
     async def list_documents(self) -> list[dict]:
-        # Missing pagination handling, but better than sync blocking call
         response = await self.db.scan(self.table_name)
-        return response
+        unique = {}
+        for doc in response:
+            key = doc.get("title") or doc.get("filename") or doc.get("doc_id")
+            if key not in unique or doc.get("upload_date", "") > unique[key].get("upload_date", ""):
+                unique[key] = doc
+        return list(unique.values())

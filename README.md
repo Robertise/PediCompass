@@ -1,56 +1,86 @@
-# Pedix - Local Development Setup
+# PediCompass (Pedix)
 
-Welcome to the Pedix project! This guide will walk you through setting up and running the entire application locally, from vector database ingestion to firing up the frontend and backend servers.
+> **AI-Powered Pediatric Health Navigator** — A multi-stage Retrieval-Augmented Generation (RAG) assistant that helps parents and caregivers navigate pediatric health concerns using evidence-based clinical guidelines from WHO and NICE.
+
+![Live](https://img.shields.io/badge/status-live-brightgreen)
+![AWS Free Tier](https://img.shields.io/badge/AWS-Free%20Tier-orange)
+![Python](https://img.shields.io/badge/python-3.11+-blue)
+![React](https://img.shields.io/badge/frontend-React%20%2B%20Vite-61DAFB)
+![FastAPI](https://img.shields.io/badge/backend-FastAPI-009688)
+
+---
+
+## 🌐 Live Deployment
+
+| | URL |
+|---|---|
+| **Frontend** | https://d2bx3usq72976a.cloudfront.net |
+| **API Health** | https://96hnl890q4.execute-api.ap-southeast-1.amazonaws.com/prod/api/health |
+
+---
+
+## 🏗 Architecture
+
+![PediCompass AWS Cloud Architecture](docs/Pedix-architecture.drawio.png)
+
+The production system runs entirely on AWS Free Tier services in `ap-southeast-1` (Singapore):
+
+- **CloudFront + S3** serve the React frontend with HTTPS globally
+- **API Gateway** (REST + SSE streaming) handles all `/api/*` traffic with Cognito JWT authorization
+- **Internal ALB + VPC Link** routes API Gateway requests securely into the Default VPC
+- **EC2 (t2.micro)** hosts the FastAPI backend and Qdrant vector database
+- **DynamoDB** stores conversation sessions, user profiles, and analytics
+- **Amazon Bedrock** (Claude Haiku) powers the multi-stage agentic reasoning pipeline
+- **Cognito** handles user authentication with post-confirmation Lambda auto-group assignment
+
+> For full cloud infrastructure details, resource IDs, and design decisions, see [`docs/cloud_setup.md`](docs/cloud_setup.md).
 
 ---
 
 ## 📋 Table of Contents
+
 1. [Prerequisites](#-prerequisites)
 2. [Step 1: Environment Configuration](#️-step-1-environment-configuration)
 3. [Step 2: Start Qdrant (Vector Database)](#-step-2-start-qdrant-vector-database)
 4. [Step 3: Run Data Ingestion](#-step-3-run-data-ingestion)
-5. [Step 4: Start Backend](#-step-4-start-backend)
+5. [Step 4: Start Backend](#️-step-4-start-backend)
 6. [Step 5: Start Frontend](#-step-5-start-frontend)
 7. [Running Tests (Optional)](#-running-tests-optional)
-8. [AWS Configuration Guide](#️-aws-configuration-guide)
-9. [Architecture Overview](#-architecture-overview)
+8. [Documentation](#-documentation)
 
 ---
 
 ## 📌 Prerequisites
 
-Before you begin, ensure you have the following installed on your machine:
+Before you begin, ensure you have the following installed:
+
 - **Python 3.11+**
 - **Node.js 20+**
-- **Docker Desktop** (Required for Qdrant vector database)
-- **AWS CLI** (`pip install awscli`)
-- **AWS Account** with credentials configured for access to: Amazon Bedrock, DynamoDB, Cognito
+- **Docker Desktop** — required for the Qdrant vector database
+- **AWS CLI** (`pip install awscli`) — configured with credentials that have access to Amazon Bedrock, DynamoDB, and Cognito
 
 ---
 
 ## 🛠️ Step 1: Environment Configuration
 
-First, you need to set up your environment variables.
-
 ```bash
-# Clone the repository (if you haven't already) and navigate to the project root
 # Copy the example environment file
 cp .env.example .env
 ```
 
-**Action Required:** Open `.env` and fill in all the necessary AWS and application configurations. Refer to the [AWS Configuration Guide](#️-aws-configuration-guide) section below if you need help finding these values.
+Open `.env` and fill in your AWS credentials and service identifiers. Refer to [docs/setup.md](docs/setup.md) for instructions on locating each value, including Bedrock inference profile IDs and Cognito pool IDs.
 
 ---
 
 ## 🐳 Step 2: Start Qdrant (Vector Database)
 
-We use Qdrant to store and query vectorized medical documents.
+Qdrant stores and queries the vectorised medical knowledge base.
 
 ```bash
 # Start the Qdrant container in the background
 docker compose up -d
 
-# Verify Qdrant is running healthily
+# Verify Qdrant is running
 curl http://localhost:6333/healthz
 ```
 
@@ -58,8 +88,7 @@ curl http://localhost:6333/healthz
 
 ## 🧠 Step 3: Run Data Ingestion
 
-Before the AI can answer queries accurately, we must ingest the medical data into Qdrant.
-Make sure **Docker (Qdrant)** is running and your `.env` file is fully configured with your AWS credentials.
+Ingest the medical knowledge base into Qdrant before starting the backend. Ensure Docker (Qdrant) is running and `.env` is fully configured.
 
 ```bash
 # Navigate to the ingestion directory
@@ -70,37 +99,35 @@ python -m venv venv
 venv\Scripts\activate      # Windows
 # source venv/bin/activate  # macOS/Linux
 
-# Install dependencies (CPU-only PyTorch recommended for local runs to avoid heavy downloads)
+# Install PyTorch CPU-only (avoids heavy GPU downloads)
 pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install ingestion dependencies
 pip install -r requirements.txt
 ```
 
-### Run Batch Ingestion (Recommended)
-
-To ingest all the foundational medical documents with Contextual Retrieval enabled, we have provided a batch script:
+### Batch Ingestion (Recommended)
 
 ```bash
-# For Windows:
+# Windows — ingests 7 core medical documents with Contextual Retrieval
 run_ingestion.bat
 
-# For macOS/Linux (you can run commands manually or create a shell script):
+# macOS/Linux — run manually or adapt to a shell script:
 # python run_ingestion.py --file data/fever_under_5s.md --source NICE
-# ... (see run_ingestion.bat for full list of files)
+# ... (see run_ingestion.bat for the full file list)
 ```
 
-> **Note:** If AWS rate limits are hit during ingestion, the script will automatically pause for 60 seconds and retry (up to 7 times).
+> If AWS rate limits are hit, the script automatically pauses 60 seconds and retries (up to 7 times).
 
-### Ingesting Large Files Separately
+### Large File (Separate Step)
 
-The batch script above processes 7 out of the 8 data files. The final file (`hospital_care_for_children.md`) is significantly larger and is intentionally left out of the batch run. 
-
-To ingest this large file, run it separately. You can optionally use the `--skip-context` flag if you want to disable Contextual Retrieval (via Haiku) to save time/cost on this massive file:
+`hospital_care_for_children.md` is significantly larger and is intentionally excluded from the batch script. Run it separately:
 
 ```bash
-# Run with Contextual Retrieval enabled (may take a long time and hit AWS rate limits)
+# With Contextual Retrieval (slower, uses Bedrock Haiku):
 python run_ingestion.py --file data/hospital_care_for_children.md --source WHO
 
-# OR Run WITHOUT Contextual Retrieval (faster, saves Bedrock costs)
+# Without Contextual Retrieval (faster, lower Bedrock cost):
 python run_ingestion.py --file data/hospital_care_for_children.md --source WHO --skip-context
 ```
 
@@ -108,123 +135,65 @@ python run_ingestion.py --file data/hospital_care_for_children.md --source WHO -
 
 ## ⚙️ Step 4: Start Backend
 
-The backend is built with FastAPI. Open a **new terminal window**.
+Open a **new terminal window**:
 
 ```bash
-# Navigate to the backend directory from project root
+# Navigate to the backend directory
 cd backend
 
-# Create and activate a virtual environment (Separate from ingestion env is recommended)
+# Create and activate a virtual environment (separate from ingestion)
 python -m venv venv
 venv\Scripts\activate      # Windows
 # source venv/bin/activate  # macOS/Linux
 
-# Install PyTorch CPU-only FIRST
+# Install PyTorch CPU-only first
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 
-# Install the rest of the backend dependencies
+# Install backend dependencies
 pip install -r requirements.txt
 
-# Start the FastAPI server (it will automatically pick up the .env in the root folder)
+# Start the FastAPI server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-> **Verify Backend:** Open your browser and go to `http://localhost:8000/api/health`
+> **Verify:** Open `http://localhost:8000/api/health` — should return `{"status":"ok","service":"pedix-backend"}`
+
+> **⚠️ Always use `--workers 1`:** The SSE streaming endpoint relies on an in-memory `PendingRequestStore` that is not shared across OS processes. Using `--workers 2+` will cause `Request ID expired or not found` errors for streaming responses.
 
 ---
 
 ## 💻 Step 5: Start Frontend
 
-The frontend is built with React and Vite. Open a **new terminal window** to keep the backend running.
+Open another **new terminal window**:
 
 ```bash
-# Navigate to the frontend directory from project root
+# Navigate to the frontend directory
 cd frontend
 
-# Install Node modules
+# Install Node.js dependencies
 npm install
 
 # Start the Vite development server
 npm run dev
 ```
 
-> **View App:** Open your browser and navigate to `http://localhost:5173`
+> **View App:** Open `http://localhost:5173`
 
 ---
 
 ## 🧪 Running Tests (Optional)
 
-To ensure everything is working correctly on the backend side:
-
 ```bash
-# Inside the backend directory (with the virtual environment activated)
+# Inside the backend directory with the virtual environment activated
 pytest tests/ -v
 ```
 
 ---
 
-## ☁️ AWS Configuration Guide
+## 📁 Documentation
 
-You need to supply values for several variables in `.env`. Here is how to find them using the AWS CLI.
-
-### AWS Region
-Use `ap-southeast-1` (Singapore) for better latency or if cross-region inference is available for your models there.
-
-### AWS Credentials
-```bash
-# Configure your AWS CLI after creating an IAM user with the required policies
-aws configure
-# Enter Access Key ID, Secret Access Key, region (e.g., ap-southeast-1), output format (json)
-```
-
-**Required IAM permissions (JSON Policy):**
-```json
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {"Effect": "Allow", "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"], "Resource": "*"},
-    {"Effect": "Allow", "Action": "dynamodb:*", "Resource": "arn:aws:dynamodb:ap-southeast-1:*:table/pedix_*"},
-    {"Effect": "Allow", "Action": "cognito-idp:*", "Resource": "*"}
-  ]
-}
-```
-
-### Bedrock Model ID
-```bash
-# List all available Claude Sonnet profiles (use inferenceProfileId)
-aws bedrock list-inference-profiles --region ap-southeast-1 --query "inferenceProfileSummaries[?contains(inferenceProfileName, 'Sonnet')]"
-```
-Copy the `inferenceProfileId` value (e.g., `ap.anthropic.claude-3-5-sonnet-20241022-v2:0`) into `BEDROCK_MODEL_ID` in your `.env` file.
-
-```bash
-# Also get the Haiku profile for faster/cheaper ingestion
-aws bedrock list-inference-profiles --region ap-southeast-1 --query "inferenceProfileSummaries[?contains(inferenceProfileName, 'Haiku')]"
-```
-
-### Cognito
-```bash
-# List your User Pools to find the Pool ID
-aws cognito-idp list-user-pools --max-results 10 --region ap-southeast-1
-
-# List App Clients for your specific Pool ID to find the Client ID
-aws cognito-idp list-user-pool-clients --user-pool-id YOUR_POOL_ID --region ap-southeast-1
-```
-
----
-
-## 🏗 Architecture Overview
-
-```text
-Frontend (React+Vite :5173) 
-       │
-       ▼
-Backend (FastAPI :8000) ────────► Qdrant (Vector DB :6333)
-       │
-       ▼
-AWS Cloud Services
- ├─► Amazon Bedrock (Claude Sonnet / Haiku)
- ├─► Amazon DynamoDB (Chat History & Metadata)
- └─► Amazon Cognito (Authentication)
-```
-
-*See `../implementation_plan.md` (if available) for deeper architectural details.*
+| Document | Description |
+|---|---|
+| [`docs/setup.md`](docs/setup.md) | Detailed local dev setup + AWS IAM, Cognito, DynamoDB, and Bedrock configuration |
+| [`docs/cloud_setup.md`](docs/cloud_setup.md) | Deployed cloud infrastructure — live resource IDs, architecture, security, and cost breakdown |
+| [`docs/Pedix-architecture.drawio.png`](docs/Pedix-architecture.drawio.png) | Full AWS architecture diagram |
