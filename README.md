@@ -1,4 +1,4 @@
-# PediCompass (Pedix)
+# Pedix
 
 > **AI-Powered Pediatric Health Navigator** — A multi-stage Retrieval-Augmented Generation (RAG) assistant that helps parents and caregivers navigate pediatric health concerns using evidence-based clinical guidelines from WHO and NICE.
 
