@@ -435,7 +435,7 @@ class PedixAgent:
     async def _call_with_heartbeat(
         self,
         coro,
-        heartbeat_interval: float = 15.0,
+        heartbeat_interval: float = 5.0,
     ):
         """
         Run an async coroutine, yielding HEARTBEAT SSE events every
