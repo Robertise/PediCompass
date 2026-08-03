@@ -69,7 +69,7 @@ User (Browser)
 |---|---|
 | **Instance Name** | `Pedix-Backend-Server` |
 | **Instance Type** | `t2.micro` / `t3.micro` (Free Tier Eligible) |
-| **AMI** | Ubuntu Server 22.04 LTS |
+| **AMI** | Ubuntu Server 26.04 LTS |
 | **Public IPv4** | `47.129.182.229` |
 | **Private IPv4** | `172.31.42.140` |
 | **Storage** | 30 GiB gp3 EBS + 2 GiB Swap (virtual memory) |
