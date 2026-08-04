@@ -34,7 +34,7 @@ class Stage5OutputGenerator:
     retrieved evidence.
     """
 
-    MAX_TOKENS = 800
+    MAX_TOKENS = 600
 
     def __init__(self, bedrock_client: BedrockClient) -> None:
         self.llm = bedrock_client

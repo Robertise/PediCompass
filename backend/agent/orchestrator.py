@@ -57,7 +57,7 @@ class PedixAgent:
     Top-level orchestrator for the 5-stage agentic RAG pipeline.
     """
 
-    MAX_ITERATIONS = 2
+    MAX_ITERATIONS = 1
 
     # Special prefix tokens sent by frontend when user clicks a button.
     # These bypass Content Check and Intent Detection, routing directly to the

@@ -21,6 +21,19 @@ DATA_DISCLAIMER = (
     "(FAERS). Reports do not establish a causal relationship between the drug and the event."
 )
 
+# Map international / brand names to FDA-recognized US generic names.
+# OpenFDA FAERS uses US drug nomenclature; queries with international names
+# (e.g. "paracetamol") return 404.
+FDA_DRUG_NAME_MAP: dict[str, str] = {
+    "paracetamol": "acetaminophen",
+    "panadol": "acetaminophen",
+    "calpol": "acetaminophen",
+    "advil": "ibuprofen",
+    "motrin": "ibuprofen",
+    "nurofen": "ibuprofen",
+    "augmentin": "amoxicillin",
+}
+
 
 class OpenFDAClient:
     """
@@ -54,9 +67,14 @@ class OpenFDAClient:
                 "data_disclaimer": DATA_DISCLAIMER,
             }
 
+        # Normalize international / brand names to FDA-recognized US names
+        fda_query_name = FDA_DRUG_NAME_MAP.get(clean_drug, clean_drug)
+        if fda_query_name != clean_drug:
+            logger.info("Normalized drug name %r -> %r for FDA lookup", clean_drug, fda_query_name)
+
         # Build search query for openfda brand_name OR generic_name
         search_query = (
-            f'(patient.drug.openfda.brand_name:"{clean_drug}" OR patient.drug.openfda.generic_name:"{clean_drug}")'
+            f'(patient.drug.openfda.brand_name:"{fda_query_name}" OR patient.drug.openfda.generic_name:"{fda_query_name}")'
             f' AND patient.patientonsetageunit:802 AND patient.patientonsetage:[0 TO 5]'
         )
 
@@ -68,7 +86,7 @@ class OpenFDAClient:
         if self.api_key:
             params["api_key"] = self.api_key
 
-        logger.info("Calling OpenFDA API for drug=%r with timeout=%.1fs", clean_drug, self.timeout)
+        logger.info("Calling OpenFDA API for drug=%r (query_name=%r) with timeout=%.1fs", clean_drug, fda_query_name, self.timeout)
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:

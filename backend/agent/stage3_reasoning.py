@@ -97,6 +97,13 @@ CARE_PATHWAY_TOOL: dict = {
 }
 
 
+COMMON_MEDICATIONS: list[str] = [
+    "paracetamol", "acetaminophen", "tylenol", "ibuprofen",
+    "advil", "motrin", "benadryl", "panadol", "aspirin",
+    "amoxicillin", "augmentin", "calpol",
+]
+
+
 class Stage3Reasoner:
     """
     Stage 3: Produces a structured CarePathway by reasoning over the
@@ -113,6 +120,44 @@ class Stage3Reasoner:
     ) -> None:
         self.llm = bedrock_client
         self.openfda = openfda_client or OpenFDAClient()
+
+    @staticmethod
+    def _extract_text_from_message(msg: dict) -> str:
+        """Extract plain text from a Bedrock message regardless of content format.
+
+        Handles:
+          - content as str  →  "My child has a fever..."
+          - content as list →  [{"type": "text", "text": "..."}, ...]
+          - missing content →  ""
+        """
+        content = msg.get("content")
+        if content is None:
+            return ""
+        if isinstance(content, str):
+            return content
+        if isinstance(content, list):
+            parts: list[str] = []
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    parts.append(block.get("text", ""))
+                elif isinstance(block, str):
+                    parts.append(block)
+            return " ".join(parts)
+        return ""
+
+    def _extract_mentioned_medication(self, context: list[dict]) -> Optional[str]:
+        """Scan conversation history for known medication names.
+
+        Robust against all Bedrock Messages content formats (str, list of
+        content blocks, or None).
+        """
+        full_text = " ".join(
+            self._extract_text_from_message(m) for m in context
+        ).lower()
+        for med in COMMON_MEDICATIONS:
+            if med in full_text:
+                return med
+        return None
 
     async def reason(
         self,
@@ -149,6 +194,15 @@ class Stage3Reasoner:
         )
 
         medication_safety = executed_results.get("lookup_openfda")
+        if not medication_safety:
+            detected_med = self._extract_mentioned_medication(context)
+            if detected_med:
+                logger.info(
+                    "Stage 3 fallback: detected medication %r in context, executing OpenFDA lookup",
+                    detected_med,
+                )
+                medication_safety = await self.openfda.lookup_pediatric_adverse_events(detected_med)
+
         return self._parse_tool_input(tool_input, medication_safety=medication_safety)
 
     # ── helpers ───────────────────────────────────────────────────────────────
