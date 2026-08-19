@@ -1,4 +1,5 @@
 {
+  "_comment": "Pedix RAG & Clinical Reasoning Evaluation Benchmark Results",
   "timestamp": "2026-07-23T14:57:59.664658+00:00",
   "total_cases": 25,
   "elapsed_time_seconds": 151.35,
@@ -6,15 +7,24 @@
   "top_k": 3,
   "metrics": {
     "retrieval": {
+      "_comment": "Retrieval metrics (Pass 1 Qdrant Vector Search + Pass 2 Cross-Encoder Reranker)",
       "hit_at_1_pct": 80.0,
+      "_note_hit_at_1_pct": "80% of testcases matched expected clinical keywords in top-1 chunk",
       "hit_at_k_pct": 96.0,
+      "_note_hit_at_k_pct": "96% of testcases matched expected clinical keywords in top-3 chunks",
       "mean_rerank_score": 0.0481,
-      "age_filter_compliance_pct": 100.0
+      "_note_mean_rerank_score": "Mean sigmoid-normalized Cross-Encoder reranker score across retrieved chunks",
+      "age_filter_compliance_pct": 100.0,
+      "_note_age_filter_compliance_pct": "100% compliance with age_group pre-filtering in Qdrant"
     },
     "urgency": {
+      "_comment": "Clinical urgency classification metrics (Stage 0 Safety Screen + Stage 3 ESI v4 Reasoner)",
       "exact_match_pct": 52.0,
+      "_note_exact_match_pct": "52% exact match with ground truth ESI v4 urgency level",
       "adjacent_match_pct": 92.0,
-      "critical_misses_count": 0
+      "_note_adjacent_match_pct": "92% predicted urgency within +/-1 level of ground truth (clinically safe)",
+      "critical_misses_count": 0,
+      "_note_critical_misses_count": "0 dangerous under-classifications of emergency cases (PASS - zero life safety risk)"
     }
   },
   "details": [

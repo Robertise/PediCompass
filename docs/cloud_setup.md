@@ -267,48 +267,93 @@ User (Browser)
 
 ---
 
-## 🔐 Security Architecture
+## 🔐 Network Isolation & Security Architecture (Zero-Trust VPC Isolation)
 
-### Zero-Trust Network
-- EC2 Port 8000 accepts traffic **only from `pedix-alb-sg`** — direct internet access to the backend is fully blocked at the Security Group level.
-- Qdrant vector database is bound to `127.0.0.1:6333` only — not reachable from the network.
+### 🛡️ Multi-Layer Network Isolation Strategy
 
-### IAM Least Privilege
+The Pedix network architecture enforces a strict **Zero-Trust Network Isolation** design. Although deployed within the Default VPC to eliminate NAT Gateway hourly charges (~$32–$35/month), every application layer is strictly segmented using Security Group chaining, internal load balancing, and localhost binding:
 
-**`Pedix-EC2-Role`** (EC2 Instance Profile — no static keys):
-```json
-{
-  "Statement": [
-    { "Sid": "BedrockAccess",
-      "Action": ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
-      "Resource": "*" },
-    { "Sid": "DynamoDBListTables",
-      "Action": ["dynamodb:ListTables"],
-      "Resource": "*" },
-    { "Sid": "DynamoDBAccess",
-      "Action": ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem",
-                 "dynamodb:DeleteItem", "dynamodb:Query", "dynamodb:Scan"],
-      "Resource": ["arn:aws:dynamodb:*:*:table/pedix_*",
-                   "arn:aws:dynamodb:*:*:table/pedix_*/index/*"] }
-  ]
-}
+```
+[Public Internet]
+       │
+       ▼ (HTTPS / Public Domain)
+[CloudFront CDN] ──[Static Assets]──► [Private S3 Bucket (Block Public Access)]
+       │
+       ▼ (API Requests /api/*)
+[API Gateway (Regional REST)]
+       │ (1. Validates Cognito JWT Authorizer Token)
+       │ (2. Tunnels into VPC via VPC Link V2 / ID: fzvy02)
+       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ Default VPC (172.31.0.0/16)                                                │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ Internal Application Load Balancer (pedix-internal-alb)              │  │
+│  │  - Scheme: INTERNAL ONLY (No Public IPv4 / Private VPC Subnets)       │  │
+│  │  - Security Group: pedix-alb-sg                                      │  │
+│  │  - Inbound: Port 80 (HTTP) from VPC Link                             │  │
+│  └──────────────────────────────────┬───────────────────────────────────┘  │
+│                                     │                                      │
+│                                     │ (Security Group Chaining)            │
+│                                     ▼                                      │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │ EC2 Instance: Pedix-Backend-Server (Private IP: 172.31.42.140)       │  │
+│  │  - Security Group: pedix-ec2-sg                                      │  │
+│  │  - Inbound Port 8000: ONLY ALLOWS pedix-alb-sg (0.0.0.0/0 BLOCKED)   │  │
+│  │                                                                      │  │
+│  │  ┌───────────────────────────┐     ┌──────────────────────────────┐  │  │
+│  │  │ FastAPI Backend (Uvicorn) │ ◄──►│ Qdrant Vector Database       │  │  │
+│  │  │ Listening on 0.0.0.0:8000 │     │ Bound ONLY to 127.0.0.1:6333 │  │  │
+│  │  └───────────────────────────┘     │ (Zero External Network Exposure)│  │
+│  │                                    └──────────────────────────────┘  │  │
+│  └──────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**`Pedix-PostConfirmation-Role`** (Lambda Execution Role):
-```json
-{
-  "Statement": [
-    { "Action": ["cognito-idp:AdminAddUserToGroup"], "Resource": "*" }
-  ]
-}
-```
-Plus AWS managed policy `AWSLambdaBasicExecutionRole` (CloudWatch log writes).
+---
 
-### Authentication & Authorisation
-- **API Gateway**: `PedixCognitoAuthorizer` validates Cognito JWT on all `/api/*` routes (except public endpoints: `/api/health`, `/api/auth/register`, `/api/auth/login`, `/api/auth/verify`, `/api/auth/resend-code`).
-- **FastAPI**: Secondary JWT verification via JWKS caching in `cognito_client.py` for defence-in-depth.
-- **Admin RBAC**: `pedix-admins` group check enforced inside FastAPI via `get_admin_user` dependency — not at API Gateway level.
-- **S3**: Private bucket — content served exclusively through CloudFront Origin Access.
+### 🔒 Inbound & Outbound Security Group Rules Matrix
+
+#### 1. Internal ALB Security Group (`pedix-alb-sg`)
+| Direction | Protocol | Port | Source | Purpose & Rationale |
+|---|---|---|---|---|
+| **Inbound** | HTTP | `80` | `0.0.0.0/0` (via VPC Link) | Accepts forwarded API Gateway traffic through VPC Link V2 (`fzvy02`). |
+| **Outbound** | HTTP | `8000` | `pedix-ec2-sg` | Forwards traffic exclusively to registered backend targets in `pedix-backend-tg`. |
+
+#### 2. EC2 Backend Security Group (`pedix-ec2-sg`)
+| Direction | Protocol | Port | Source | Purpose & Rationale |
+|---|---|---|---|---|
+| **Inbound** | TCP | `8000` | `pedix-alb-sg` **ONLY** | **Security Group Chaining:** Direct internet access to port 8000 is **100% blocked**. Requests MUST come through API Gateway → VPC Link → Internal ALB. |
+| **Inbound** | TCP | `22` | Admin IPs / `0.0.0.0/0` | Administrative SSH access using `pedix-ec2-key.pem`. (AWS SSM Session Manager preferred). |
+| **Outbound** | HTTPS | `443` | `0.0.0.0/0` | Outbound access for Bedrock Runtime (`bedrock-runtime.ap-southeast-1.amazonaws.com`), DynamoDB, and Cognito APIs. |
+
+#### 3. Qdrant Container Network Binding
+| Component | Port | Network Interface | Rationale |
+|---|---|---|---|
+| **Qdrant DB** | `6333` | `127.0.0.1` (Localhost loopback) | Bound strictly to host loopback interface inside Docker (`-p 127.0.0.1:6333:6333`). **Not exposed to the VPC or internet.** |
+
+---
+
+### 🎯 Architectural Rationale & Trade-off Analysis
+
+1. **Why Security Group Chaining over NAT Gateway?**
+   - Standard AWS reference architecture places backend instances in a Private Subnet behind a NAT Gateway. However, a NAT Gateway costs **~$32–$35/month** in base charges + per-GB data processing fees.
+   - **Pedix Strategy:** Uses Security Group chaining (`pedix-ec2-sg` inbound port 8000 allows source `pedix-alb-sg` *only*). This achieves the exact same Zero-Trust isolation against unauthorized inbound traffic at **$0 cost**.
+
+2. **Why Internal ALB Scheme?**
+   - The ALB is provisioned with `Scheme: Internal`, meaning AWS does **not** assign public IP addresses to the load balancer interfaces.
+   - It is physically impossible to access the ALB directly from outside the VPC. Public traffic *must* be validated by API Gateway's Cognito JWT Authorizer first.
+
+3. **Why Localhost Loopback for Qdrant Vector DB?**
+   - Vector data contains embedded clinical guideline knowledge. Binding Qdrant to `127.0.0.1:6333` ensures that even if another instance inside the same VPC were compromised, it cannot query or modify the Qdrant database. Only the FastAPI process running locally on the same EC2 instance can interact with Qdrant.
+
+---
+
+### 🔐 Authentication & Authorisation (Defence-in-Depth)
+- **API Gateway Layer**: `PedixCognitoAuthorizer` validates Cognito JWT signatures on all `/api/*` routes before forwarding to VPC Link.
+- **FastAPI Application Layer**: Secondary JWT validation via cached JWKS keys in `cognito_client.py` for defense-in-depth.
+- **Admin RBAC**: `pedix-admins` group membership is verified inside FastAPI via `get_admin_user` dependency (e.g. for `/api/analytics`).
+- **S3 Bucket Access**: Bucket `pedix-frontend-prod` is private with *Block All Public Access* enabled. Served strictly via CloudFront Origin Access Control (OAC).
 
 ---
 

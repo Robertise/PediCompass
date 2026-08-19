@@ -45,7 +45,7 @@ The production system runs entirely on AWS Free Tier services in `ap-southeast-1
 4. [Step 3: Run Data Ingestion](#-step-3-run-data-ingestion)
 5. [Step 4: Start Backend](#️-step-4-start-backend)
 6. [Step 5: Start Frontend](#-step-5-start-frontend)
-7. [Running Tests (Optional)](#-running-tests-optional)
+7. [Running Tests & Evaluation](#-running-tests--evaluation)
 8. [Documentation](#-documentation)
 
 ---
@@ -181,12 +181,33 @@ npm run dev
 
 ---
 
-## 🧪 Running Tests (Optional)
+## 🧪 Running Tests & Evaluation
+
+### Unit Tests
 
 ```bash
 # Inside the backend directory with the virtual environment activated
 pytest tests/ -v
 ```
+
+### RAG & Clinical Reasoning Evaluation Benchmark
+
+The evaluation harness evaluates **Retrieval Quality** (Hit@1, Hit@K, Mean Rerank Score, Age Filter Compliance) and **Clinical Urgency Accuracy** (ESI v4 Exact Match, Adjacent Match, Critical Safety Misses) across 25 pediatric clinical testcases ([`scripts/eval_data/rag_testcases.json`](scripts/eval_data/rag_testcases.json)).
+
+Ensure Docker (Qdrant) is running and your virtual environment is activated:
+
+```bash
+# 1. Full Evaluation (Retrieval + Stage 0 Safety Screen + Stage 3 Bedrock Reasoner)
+python scripts/eval_rag.py
+
+# 2. Fast Evaluation (Retrieval-Only — skips Bedrock LLM calls for speed and cost saving)
+python scripts/eval_rag.py --retrieval-only
+
+# 3. Custom Evaluation (Custom Top-K or Output JSON Path)
+python scripts/eval_rag.py --top-k 5 --output scripts/eval_results/custom_run.json
+```
+
+> **Evaluation Results:** Detailed JSON reports with full metrics and per-case breakdowns are saved automatically to `scripts/eval_results/eval_<timestamp>.json`.
 
 ---
 

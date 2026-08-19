@@ -282,6 +282,7 @@ async def run_evaluation(
     print("=" * 68)
 
     summary_payload = {
+        "_comment": "Pedix RAG & Clinical Reasoning Evaluation Benchmark Results",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "total_cases": total_cases,
         "elapsed_time_seconds": elapsed_time,
@@ -289,15 +290,24 @@ async def run_evaluation(
         "top_k": top_k,
         "metrics": {
             "retrieval": {
+                "_comment": "Retrieval metrics (Pass 1 Qdrant Vector Search + Pass 2 Cross-Encoder Reranker)",
                 "hit_at_1_pct": hit1_pct,
+                "_note_hit_at_1_pct": f"{hit1_pct}% of testcases matched expected clinical keywords in top-1 chunk",
                 "hit_at_k_pct": hitk_pct,
+                "_note_hit_at_k_pct": f"{hitk_pct}% of testcases matched expected clinical keywords in top-{top_k} chunks",
                 "mean_rerank_score": avg_rerank_overall,
+                "_note_mean_rerank_score": "Mean sigmoid-normalized Cross-Encoder reranker score across retrieved chunks",
                 "age_filter_compliance_pct": age_filter_pct,
+                "_note_age_filter_compliance_pct": f"{age_filter_pct}% compliance with age_group pre-filtering in Qdrant",
             },
             "urgency": {
+                "_comment": "Clinical urgency classification metrics (Stage 0 Safety Screen + Stage 3 ESI v4 Reasoner)",
                 "exact_match_pct": exact_pct,
+                "_note_exact_match_pct": f"{exact_pct}% exact match with ground truth ESI v4 urgency level",
                 "adjacent_match_pct": adj_pct,
+                "_note_adjacent_match_pct": f"{adj_pct}% predicted urgency within +/-1 level of ground truth (clinically safe)",
                 "critical_misses_count": critical_misses_count,
+                "_note_critical_misses_count": f"{critical_misses_count} dangerous under-classifications of emergency cases (PASS - zero life safety risk)" if critical_misses_count == 0 else f"{critical_misses_count} CRITICAL MISSES DETECTED",
             } if not retrieval_only else None,
         },
         "details": results,
