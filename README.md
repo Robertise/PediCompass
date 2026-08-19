@@ -12,28 +12,26 @@
 
 ## 🌐 Live Deployment
 
-| | URL |
+| Component | URL |
 |---|---|
-| **Frontend** | https://d2bx3usq72976a.cloudfront.net |
-| **API Health** | https://96hnl890q4.execute-api.ap-southeast-1.amazonaws.com/prod/api/health |
+| **Web Application** | https://d2bx3usq72976a.cloudfront.net |
+| **API Health Check** | https://d2bx3usq72976a.cloudfront.net/api/health |
 
 ---
 
 ## 🏗 Architecture
 
-![PediCompass AWS Cloud Architecture](docs/Pedix-architecture.drawio.png)
+The production system runs on AWS Free Tier / cost-optimized infrastructure in `ap-southeast-1` (Singapore):
 
-The production system runs entirely on AWS Free Tier services in `ap-southeast-1` (Singapore):
-
-- **CloudFront + S3** serve the React frontend with HTTPS globally
-- **API Gateway** (REST + SSE streaming) handles all `/api/*` traffic with Cognito JWT authorization
-- **Internal ALB + VPC Link** routes API Gateway requests securely into the Default VPC
-- **EC2 (t2.micro)** hosts the FastAPI backend and Qdrant vector database
-- **DynamoDB** stores conversation sessions, user profiles, and analytics
-- **Amazon Bedrock** (Claude Haiku) powers the multi-stage agentic reasoning pipeline
+- **CloudFront + S3** serve the React 19 frontend with global TLS/HTTPS acceleration
+- **CloudFront Direct Edge Routing** proxies `/api/*` requests directly to EC2 Nginx reverse proxy
+- **EC2 (t3.micro)** hosts the FastAPI backend with Nginx reverse proxy and local Docker Qdrant vector database
+- **FastAPI Middleware** performs native Cognito JWKS token verification and CORS handling
+- **DynamoDB (4 Tables)** stores conversation message sessions, child health profiles, analytics, and document registry
+- **Amazon Bedrock (Claude 3.5 Haiku)** powers the multi-stage agentic RAG triage pipeline
 - **Cognito** handles user authentication with post-confirmation Lambda auto-group assignment
 
-> For full cloud infrastructure details, resource IDs, and design decisions, see [`docs/cloud_setup.md`](docs/cloud_setup.md).
+> For full cloud infrastructure details, migration history, and cost analysis, see [`docs/cloud_setup.md`](docs/cloud_setup.md) and [`deployment.md`](../deployment.md).
 
 ---
 

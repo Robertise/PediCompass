@@ -350,10 +350,39 @@ The Pedix network architecture enforces a strict **Zero-Trust Network Isolation*
 ---
 
 ### 🔐 Authentication & Authorisation (Defence-in-Depth)
-- **API Gateway Layer**: `PedixCognitoAuthorizer` validates Cognito JWT signatures on all `/api/*` routes before forwarding to VPC Link.
-- **FastAPI Application Layer**: Secondary JWT validation via cached JWKS keys in `cognito_client.py` for defense-in-depth.
+- **FastAPI Application Layer**: Direct JWT signature verification against cached Cognito JWKS (`https://cognito-idp.ap-southeast-1.amazonaws.com/<pool_id>/.well-known/jwks.json`) in `cognito_client.py`.
 - **Admin RBAC**: `pedix-admins` group membership is verified inside FastAPI via `get_admin_user` dependency (e.g. for `/api/analytics`).
 - **S3 Bucket Access**: Bucket `pedix-frontend-prod` is private with *Block All Public Access* enabled. Served strictly via CloudFront Origin Access Control (OAC).
+
+---
+
+## 🚀 Phase 2 Cost Optimization: ALB & VPC Link Decommissioning (Direct CloudFront ➔ EC2)
+
+> **Status**: ✅ Active Production Architecture (Post-Migration)
+> **Monthly Savings**: **-$42.49 / month (~78% Total Cost Reduction)**
+
+To eliminate continuous idle charges from the Application Load Balancer ($24.24/mo) and VPC Link ($18.25/mo), the production routing was migrated to direct CloudFront-to-EC2 edge routing:
+
+```
+[Parent Browser / Recruiter]
+       │ (HTTPS)
+       ▼
+[CloudFront CDN] (https://d2bx3usq72976a.cloudfront.net)
+   ├── Default (*)  ──► [Amazon S3] (React 19 Static SPA)
+   └── Path (/api/*) ──► [EC2 Nginx Reverse Proxy (Port 80)]
+                                 │ (Localhost proxy 127.0.0.1:8000)
+                                 ▼
+                        [FastAPI Backend (Port 8000)]
+                          ├── Qdrant Vector DB (Port 6333)
+                          ├── Amazon Bedrock (Claude 3.5 Haiku)
+                          └── Amazon DynamoDB (4 Tables)
+```
+
+### Key Technical Adjustments:
+1. **Nginx Reverse Proxy on EC2**: Handles incoming HTTP Port 80 traffic on `Pedix-Backend-Server` and forwards to FastAPI on `127.0.0.1:8000`. Configured with `proxy_buffering off` and `proxy_read_timeout 300s` to support uninterrupted Server-Sent Events (SSE) streaming.
+2. **CloudFront Custom Origin**: Origin `/api/*` targets the EC2 Public DNS (`ec2-47-129-182-229.ap-southeast-1.compute.amazonaws.com:80`) with `ViewerProtocolPolicy: redirect-to-https` and `CachePolicy: CachingDisabled`.
+3. **Frontend Zero-CORS Relative Routing**: Frontend `.env.production` is set to `VITE_API_BASE_URL=`, making all API calls relative (`/api/...`) under the same CloudFront domain.
+4. **Decommissioned Resources**: `pedix-internal-alb`, `pedix-backend-tg`, `pedix-vpclink` (`fzvy02`), and `Pedix-API` (`96hnl890q4`) were safely deleted.
 
 ---
 
@@ -370,9 +399,8 @@ If re-deploying from scratch, execute steps in this order:
 | 5 | EC2 Instance | Launch, attach IAM role, configure Security Group, setup swap + Docker |
 | 6 | Qdrant + Ingestion | Start container, run ingestion pipeline for all knowledge base files |
 | 7 | Backend Service | Clone repo, configure `.env`, start `pedix-backend.service` |
-| 8 | Internal ALB | Create Target Group + Internal ALB, register EC2, verify health |
-| 9 | API Gateway | Create REST API, VPC Link, resource integrations, deploy `prod` stage |
-| 10 | S3 + CloudFront | Build React app, upload to S3, create distribution, configure origins |
-| 11 | Verify | `curl .../prod/api/health` → `{"status":"ok","service":"pedix-backend"}` |
+| 8 | Nginx Reverse Proxy | Install Nginx, configure `/api/` reverse proxy to `127.0.0.1:8000` |
+| 9 | S3 + CloudFront | Build React app, upload to S3, create distribution, point `/api/*` to EC2 Origin |
+| 10 | Verify | `curl https://d2bx3usq72976a.cloudfront.net/api/health` → `{"status":"ok","service":"pedix-backend"}` |
 
 See [`docs/setup.md`](setup.md) for detailed IAM policy JSON and Cognito configuration steps.
